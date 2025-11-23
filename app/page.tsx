@@ -1,22 +1,33 @@
-"use client";
 
-import React, { useState } from "react";
+import React, { JSX } from "react";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
-import FeatureSearch from "@/components/landing/FeatureSearch";
-import Highlights from "@/components/landing/Highlights";
-import FooterSection from "@/components/landing/Footer";
+import Features from "@/components/landing/Features";
+import DeepSections from "@/components/landing/DeepSection";
+import ScreensCarousel from "@/components/landing/ScreensCarousel";
+import DownloadSection from "@/components/landing/DownloadSection";
+import FAQ from "@/components/landing/FAQ";
+import Footer from "@/components/landing/Footer";
 
-export default function LandingPage() {
-  const [query, setQuery] = useState<string>("");
+export const metadata = {
+  title: "Farewell — Organise Farewells, Collect Contributions",
+  description:
+    "A complete platform to plan farewells, manage contributions, assign duties and save memories.",
+};
 
+export default function Page(): JSX.Element {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0b0e1a] via-[#0a0c14] to-[#05060a] text-slate-100 antialiased">
-      <Navbar query={query} setQuery={setQuery} />
-      <Hero />
-      <FeatureSearch query={query} setQuery={setQuery} />
-      <Highlights />
-      <FooterSection />
-    </main>
+    <div className="min-h-screen text-slate-900 dark:text-slate-100">
+      <Navbar />
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        <Hero />
+        <Features />
+        <DeepSections />
+        <ScreensCarousel />
+        <DownloadSection />
+        <FAQ />
+      </main>
+      <Footer />
+    </div>
   );
 }

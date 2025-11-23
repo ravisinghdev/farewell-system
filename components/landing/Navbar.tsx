@@ -1,45 +1,67 @@
 "use client";
 
-import React from "react";
+import React, { JSX, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Search from "@/components/landing/Search";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 
-export default function Navbar({
-  query,
-  setQuery,
-}: {
-  query: string;
-  setQuery: (v: string) => void;
-}) {
+export default function Navbar(): JSX.Element {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 backdrop-blur-xl bg-[#0b0e1a]/70">
-      <div className="flex items-center justify-between h-16 px-6 lg:px-24">
-        <Link href="/" className="text-xl font-bold text-slate-100">
-          FarewellOS
+    <header className="sticky top-0 z-50 border-b backdrop-blur-lg">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-md bg-indigo-600 flex items-center justify-center text-white font-semibold">
+            F
+          </div>
+          <div>
+            <div className="text-sm font-semibold">Farewell</div>
+            <div className="text-xs text-slate-500">farewell.management</div>
+          </div>
         </Link>
 
-        <div className="hidden md:block relative w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Search features..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value ?? "")}
-            className="pl-10 bg-white/5 border-white/10 text-slate-200"
-          />
+        <div className="flex-1">
+          <Search />
         </div>
 
-        <div className="flex gap-4 items-center">
-          <Button
-            variant="ghost"
-            className="hover:bg-white/10 text-slate-200 text-sm"
-          >
-            Login
-          </Button>
-          <Button className="text-sm px-5">Register</Button>
+        <nav className="hidden md:flex items-center gap-3">
+          <Link href="#features" className="text-sm">
+            Features
+          </Link>
+          <Link href="#screens" className="text-sm">
+            Screens
+          </Link>
+          <Link href="#download" className="text-sm">
+            Download
+          </Link>
+          <Link href="/auth/signin">
+            <Button variant="default" size="sm">
+              Sign in
+            </Button>
+          </Link>
+        </nav>
+
+        <div className="md:hidden">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button aria-label="Open menu" className="p-2 rounded-md">
+                <Menu className="w-6 h-6" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-64">
+              <div className="flex flex-col gap-3">
+                <Link href="#features">Features</Link>
+                <Link href="#screens">Screens</Link>
+                <Link href="#download">Download</Link>
+                <Link href="/auth/signin">Sign in</Link>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-    </div>
+    </header>
   );
 }
