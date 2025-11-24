@@ -1,4 +1,3 @@
-// app/api/auth/2fa/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/utils/supabase/admin";
 import { ApiError, handleApiError } from "@/utils/errors";
