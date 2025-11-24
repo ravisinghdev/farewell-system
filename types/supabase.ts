@@ -18,26 +18,23 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
-          description: string | null
           farewell_id: string | null
           id: string
-          title: string | null
+          name: string
         }
         Insert: {
           created_at?: string | null
           created_by?: string | null
-          description?: string | null
           farewell_id?: string | null
           id?: string
-          title?: string | null
+          name: string
         }
         Update: {
           created_at?: string | null
           created_by?: string | null
-          description?: string | null
           farewell_id?: string | null
           id?: string
-          title?: string | null
+          name?: string
         }
         Relationships: [
           {
@@ -56,50 +53,73 @@ export type Database = {
           },
         ]
       }
-      announcements: {
+      audit_logs: {
         Row: {
-          body: string | null
+          action: string
           created_at: string | null
-          created_by: string | null
-          expires_at: string | null
+          details: Json | null
           farewell_id: string | null
           id: string
-          pinned: boolean | null
-          starts_at: string | null
-          title: string | null
+          user_id: string | null
         }
         Insert: {
-          body?: string | null
+          action: string
           created_at?: string | null
-          created_by?: string | null
-          expires_at?: string | null
+          details?: Json | null
           farewell_id?: string | null
           id?: string
-          pinned?: boolean | null
-          starts_at?: string | null
-          title?: string | null
+          user_id?: string | null
         }
         Update: {
-          body?: string | null
+          action?: string
           created_at?: string | null
-          created_by?: string | null
-          expires_at?: string | null
+          details?: Json | null
           farewell_id?: string | null
           id?: string
-          pinned?: boolean | null
-          starts_at?: string | null
-          title?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "announcements_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "audit_logs_farewell_id_fkey"
+            columns: ["farewell_id"]
+            isOneToOne: false
+            referencedRelation: "farewells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      chat_channels: {
+        Row: {
+          created_at: string | null
+          farewell_id: string | null
+          id: string
+          name: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          farewell_id?: string | null
+          id?: string
+          name?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          farewell_id?: string | null
+          id?: string
+          name?: string | null
+          type?: string | null
+        }
+        Relationships: [
           {
-            foreignKeyName: "announcements_farewell_id_fkey"
+            foreignKeyName: "chat_channels_farewell_id_fkey"
             columns: ["farewell_id"]
             isOneToOne: false
             referencedRelation: "farewells"
@@ -107,61 +127,96 @@ export type Database = {
           },
         ]
       }
-      audit_logs: {
+      chat_members: {
         Row: {
-          action: string | null
-          created_at: string | null
-          id: string
-          payload: Json | null
-          resource: string | null
-          resource_id: string | null
-          user_id: string | null
+          channel_id: string
+          joined_at: string | null
+          last_read_at: string | null
+          user_id: string
         }
         Insert: {
-          action?: string | null
-          created_at?: string | null
-          id?: string
-          payload?: Json | null
-          resource?: string | null
-          resource_id?: string | null
-          user_id?: string | null
+          channel_id: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          user_id: string
         }
         Update: {
-          action?: string | null
-          created_at?: string | null
-          id?: string
-          payload?: Json | null
-          resource?: string | null
-          resource_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      chat_threads: {
-        Row: {
-          created_at: string | null
-          farewell_id: string
-          id: string
-          title: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          farewell_id: string
-          id?: string
-          title?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          farewell_id?: string
-          id?: string
-          title?: string | null
+          channel_id?: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "chat_threads_farewell_id_fkey"
-            columns: ["farewell_id"]
+            foreignKeyName: "chat_members_channel_id_fkey"
+            columns: ["channel_id"]
             isOneToOne: false
-            referencedRelation: "farewells"
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          channel_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          reply_to: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          reply_to?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          reply_to?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -170,47 +225,38 @@ export type Database = {
         Row: {
           amount: number
           created_at: string | null
-          currency: string
-          farewell_id: string
+          farewell_id: string | null
           id: string
-          metadata: Json | null
-          method: string
-          payer_id: string | null
-          receipt_url: string | null
-          reference: string | null
-          split: Json | null
-          status: string
-          updated_at: string | null
+          method: Database["public"]["Enums"]["payment_method"]
+          screenshot_url: string | null
+          status: Database["public"]["Enums"]["contribution_status"] | null
+          transaction_id: string | null
+          user_id: string | null
+          verified_by: string | null
         }
         Insert: {
           amount: number
           created_at?: string | null
-          currency?: string
-          farewell_id: string
+          farewell_id?: string | null
           id?: string
-          metadata?: Json | null
-          method: string
-          payer_id?: string | null
-          receipt_url?: string | null
-          reference?: string | null
-          split?: Json | null
-          status?: string
-          updated_at?: string | null
+          method: Database["public"]["Enums"]["payment_method"]
+          screenshot_url?: string | null
+          status?: Database["public"]["Enums"]["contribution_status"] | null
+          transaction_id?: string | null
+          user_id?: string | null
+          verified_by?: string | null
         }
         Update: {
           amount?: number
           created_at?: string | null
-          currency?: string
-          farewell_id?: string
+          farewell_id?: string | null
           id?: string
-          metadata?: Json | null
-          method?: string
-          payer_id?: string | null
-          receipt_url?: string | null
-          reference?: string | null
-          split?: Json | null
-          status?: string
-          updated_at?: string | null
+          method?: Database["public"]["Enums"]["payment_method"]
+          screenshot_url?: string | null
+          status?: Database["public"]["Enums"]["contribution_status"] | null
+          transaction_id?: string | null
+          user_id?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -221,89 +267,15 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "contributions_payer_id_fkey"
-            columns: ["payer_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dm_messages: {
-        Row: {
-          content: string | null
-          created_at: string | null
-          id: string
-          media_storage_path: string | null
-          seen_by: Json | null
-          sender_id: string | null
-          thread_id: string | null
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          media_storage_path?: string | null
-          seen_by?: Json | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Update: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          media_storage_path?: string | null
-          seen_by?: Json | null
-          sender_id?: string | null
-          thread_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dm_messages_sender_id_fkey"
-            columns: ["sender_id"]
+            foreignKeyName: "contributions_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "dm_messages_thread_id_fkey"
-            columns: ["thread_id"]
-            isOneToOne: false
-            referencedRelation: "dm_threads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dm_threads: {
-        Row: {
-          created_at: string | null
-          id: string
-          participant_a: string
-          participant_b: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          participant_a: string
-          participant_b: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          participant_a?: string
-          participant_b?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dm_threads_participant_a_fkey"
-            columns: ["participant_a"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "dm_threads_participant_b_fkey"
-            columns: ["participant_b"]
+            foreignKeyName: "contributions_verified_by_fkey"
+            columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -312,46 +284,33 @@ export type Database = {
       }
       duties: {
         Row: {
+          assigned_to: string[] | null
           created_at: string | null
-          created_by: string | null
           description: string | null
-          due_date: string | null
-          expense_limit: number | null
-          farewell_id: string
+          farewell_id: string | null
           id: string
+          status: Database["public"]["Enums"]["duty_status"] | null
           title: string
-          updated_at: string | null
         }
         Insert: {
+          assigned_to?: string[] | null
           created_at?: string | null
-          created_by?: string | null
           description?: string | null
-          due_date?: string | null
-          expense_limit?: number | null
-          farewell_id: string
+          farewell_id?: string | null
           id?: string
+          status?: Database["public"]["Enums"]["duty_status"] | null
           title: string
-          updated_at?: string | null
         }
         Update: {
+          assigned_to?: string[] | null
           created_at?: string | null
-          created_by?: string | null
           description?: string | null
-          due_date?: string | null
-          expense_limit?: number | null
-          farewell_id?: string
+          farewell_id?: string | null
           id?: string
+          status?: Database["public"]["Enums"]["duty_status"] | null
           title?: string
-          updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "duties_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "duties_farewell_id_fkey"
             columns: ["farewell_id"]
@@ -361,93 +320,97 @@ export type Database = {
           },
         ]
       }
-      duty_assignments: {
+      expenses: {
         Row: {
-          assigned_at: string | null
-          duty_id: string
+          amount: number
+          approved_by: string | null
+          category: string | null
+          created_at: string | null
+          farewell_id: string | null
           id: string
-          user_id: string
+          paid_by: string | null
+          receipt_url: string | null
+          title: string
         }
         Insert: {
-          assigned_at?: string | null
-          duty_id: string
+          amount: number
+          approved_by?: string | null
+          category?: string | null
+          created_at?: string | null
+          farewell_id?: string | null
           id?: string
-          user_id: string
+          paid_by?: string | null
+          receipt_url?: string | null
+          title: string
         }
         Update: {
-          assigned_at?: string | null
-          duty_id?: string
+          amount?: number
+          approved_by?: string | null
+          category?: string | null
+          created_at?: string | null
+          farewell_id?: string | null
           id?: string
-          user_id?: string
+          paid_by?: string | null
+          receipt_url?: string | null
+          title?: string
         }
         Relationships: [
           {
-            foreignKeyName: "duty_assignments_duty_id_fkey"
-            columns: ["duty_id"]
+            foreignKeyName: "expenses_approved_by_fkey"
+            columns: ["approved_by"]
             isOneToOne: false
-            referencedRelation: "duties"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "duty_assignments_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "expenses_farewell_id_fkey"
+            columns: ["farewell_id"]
+            isOneToOne: false
+            referencedRelation: "farewells"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_paid_by_fkey"
+            columns: ["paid_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
-      duty_receipts: {
+      farewell_join_requests: {
         Row: {
-          amount: number
-          approved_at: string | null
-          approved_by: string | null
           created_at: string | null
-          currency: string
-          duty_assignment_id: string | null
+          farewell_id: string | null
           id: string
-          meta: Json | null
-          receipt_storage_path: string | null
-          status: string | null
-          uploader_id: string | null
+          status: Database["public"]["Enums"]["join_status"] | null
+          user_id: string | null
         }
         Insert: {
-          amount: number
-          approved_at?: string | null
-          approved_by?: string | null
           created_at?: string | null
-          currency?: string
-          duty_assignment_id?: string | null
+          farewell_id?: string | null
           id?: string
-          meta?: Json | null
-          receipt_storage_path?: string | null
-          status?: string | null
-          uploader_id?: string | null
+          status?: Database["public"]["Enums"]["join_status"] | null
+          user_id?: string | null
         }
         Update: {
-          amount?: number
-          approved_at?: string | null
-          approved_by?: string | null
           created_at?: string | null
-          currency?: string
-          duty_assignment_id?: string | null
+          farewell_id?: string | null
           id?: string
-          meta?: Json | null
-          receipt_storage_path?: string | null
-          status?: string | null
-          uploader_id?: string | null
+          status?: Database["public"]["Enums"]["join_status"] | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "duty_receipts_duty_assignment_id_fkey"
-            columns: ["duty_assignment_id"]
+            foreignKeyName: "farewell_join_requests_farewell_id_fkey"
+            columns: ["farewell_id"]
             isOneToOne: false
-            referencedRelation: "duty_assignments"
+            referencedRelation: "farewells"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "duty_receipts_uploader_id_fkey"
-            columns: ["uploader_id"]
+            foreignKeyName: "farewell_join_requests_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -457,27 +420,27 @@ export type Database = {
       farewell_members: {
         Row: {
           active: boolean | null
-          farewell_id: string
+          farewell_id: string | null
           id: string
           joined_at: string | null
-          role: string
-          user_id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+          user_id: string | null
         }
         Insert: {
           active?: boolean | null
-          farewell_id: string
+          farewell_id?: string | null
           id?: string
           joined_at?: string | null
-          role: string
-          user_id: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          user_id?: string | null
         }
         Update: {
           active?: boolean | null
-          farewell_id?: string
+          farewell_id?: string | null
           id?: string
           joined_at?: string | null
-          role?: string
-          user_id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -498,83 +461,116 @@ export type Database = {
       }
       farewells: {
         Row: {
+          code: string | null
           created_at: string | null
-          created_by: string | null
+          date: string | null
           id: string
-          metadata: Json | null
           name: string
-          section: string
+          requires_approval: boolean | null
+          section: string | null
+          status: string | null
           year: number
         }
         Insert: {
+          code?: string | null
           created_at?: string | null
-          created_by?: string | null
+          date?: string | null
           id?: string
-          metadata?: Json | null
           name: string
-          section: string
+          requires_approval?: boolean | null
+          section?: string | null
+          status?: string | null
           year: number
         }
         Update: {
+          code?: string | null
           created_at?: string | null
-          created_by?: string | null
+          date?: string | null
           id?: string
-          metadata?: Json | null
           name?: string
-          section?: string
+          requires_approval?: boolean | null
+          section?: string | null
+          status?: string | null
           year?: number
+        }
+        Relationships: []
+      }
+      media: {
+        Row: {
+          album_id: string | null
+          created_at: string | null
+          id: string
+          type: string
+          uploaded_by: string | null
+          url: string
+        }
+        Insert: {
+          album_id?: string | null
+          created_at?: string | null
+          id?: string
+          type: string
+          uploaded_by?: string | null
+          url: string
+        }
+        Update: {
+          album_id?: string | null
+          created_at?: string | null
+          id?: string
+          type?: string
+          uploaded_by?: string | null
+          url?: string
         }
         Relationships: [
           {
-            foreignKeyName: "farewells_created_by_fkey"
-            columns: ["created_by"]
+            foreignKeyName: "media_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albums"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_uploaded_by_fkey"
+            columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
       }
-      ledger_entries: {
+      notifications: {
         Row: {
-          amount: number
           created_at: string | null
-          currency: string
-          farewell_id: string | null
           id: string
-          meta: Json | null
-          type: string
+          link: string | null
+          message: string
+          read: boolean | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"] | null
           user_id: string | null
         }
         Insert: {
-          amount: number
           created_at?: string | null
-          currency?: string
-          farewell_id?: string | null
           id?: string
-          meta?: Json | null
-          type: string
+          link?: string | null
+          message: string
+          read?: boolean | null
+          title: string
+          type?: Database["public"]["Enums"]["notification_type"] | null
           user_id?: string | null
         }
         Update: {
-          amount?: number
           created_at?: string | null
-          currency?: string
-          farewell_id?: string | null
           id?: string
-          meta?: Json | null
-          type?: string
+          link?: string | null
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"] | null
           user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "ledger_entries_farewell_id_fkey"
-            columns: ["farewell_id"]
-            isOneToOne: false
-            referencedRelation: "farewells"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ledger_entries_user_id_fkey"
+            foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -582,306 +578,47 @@ export type Database = {
           },
         ]
       }
-      media_files: {
+      song_requests: {
         Row: {
-          album_id: string | null
+          artist: string | null
           created_at: string | null
           farewell_id: string | null
-          filename: string | null
           id: string
-          metadata: Json | null
-          mime: string | null
-          size_bytes: number | null
-          storage_path: string | null
-          uploader_id: string | null
+          song_name: string
+          status: string | null
+          user_id: string | null
+          votes: number | null
         }
         Insert: {
-          album_id?: string | null
+          artist?: string | null
           created_at?: string | null
           farewell_id?: string | null
-          filename?: string | null
           id?: string
-          metadata?: Json | null
-          mime?: string | null
-          size_bytes?: number | null
-          storage_path?: string | null
-          uploader_id?: string | null
+          song_name: string
+          status?: string | null
+          user_id?: string | null
+          votes?: number | null
         }
         Update: {
-          album_id?: string | null
+          artist?: string | null
           created_at?: string | null
           farewell_id?: string | null
-          filename?: string | null
           id?: string
-          metadata?: Json | null
-          mime?: string | null
-          size_bytes?: number | null
-          storage_path?: string | null
-          uploader_id?: string | null
+          song_name?: string
+          status?: string | null
+          user_id?: string | null
+          votes?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "media_files_album_id_fkey"
-            columns: ["album_id"]
-            isOneToOne: false
-            referencedRelation: "albums"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "media_files_farewell_id_fkey"
+            foreignKeyName: "song_requests_farewell_id_fkey"
             columns: ["farewell_id"]
             isOneToOne: false
             referencedRelation: "farewells"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "media_files_uploader_id_fkey"
-            columns: ["uploader_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          content: string | null
-          created_at: string | null
-          id: string
-          media_storage_path: string | null
-          reply_to: string | null
-          sender_id: string | null
-          status: string | null
-          thread_id: string | null
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          media_storage_path?: string | null
-          reply_to?: string | null
-          sender_id?: string | null
-          status?: string | null
-          thread_id?: string | null
-        }
-        Update: {
-          content?: string | null
-          created_at?: string | null
-          id?: string
-          media_storage_path?: string | null
-          reply_to?: string | null
-          sender_id?: string | null
-          status?: string | null
-          thread_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_reply_to_fkey"
-            columns: ["reply_to"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_thread_id_fkey"
-            columns: ["thread_id"]
-            isOneToOne: false
-            referencedRelation: "chat_threads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      notifications: {
-        Row: {
-          body: string | null
-          created_at: string | null
-          created_by: string | null
-          farewell_id: string | null
-          id: string
-          meta: Json | null
-          read_by: Json | null
-          target: Json | null
-          title: string | null
-        }
-        Insert: {
-          body?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          farewell_id?: string | null
-          id?: string
-          meta?: Json | null
-          read_by?: Json | null
-          target?: Json | null
-          title?: string | null
-        }
-        Update: {
-          body?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          farewell_id?: string | null
-          id?: string
-          meta?: Json | null
-          read_by?: Json | null
-          target?: Json | null
-          title?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notifications_farewell_id_fkey"
-            columns: ["farewell_id"]
-            isOneToOne: false
-            referencedRelation: "farewells"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payments_offline: {
-        Row: {
-          approved: boolean | null
-          approved_at: string | null
-          approved_by: string | null
-          contribution_id: string | null
-          created_at: string | null
-          id: string
-          receipt_storage_path: string | null
-          recorded_by: string | null
-        }
-        Insert: {
-          approved?: boolean | null
-          approved_at?: string | null
-          approved_by?: string | null
-          contribution_id?: string | null
-          created_at?: string | null
-          id?: string
-          receipt_storage_path?: string | null
-          recorded_by?: string | null
-        }
-        Update: {
-          approved?: boolean | null
-          approved_at?: string | null
-          approved_by?: string | null
-          contribution_id?: string | null
-          created_at?: string | null
-          id?: string
-          receipt_storage_path?: string | null
-          recorded_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_offline_contribution_id_fkey"
-            columns: ["contribution_id"]
-            isOneToOne: false
-            referencedRelation: "contributions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_offline_recorded_by_fkey"
-            columns: ["recorded_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      roles: {
-        Row: {
-          description: string | null
-          id: number
-          name: string
-        }
-        Insert: {
-          description?: string | null
-          id?: number
-          name: string
-        }
-        Update: {
-          description?: string | null
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      transactions: {
-        Row: {
-          contribution_id: string | null
-          created_at: string | null
-          gateway: string | null
-          gateway_id: string | null
-          gateway_payload: Json | null
-          id: string
-          status: string | null
-        }
-        Insert: {
-          contribution_id?: string | null
-          created_at?: string | null
-          gateway?: string | null
-          gateway_id?: string | null
-          gateway_payload?: Json | null
-          id?: string
-          status?: string | null
-        }
-        Update: {
-          contribution_id?: string | null
-          created_at?: string | null
-          gateway?: string | null
-          gateway_id?: string | null
-          gateway_payload?: Json | null
-          id?: string
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "transactions_contribution_id_fkey"
-            columns: ["contribution_id"]
-            isOneToOne: false
-            referencedRelation: "contributions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_roles: {
-        Row: {
-          assigned_at: string | null
-          id: string
-          role_id: number
-          user_id: string
-        }
-        Insert: {
-          assigned_at?: string | null
-          id?: string
-          role_id: number
-          user_id: string
-        }
-        Update: {
-          assigned_at?: string | null
-          id?: string
-          role_id?: number
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "roles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
+            foreignKeyName: "song_requests_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -893,122 +630,46 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
-          display_name: string | null
           email: string | null
+          full_name: string | null
           id: string
-          metadata: Json | null
-          phone: string | null
+          updated_at: string | null
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
-          display_name?: string | null
           email?: string | null
-          id?: string
-          metadata?: Json | null
-          phone?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
-          display_name?: string | null
           email?: string | null
+          full_name?: string | null
           id?: string
-          metadata?: Json | null
-          phone?: string | null
+          updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }
     }
     Views: {
-      v_farewell_member_roles: {
-        Row: {
-          farewell_id: string | null
-          role: string | null
-          user_id: string | null
-        }
-        Insert: {
-          farewell_id?: string | null
-          role?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          farewell_id?: string | null
-          role?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "farewell_members_farewell_id_fkey"
-            columns: ["farewell_id"]
-            isOneToOne: false
-            referencedRelation: "farewells"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "farewell_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
-      add_media_file: { Args: { payload: Json }; Returns: string }
-      approve_duty_receipt: { Args: { receipt_id: string }; Returns: Json }
-      assign_duty: {
-        Args: { duty_id: string; user_ids: string[] }
-        Returns: Json
-      }
-      claim_invite: {
-        Args: { p_code: string; p_user_id: string }
-        Returns: string
-      }
-      create_album: {
-        Args: { farewell_id: string; title: string }
-        Returns: string
-      }
-      create_dm_thread: { Args: { user_b: string }; Returns: string }
-      create_farewell: { Args: { farewell_info: Json }; Returns: Json }
-      create_group_thread: {
-        Args: { farewell_id: string; title: string }
-        Returns: string
-      }
-      join_farewell: { Args: { farewell_id: string }; Returns: Json }
-      record_offline_payment: {
-        Args: { amount: number; contribution_id: string }
-        Returns: Json
-      }
-      reject_duty_receipt: {
-        Args: { reason: string; receipt_id: string }
-        Returns: Json
-      }
-      rls_current_jwt_farewell_id: { Args: never; Returns: string }
-      rls_current_user_id: { Args: never; Returns: string }
-      rls_current_user_is_admin: { Args: never; Returns: boolean }
-      rls_is_admin: { Args: { u_id: string }; Returns: boolean }
-      rls_is_member_of_farewell: {
-        Args: { f_id: string; u_id: string }
-        Returns: boolean
-      }
-      send_dm_message: {
-        Args: { content: string; thread_id: string }
-        Returns: Json
-      }
-      send_group_message: {
-        Args: { content: string; thread_id: string }
-        Returns: Json
-      }
-      set_user_farewell_claim: {
-        Args: { farewell_id: string }
-        Returns: undefined
-      }
-      unassign_duty: { Args: { assignment_id: string }; Returns: Json }
+      [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      contribution_status: "pending" | "verified" | "rejected"
+      duty_status: "pending" | "in_progress" | "completed"
+      join_status: "pending" | "approved" | "rejected"
+      notification_type: "info" | "warning" | "success" | "error"
+      payment_method: "upi" | "cash" | "bank_transfer"
+      user_role: "student" | "teacher" | "parallel_admin" | "main_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1135,6 +796,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      contribution_status: ["pending", "verified", "rejected"],
+      duty_status: ["pending", "in_progress", "completed"],
+      join_status: ["pending", "approved", "rejected"],
+      notification_type: ["info", "warning", "success", "error"],
+      payment_method: ["upi", "cash", "bank_transfer"],
+      user_role: ["student", "teacher", "parallel_admin", "main_admin"],
+    },
   },
 } as const

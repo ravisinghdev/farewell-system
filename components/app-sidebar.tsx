@@ -1,175 +1,369 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
-  AudioWaveform,
+  Activity,
+  Bell,
   BookOpen,
-  Bot,
-  Command,
-  Frame,
+  Brush,
+  CalendarDays,
+  ClipboardCheck,
+  ClipboardList,
+  Download,
+  Film,
+  FolderClock,
   GalleryVerticalEnd,
-  Map,
-  PieChart,
-  Settings2,
+  Gift,
+  GraduationCap,
+  Heart,
+  Home,
+  Image,
+  Info,
+  LayoutTemplate,
+  LifeBuoy,
+  LineChart,
+  ListChecks,
+  Mail,
+  MessageSquare,
+  MessageSquareHeart,
+  Music,
+  Music2,
+  Palette,
+  PartyPopper,
+  PiggyBank,
+  Plus,
+  Quote,
+  ReceiptText,
+  Settings,
+  Shield,
   SquareTerminal,
-} from "lucide-react"
+  Star,
+  Trophy,
+  User,
+  UserCircle,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import Link from "next/link";
 
-// This is sample data.
-const data = {
+import { SidebarChatList } from "@/components/chat/sidebar-chat-list";
+
+// Define types for the props
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
+    name: string;
+    email: string;
+    avatar: string;
+    id: string;
+  };
+  farewellId: string;
+  role: string;
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  user,
+  farewellId,
+  role,
+  ...props
+}: AppSidebarProps) {
+  // Helper to prefix links
+  const p = (path: string) => {
+    // If path is exactly /dashboard, append ID.
+    // If path is /dashboard/something, insert ID: /dashboard/[id]/something
+    if (path === "/dashboard") return `/dashboard/${farewellId}`;
+    return path.replace("/dashboard", `/dashboard/${farewellId}`);
+  };
+
+  const navGroups = [
+    {
+      title: "Overview",
+      items: [
+        { href: "/dashboard", label: "Home", icon: Home },
+        {
+          href: "/dashboard/announcements",
+          label: "Announcements",
+          icon: Bell,
+        },
+        {
+          href: "/dashboard/timeline",
+          label: "Farewell Timeline",
+          icon: CalendarDays,
+        },
+        {
+          href: "/dashboard/highlights",
+          label: "Highlights & Updates",
+          icon: Star,
+        },
+      ],
+    },
+
+    /* ------------------- CONTRIBUTIONS ------------------- */
+    {
+      title: "Contributions",
+      items: [
+        {
+          href: "/dashboard/contributions",
+          label: "Main Dashboard",
+          icon: PiggyBank,
+        },
+        {
+          href: "/dashboard/contributions/payment",
+          label: "Make Payment",
+          icon: Plus,
+        },
+        {
+          href: "/dashboard/contributions/receipt",
+          label: "Receipts & Downloads",
+          icon: ReceiptText,
+        },
+        {
+          href: "/dashboard/contributions/history",
+          label: "Payment History",
+          icon: FolderClock,
+        },
+        {
+          href: "/dashboard/contributions/analytics",
+          label: "Analytics & Insights",
+          icon: LineChart,
+        },
+        {
+          href: "/dashboard/contributions/leaderboard",
+          label: "Top Contributors",
+          icon: Trophy,
+        },
+      ],
+    },
+
+    /* ------------------- CONNECTIONS ------------------- */
+    {
+      title: "Connections",
+      items: [
+        {
+          href: "/dashboard/messages",
+          label: "Farewell Messages",
+          icon: MessageSquare,
+        },
+        {
+          href: "/dashboard/memories",
+          label: "Photo & Video Gallery",
+          icon: Image,
+        },
+        { href: "/dashboard/letters", label: "Letters to Seniors", icon: Mail },
+        {
+          href: "/dashboard/artworks",
+          label: "Art & Creative Works",
+          icon: Brush,
+        },
+        {
+          href: "/dashboard/yearbook",
+          label: "Digital Yearbook",
+          icon: BookOpen,
+        },
+      ],
+    },
+
+    /* ------------------- PEOPLE ------------------- */
+    {
+      title: "People",
+      items: [
+        {
+          href: "/dashboard/students",
+          label: "12th Grade Students",
+          icon: Users,
+        },
+        {
+          href: "/dashboard/teachers",
+          label: "Teachers & Mentors",
+          icon: GraduationCap,
+        },
+        {
+          href: "/dashboard/juniors",
+          label: "Junior Contributors",
+          icon: User,
+        },
+        {
+          href: "/dashboard/alumni",
+          label: "Alumni Messages",
+          icon: UserCircle,
+        },
+      ],
+    },
+
+    /* ------------------- EVENTS ------------------- */
+    {
+      title: "Events",
+      items: [
+        {
+          href: "/dashboard/farewell-event",
+          label: "Main Farewell Event",
+          icon: PartyPopper,
+        },
+        {
+          href: "/dashboard/rehearsals",
+          label: "Rehearsals & Planning",
+          icon: ClipboardList,
+        },
+        {
+          href: "/dashboard/performances",
+          label: "Performances & Acts",
+          icon: Music,
+        },
+        {
+          href: "/dashboard/decor",
+          label: "Decoration & Setup",
+          icon: Palette,
+        },
+        {
+          href: "/dashboard/tasks",
+          label: "Event Task Board",
+          icon: ListChecks,
+        },
+      ],
+    },
+
+    /* ------------------- LEGACY ------------------- */
+    {
+      title: "Legacy",
+      items: [
+        {
+          href: "/dashboard/quotes",
+          label: "Best Quotes & Memories",
+          icon: Quote,
+        },
+        {
+          href: "/dashboard/farewell-video",
+          label: "Farewell Film",
+          icon: Film,
+        },
+        {
+          href: "/dashboard/gift-wall",
+          label: "Gift & Wishes Wall",
+          icon: Gift,
+        },
+        { href: "/dashboard/thankyou", label: "Thank You Notes", icon: Heart },
+      ],
+    },
+
+    /* ------------------- MANAGEMENT ------------------- */
+    {
+      title: "Management",
+      items: [
+        {
+          href: "/dashboard/committees",
+          label: "Organizing Committees",
+          icon: ClipboardCheck,
+        },
+        { href: "/dashboard/budget", label: "Budget & Expenses", icon: Wallet },
+        {
+          href: "/dashboard/permissions",
+          label: "Access & Roles",
+          icon: Shield,
+        },
+        {
+          href: "/dashboard/settings",
+          label: "Admin Settings",
+          icon: Settings,
+        },
+        {
+          href: "/dashboard/activity",
+          label: "System Activity",
+          icon: Activity,
+        },
+      ],
+    },
+
+    /* ------------------- RESOURCES ------------------- */
+    {
+      title: "Resources",
+      items: [
+        {
+          href: "/dashboard/templates",
+          label: "Templates & Designs",
+          icon: LayoutTemplate,
+        },
+        {
+          href: "/dashboard/music-library",
+          label: "Music & Backgrounds",
+          icon: Music2,
+        },
+        { href: "/dashboard/downloads", label: "Downloads", icon: Download },
+      ],
+    },
+
+    /* ------------------- COMMUNITY ------------------- */
+    {
+      title: "Community",
+      items: [
+        {
+          href: "/dashboard/feedback",
+          label: "Feedback & Suggestions",
+          icon: MessageSquareHeart,
+        },
+        { href: "/dashboard/support", label: "Support Team", icon: LifeBuoy },
+        {
+          href: "/dashboard/about",
+          label: "About Farewell Project",
+          icon: Info,
+        },
+      ],
+    },
+  ];
+
+  const teams = [
+    {
+      name: "Farewell System",
+      logo: GalleryVerticalEnd,
+      plan: role,
+    },
+  ];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* Chat List Integration */}
+        <SidebarChatList farewellId={farewellId} currentUserId={user.id} />
+
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.title}>
+            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+            <SidebarMenu>
+              {group.items.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                  <SidebarMenuButton asChild tooltip={item.label}>
+                    <Link href={p(item.href)}>
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

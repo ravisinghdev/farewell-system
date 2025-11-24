@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { ApiError, handleApiError } from "@/utils/errors";
 import { registerDevice, listDevicesForUser } from "@/lib/auth/devices";
 import { generateDeviceFingerprint } from "@/lib/auth/device";
-import { getServerSupabase } from "@/utils/supabase/server";
 
 export async function GET(req: NextRequest) {
   try {

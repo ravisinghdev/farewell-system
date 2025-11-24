@@ -15,11 +15,10 @@ import {
 } from "@/lib/auth/authServices";
 
 import { handleApiError, ApiError } from "@/utils/errors";
-import supabaseAdmin from "@/utils/supabase/admin";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await supabaseAdmin;
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
     console.log("AUTH ACTION:", action);
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest) {
         const {
           data: { user },
           error,
-        } = await supabase.auth.admin.createUser({
+        } = await supabaseAdmin.auth.admin.createUser({
           email,
           password,
           email_confirm: false,

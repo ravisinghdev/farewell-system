@@ -156,12 +156,9 @@ export function AuthCard() {
           action: { label: "Close", onClick: () => toast.dismiss() },
         });
       } else if (result?.success) {
-        const msg =
-          result.success ??
-          "Account created! Please check your email to verify your account.";
-        setSignupSuccess(msg);
         toast("Signup Successful!", {
-          description: msg,
+          description:
+            "Account created! Please check your email to verify your account.",
         });
 
         // OPTIONAL: switch to login tab after success

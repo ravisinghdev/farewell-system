@@ -1,6 +1,6 @@
 import { supabaseClient } from "@/utils/supabase/client";
 import { supabaseAdmin } from "@/utils/supabase/admin";
-import { getServerSupabase } from "@/utils/supabase/server";
+import { createClient as createServerClient } from "@/utils/supabase/server";
 import { ApiError } from "@/utils/errors";
 import type { Session, User } from "@supabase/supabase-js";
 import jwt, { SignOptions } from "jsonwebtoken";
@@ -138,7 +138,7 @@ export function parseBearer(value?: string | null) {
 export async function verifySupabaseAccessToken(accessToken?: string | null) {
   if (!accessToken) throw new ApiError("missing_access_token", 401);
 
-  const client = getServerSupabase(accessToken);
+  const client = await createServerClient();
 
   const { data, error } = await client.auth.getUser();
 
@@ -154,7 +154,7 @@ export async function signOutUser(accessToken?: string | null) {
   try {
     if (!accessToken) return true;
 
-    const client = getServerSupabase(accessToken);
+    const client = await createServerClient();
     await client.auth.signOut();
 
     return true;
