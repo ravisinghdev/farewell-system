@@ -28,7 +28,7 @@ export default async function MessagesPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/auth/signin");
+  if (!user) redirect("/auth");
 
   // Fetch both lists
   const channels = await getChannelsAction(id, "primary");

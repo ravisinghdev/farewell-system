@@ -52,7 +52,7 @@ export default function Navbar(): JSX.Element {
           >
             Download
           </Link>
-          <Link href="/auth/signin">
+          <Link href="/auth">
             <Button
               size="sm"
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-0 text-white shadow-lg hover:shadow-purple-500/50 transition-all duration-300"
@@ -101,7 +101,7 @@ export default function Navbar(): JSX.Element {
                   Download
                 </Link>
                 <Link
-                  href="/auth/signin"
+                  href="/auth"
                   onClick={() => setOpen(false)}
                   className="mt-4"
                 >

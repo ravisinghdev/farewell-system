@@ -36,13 +36,13 @@ export default function Footer(): JSX.Element {
               Terms
             </Link>
             <Link
-              href="/auth/signin"
+              href="/auth"
               className="text-slate-400 hover:text-pink-400 transition-colors"
             >
               Sign In
             </Link>
             <Link
-              href="/auth/signup"
+              href="/auth"
               className="text-slate-400 hover:text-purple-400 transition-colors"
             >
               Sign Up

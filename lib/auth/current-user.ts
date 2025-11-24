@@ -42,7 +42,7 @@ export interface AuthUserWithRole {
  * ```tsx
  * export default async function ProtectedPage() {
  *   const user = await getCurrentUserWithRole();
- *   if (!user) redirect('/auth/signin');
+ *   if (!user) redirect('/auth');
  *
  *   if (user.role === 'main_admin') {
  *     return <AdminDashboard />;
@@ -69,7 +69,7 @@ export interface AuthUserWithRole {
  * const user = await getCurrentUserWithRole();
  * if (!user) {
  *   // User not authenticated
- *   redirect('/auth/signin');
+ *   redirect('/auth');
  * }
  *
  * @example

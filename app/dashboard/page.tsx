@@ -9,7 +9,7 @@ export default async function DashboardRootPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth/signin");
+    redirect("/auth");
   }
 
   const claims = getClaims(user);

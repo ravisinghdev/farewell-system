@@ -42,7 +42,7 @@ export async function updateSession(request: NextRequest) {
   // PROTECTED ROUTES LOGIC
   // If user is NOT logged in and tries to access a protected page
   if (!user && !path.startsWith("/auth")) {
-    return NextResponse.redirect(new URL("/auth/signin", request.url));
+    return NextResponse.redirect(new URL("/auth", request.url));
   }
 
   // If user IS logged in

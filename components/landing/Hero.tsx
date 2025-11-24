@@ -83,7 +83,7 @@ export default function Hero(): JSX.Element {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-wrap gap-4"
           >
-            <Link href="/auth/signup">
+            <Link href="/auth">
               <Button
                 size="lg"
                 className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-0 text-white px-8 py-6 text-lg font-semibold rounded-xl shadow-lg hover:shadow-purple-500/50 transition-all duration-300"

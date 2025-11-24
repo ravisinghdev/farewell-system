@@ -141,7 +141,7 @@ export default function DownloadSection(): JSX.Element {
                 className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 border-0 text-white shadow-lg hover:shadow-cyan-500/50 transition-all duration-300"
                 size="lg"
               >
-                <a href="/auth/signup">
+                <a href="/auth">
                   <Sparkles className="w-5 h-5 mr-2" />
                   Get Started
                 </a>

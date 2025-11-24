@@ -25,7 +25,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth/signin");
+    redirect("/auth");
   }
 
   // Verify membership in this specific farewell
