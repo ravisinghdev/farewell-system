@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasAnyFarewell } from "@/lib/auth/claims";
+import { createClient } from "@supabase/supabase-js";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({
@@ -58,9 +59,55 @@ export async function updateSession(request: NextRequest) {
       // Use the helper from lib/auth/claims.ts
       // This reads from user.app_metadata which is in the JWT
       const hasFarewell = hasAnyFarewell(user);
+      console.log(
+        "Middleware: User",
+        user.id,
+        "Has Farewell Claims:",
+        hasFarewell
+      );
 
       if (!hasFarewell) {
-        return NextResponse.redirect(new URL("/welcome", request.url));
+        // FALLBACK: Check DB directly
+        // We use a Service Role client if available to bypass RLS, ensuring we don't get false negatives
+        let member;
+
+        if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+          const adminSupabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY,
+            {
+              auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false,
+              },
+            }
+          );
+
+          const { data } = await adminSupabase
+            .from("farewell_members")
+            .select("farewell_id")
+            .eq("user_id", user.id)
+            .eq("status", "approved")
+            .maybeSingle();
+          member = data;
+        } else {
+          // Fallback to normal client (subject to RLS)
+          const { data } = await supabase
+            .from("farewell_members")
+            .select("farewell_id")
+            .eq("user_id", user.id)
+            .eq("status", "approved")
+            .maybeSingle();
+          member = data;
+        }
+
+        console.log("Middleware: DB Fallback Member:", member);
+
+        if (!member) {
+          console.log("Middleware: Redirecting to /welcome");
+          return NextResponse.redirect(new URL("/welcome", request.url));
+        }
       }
     }
   }

@@ -12,7 +12,11 @@ const contributionSchema = z.object({
   farewellId: z.string().min(1, "Farewell ID is required"),
 });
 
-export async function createContributionAction(formData: FormData) {
+import { ActionState } from "@/types/custom";
+
+export async function createContributionAction(
+  formData: FormData
+): Promise<ActionState> {
   const supabase = await createClient();
 
   // 1. Auth check

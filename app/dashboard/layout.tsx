@@ -10,13 +10,8 @@ import type { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
 import { getClaims, getFarewellRole } from "@/lib/auth/claims";
 import { AppSidebar } from "@/components/app-sidebar";
-import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SiteHeader } from "@/components/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 // Metadata for dashboard pages
 export const metadata: Metadata = {
@@ -59,28 +54,58 @@ export default async function DashboardLayout({
   };
 
   const claims = getClaims(user);
-  // If id is present, use it. If not, try to get the first one.
-  const farewellId =
-    id || (claims.farewells ? Object.keys(claims.farewells)[0] : "");
+
+  let farewellId = id;
+
+  if (!farewellId) {
+    if (claims.farewells && Object.keys(claims.farewells).length > 0) {
+      farewellId = Object.keys(claims.farewells)[0];
+    } else if (user) {
+      // Fallback: Query DB
+      const { data: member } = await supabase
+        .from("farewell_members")
+        .select("farewell_id")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .limit(1)
+        .maybeSingle();
+
+      if (member) farewellId = member.farewell_id;
+    }
+  }
 
   const role = user
-    ? getFarewellRole(user, farewellId) || "student"
+    ? getFarewellRole(user, farewellId || "") || "student"
     : "student";
+
+  // Fetch farewell details for the sidebar
+  let farewellName = "Farewell System";
+  let farewellYear: string | number = new Date().getFullYear();
+
+  if (farewellId) {
+    const { data: farewell } = await supabase
+      .from("farewells")
+      .select("name, year")
+      .eq("id", farewellId)
+      .single();
+
+    if (farewell) {
+      farewellName = farewell.name;
+      farewellYear = farewell.year;
+    }
+  }
 
   return (
     <SidebarProvider>
-      <AppSidebar user={userData} farewellId={farewellId} role={role} />
+      <AppSidebar
+        user={userData}
+        farewellId={farewellId || ""}
+        farewellName={farewellName}
+        farewellYear={farewellYear}
+        role={role}
+      />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <DashboardBreadcrumb />
-          </div>
-        </header>
+        <SiteHeader user={userData} />
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
       </SidebarInset>
     </SidebarProvider>

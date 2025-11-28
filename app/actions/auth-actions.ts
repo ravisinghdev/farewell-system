@@ -20,9 +20,7 @@ import {
 import { UserRole } from "@/lib/auth/roles";
 import { getPostLoginDestination } from "@/lib/farewell/post-login";
 
-/* ---------------------------------------------------------------------- */
-/* SIGNUP                                                                 */
-/* ---------------------------------------------------------------------- */
+// Sign Up Action
 
 export async function signupAction(form: SignupInput) {
   const parsed = signupSchema.safeParse(form);
@@ -34,7 +32,7 @@ export async function signupAction(form: SignupInput) {
     };
   }
 
-  const { email, username, password } = parsed.data;
+  const { fullName, email, username, password } = parsed.data;
 
   const { ip } = await getClientInfo();
 
@@ -51,12 +49,16 @@ export async function signupAction(form: SignupInput) {
   try {
     const supabase = await createClient();
 
-    const { data, error } = await supabase.auth.signUp({
+    const {
+      data: { user, session },
+      error,
+    } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
         data: {
+          full_name: fullName,
           username,
           role: defaultRole,
         },
@@ -65,7 +67,7 @@ export async function signupAction(form: SignupInput) {
 
     if (error) return { error: error.message };
 
-    if (data.user && !data.session) {
+    if (user && !session) {
       return {
         success: true,
         requiresEmailConfirmation: true,
@@ -79,9 +81,7 @@ export async function signupAction(form: SignupInput) {
   }
 }
 
-/* ---------------------------------------------------------------------- */
-/* LOGIN                                                                  */
-/* ---------------------------------------------------------------------- */
+// Login Action
 
 export async function loginAction(form: LoginInput) {
   const parsed = loginSchema.safeParse(form);
@@ -93,7 +93,7 @@ export async function loginAction(form: LoginInput) {
     };
   }
 
-  const { email, password, rememberMe } = parsed.data;
+  const { email, password } = parsed.data;
   const { ip } = await getClientInfo();
 
   if (rateLimitLogin(ip, email)) {
@@ -113,7 +113,7 @@ export async function loginAction(form: LoginInput) {
 
     if (error) return { error: error.message };
 
-    // If you're enforcing 2FA, call your TOTP check here and return { mfaRequired: true } as before
+    // TODO: MFA required method implantation
 
     const { data: userResp, error: userError } = await supabase.auth.getUser();
     if (userError || !userResp.user) {

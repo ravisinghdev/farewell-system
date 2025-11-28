@@ -14,15 +14,19 @@ export const metadata = {
 
 export default function Page(): JSX.Element {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <Navbar />
-      <main>
-        <Hero />
-        <Features />
-        <DownloadSection />
-        <FAQ />
-      </main>
-      <Footer />
-    </div>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+          <Navbar />
+          <main>
+            <Hero />
+            <Features />
+            <DownloadSection />
+            <FAQ />
+          </main>
+          <Footer />
+        </div>
+      </body>
+    </html>
   );
 }

@@ -33,7 +33,7 @@ export function CreateAlbumDialog({ farewellId }: CreateAlbumDialogProps) {
     startTransition(async () => {
       const result = await createAlbumAction(formData);
       if (result?.error) {
-        toast.error(result.error);
+        toast(result.error);
       } else {
         toast.success("Album created!");
         setOpen(false);

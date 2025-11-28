@@ -1,11 +1,7 @@
-// lib/security/auth-security.ts
-
 import crypto from "crypto";
 import { headers } from "next/headers";
 
-/* ------------------------------------------ */
-/* RATE LIMITING                              */
-/* ------------------------------------------ */
+// Rate Limiting
 
 type BucketKey = string;
 type Bucket = { count: number; windowStart: number };
@@ -41,9 +37,7 @@ export function rateLimitSignup(ip: string) {
   return limit(`signup:${ip}`, SIGNUP_LIMIT);
 }
 
-/* ------------------------------------------ */
-/* EXTRACT IP + AGENT                         */
-/* ------------------------------------------ */
+// Extracting the user IP Address
 
 export async function getClientInfo() {
   const h = await headers();
@@ -58,9 +52,7 @@ export async function getClientInfo() {
   return { ip, userAgent };
 }
 
-/* ------------------------------------------ */
-/* BLOCKLIST                                  */
-/* ------------------------------------------ */
+// Blocklist methods
 
 const BLOCKED_EMAILS = ["test@example.com"];
 const BLOCKED_DOMAINS = ["tempmail.com", "mailinator.com"];
@@ -74,9 +66,7 @@ export function isBlockedEmail(email: string): boolean {
   return BLOCKED_DOMAINS.includes(domain);
 }
 
-/* ------------------------------------------ */
-/* DEVICE FINGERPRINT                         */
-/* ------------------------------------------ */
+// Taking the device fingerprint
 
 export function createDeviceFingerprint(ip: string, agent: string) {
   return crypto.createHash("sha256").update(`${ip}::${agent}`).digest("hex");

@@ -45,7 +45,7 @@ import { USER_ROLES, UserRole } from "@/lib/auth/roles";
  *   });
  *
  *   if (result.error) {
- *     toast.error(result.error);
+ *     toast(result.error);
  *   } else {
  *     toast.success('Role updated successfully');
  *   }

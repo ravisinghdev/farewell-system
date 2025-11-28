@@ -29,10 +29,16 @@ export default function SignInForm() {
     }
 
     startTransition(async () => {
-      const result = await loginAction(form);
-      if (result?.error) {
-        setError(result.error);
-        toast.error(result.error);
+      try {
+        const result = await loginAction(form);
+        if (result?.error) {
+          setError(result.error);
+          toast.error(result.error);
+        }
+      } catch (err) {
+        // If it's a redirect, it might throw, but usually server actions handle it.
+        // If we get here, it's a real error.
+        console.error("Login error:", err);
       }
     });
   }

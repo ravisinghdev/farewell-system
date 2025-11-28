@@ -43,7 +43,7 @@ export function AddContributionDialog({
       const result = await createContributionAction(formData);
 
       if (result?.error) {
-        toast.error(result.error);
+        toast(result.error);
       } else {
         toast.success("Contribution added successfully!");
         setOpen(false);

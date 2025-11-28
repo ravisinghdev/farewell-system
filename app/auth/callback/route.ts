@@ -29,7 +29,8 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      // Redirect to welcome page with verified param
+      return NextResponse.redirect(`${origin}/welcome?verified=true`);
     }
   }
 

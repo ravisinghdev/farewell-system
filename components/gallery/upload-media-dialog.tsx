@@ -38,7 +38,7 @@ export function UploadMediaDialog({
     startTransition(async () => {
       const result = await uploadMediaAction(formData);
       if (result?.error) {
-        toast.error(result.error);
+        toast(result.error);
       } else {
         toast.success("Media uploaded!");
         setOpen(false);

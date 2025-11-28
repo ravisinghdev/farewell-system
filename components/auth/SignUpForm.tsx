@@ -10,7 +10,12 @@ import { signupAction } from "@/app/actions/auth-actions";
 import { toast } from "sonner";
 
 export default function SignUpForm() {
-  const [form, setForm] = useState({ email: "", password: "", username: "" });
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+    username: "",
+    fullName: "",
+  });
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -34,7 +39,7 @@ export default function SignUpForm() {
       const result = await signupAction(form as any);
       if (result?.error) {
         setError(result.error);
-        toast.error(result.error);
+        toast(result.error);
       } else if (result?.success) {
         setSuccess(
           "Account created successfully! Check your email for verification."
@@ -48,6 +53,15 @@ export default function SignUpForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <p className="text-red-600">{error}</p>}
       {success && <p className="text-green-600">{success}</p>}
+
+      <div>
+        <Label>Full Name</Label>
+        <Input
+          value={form.fullName}
+          onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+          required
+        />
+      </div>
 
       <div>
         <Label>Username (optional)</Label>

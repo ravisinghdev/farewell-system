@@ -46,8 +46,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
+import { FarewellHeader } from "@/components/farewell-header";
 import {
   Sidebar,
   SidebarContent,
@@ -73,12 +72,16 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
     id: string;
   };
   farewellId: string;
+  farewellName: string;
+  farewellYear: string | number;
   role: string;
 }
 
 export function AppSidebar({
   user,
   farewellId,
+  farewellName,
+  farewellYear,
   role,
   ...props
 }: AppSidebarProps) {
@@ -155,16 +158,10 @@ export function AppSidebar({
       title: "Connections",
       items: [
         {
-          href: "/dashboard/messages",
-          label: "Farewell Messages",
-          icon: MessageSquare,
-        },
-        {
           href: "/dashboard/memories",
           label: "Photo & Video Gallery",
           icon: Image,
         },
-        { href: "/dashboard/letters", label: "Letters to Seniors", icon: Mail },
         {
           href: "/dashboard/artworks",
           label: "Art & Creative Works",
@@ -196,11 +193,6 @@ export function AppSidebar({
           href: "/dashboard/juniors",
           label: "Junior Contributors",
           icon: User,
-        },
-        {
-          href: "/dashboard/alumni",
-          label: "Alumni Messages",
-          icon: UserCircle,
         },
       ],
     },
@@ -310,11 +302,6 @@ export function AppSidebar({
     {
       title: "Community",
       items: [
-        {
-          href: "/dashboard/feedback",
-          label: "Feedback & Suggestions",
-          icon: MessageSquareHeart,
-        },
         { href: "/dashboard/support", label: "Support Team", icon: LifeBuoy },
         {
           href: "/dashboard/about",
@@ -325,22 +312,47 @@ export function AppSidebar({
     },
   ];
 
-  const teams = [
-    {
-      name: "Farewell System",
-      logo: GalleryVerticalEnd,
-      plan: role,
-    },
-  ];
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={teams} />
+        <FarewellHeader name={farewellName} year={farewellYear} />
       </SidebarHeader>
       <SidebarContent>
-        {/* Chat List Integration */}
-        <SidebarChatList farewellId={farewellId} currentUserId={user.id} />
+        {/* Chat List Integration with Message Links */}
+        <SidebarChatList farewellId={farewellId} currentUserId={user.id}>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Farewell Messages">
+              <Link href={p("/dashboard/messages")}>
+                <MessageSquare />
+                <span>Farewell Messages</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Letters to Seniors">
+              <Link href={p("/dashboard/letters")}>
+                <Mail />
+                <span>Letters to Seniors</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Alumni Messages">
+              <Link href={p("/dashboard/alumni")}>
+                <UserCircle />
+                <span>Alumni Messages</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Feedback & Suggestions">
+              <Link href={p("/dashboard/feedback")}>
+                <MessageSquareHeart />
+                <span>Feedback & Suggestions</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarChatList>
 
         {navGroups.map((group) => (
           <SidebarGroup key={group.title}>
@@ -360,9 +372,7 @@ export function AppSidebar({
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={user} />
-      </SidebarFooter>
+      <SidebarFooter>{/* NavUser moved to Top Navbar */}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

@@ -49,6 +49,17 @@ export default async function MessagesPage({
     activeChannel = allChannels.find((c) => c.id === activeChannelId) || null;
   }
 
+  // Fetch farewell role
+  const { data: farewellMember } = await supabase
+    .from("farewell_members")
+    .select("role")
+    .eq("farewell_id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  const isFarewellAdmin =
+    farewellMember?.role === "admin" || farewellMember?.role === "main_admin";
+
   return (
     <ChatClientWrapper
       channels={channels}
@@ -62,6 +73,7 @@ export default async function MessagesPage({
         full_name: user.user_metadata.full_name,
         avatar_url: user.user_metadata.avatar_url,
       }}
+      isFarewellAdmin={isFarewellAdmin}
     />
   );
 }

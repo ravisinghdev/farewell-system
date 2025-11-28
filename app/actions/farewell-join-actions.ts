@@ -1,25 +1,22 @@
-// app/actions/farewell-join-actions.ts
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { ActionState } from "@/types/custom";
 
-// your existing result type
-interface JoinFarewellResult {
-  status: "joined" | "pending" | "error";
+interface JoinData {
+  status: "joined" | "pending";
   farewellId?: string;
-  message?: string;
 }
 
-// existing core logic (already in your file)
 export async function requestJoinFarewellAction(
   farewellId: string
-): Promise<JoinFarewellResult> {
+): Promise<ActionState<JoinData>> {
   const supabase = await createClient();
 
   // 1. current user
   const { data: userResp, error: userError } = await supabase.auth.getUser();
   if (userError || !userResp?.user) {
-    return { status: "error", message: "Not authenticated" };
+    return { error: "Not authenticated" };
   }
   const user = userResp.user;
 
@@ -32,8 +29,7 @@ export async function requestJoinFarewellAction(
 
   if (existingMember) {
     return {
-      status: "error",
-      message: "You are already part of a farewell.",
+      error: "You are already part of a farewell.",
     };
   }
 
@@ -45,7 +41,7 @@ export async function requestJoinFarewellAction(
     .maybeSingle();
 
   if (farewellError || !farewell) {
-    return { status: "error", message: "Farewell not found." };
+    return { error: "Farewell not found." };
   }
 
   // auto-join
@@ -56,18 +52,29 @@ export async function requestJoinFarewellAction(
         farewell_id: farewell.id,
         user_id: user.id,
         role: "student",
-        active: true,
+        status: "approved", // Changed from active: true to status: 'approved'
       });
 
     if (insertError) {
+      // Handle unique constraint violation (already a member)
+      if (insertError.code === "23505") {
+        return {
+          success: true,
+          data: { status: "joined", farewellId: farewell.id },
+        };
+      }
+
       console.error(
         "requestJoinFarewellAction insert member error:",
         insertError
       );
-      return { status: "error", message: "Failed to join farewell." };
+      return { error: "Failed to join farewell." };
     }
 
-    return { status: "joined", farewellId: farewell.id };
+    return {
+      success: true,
+      data: { status: "joined", farewellId: farewell.id },
+    };
   }
 
   // approval required → create join request
@@ -80,9 +87,9 @@ export async function requestJoinFarewellAction(
 
   if (existingRequest && existingRequest.status === "pending") {
     return {
-      status: "pending",
-      farewellId: farewell.id,
-      message: "Your join request is already pending approval.",
+      success: true,
+      data: { status: "pending", farewellId: farewell.id },
+      error: "Your join request is already pending approval.", // Optional info
     };
   }
 
@@ -96,10 +103,13 @@ export async function requestJoinFarewellAction(
 
   if (reqError) {
     console.error("requestJoinFarewellAction create request error:", reqError);
-    return { status: "error", message: "Failed to submit join request." };
+    return { error: "Failed to submit join request." };
   }
 
-  return { status: "pending", farewellId: farewell.id };
+  return {
+    success: true,
+    data: { status: "pending", farewellId: farewell.id },
+  };
 }
 
 // ✅ Form-compatible server action (void-return, FormData-based)

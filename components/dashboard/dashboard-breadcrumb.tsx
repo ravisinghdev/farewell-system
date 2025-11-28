@@ -25,22 +25,33 @@ export function DashboardBreadcrumb() {
   return (
     <Breadcrumb>
       <BreadcrumbList aria-label="Breadcrumb">
-        <BreadcrumbItem>
+        <BreadcrumbItem className="hidden md:block">
           <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
         </BreadcrumbItem>
 
         {segments.map((seg, idx) => {
+          // Skip if segment looks like a UUID
+          const isUuid =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+              seg
+            );
+          if (isUuid) return null;
+
           const href = "/dashboard/" + segments.slice(0, idx + 1).join("/");
           const isLast = idx === segments.length - 1;
 
           return (
             <React.Fragment key={seg + idx}>
-              <BreadcrumbSeparator />
+              <BreadcrumbSeparator
+                className={idx === 0 ? "hidden md:block" : ""}
+              />
               <BreadcrumbItem>
                 {isLast ? (
                   <BreadcrumbPage>{pretty(seg)}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink href={href}>{pretty(seg)}</BreadcrumbLink>
+                  <BreadcrumbLink href={href} className="hidden md:block">
+                    {pretty(seg)}
+                  </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
             </React.Fragment>

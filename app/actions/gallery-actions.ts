@@ -9,7 +9,11 @@ const createAlbumSchema = z.object({
   farewellId: z.string().min(1, "Farewell ID is required"),
 });
 
-export async function createAlbumAction(formData: FormData) {
+import { ActionState } from "@/types/custom";
+
+export async function createAlbumAction(
+  formData: FormData
+): Promise<ActionState> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -78,7 +82,9 @@ export async function getAlbumMediaAction(albumId: string) {
   return data;
 }
 
-export async function uploadMediaAction(formData: FormData) {
+export async function uploadMediaAction(
+  formData: FormData
+): Promise<ActionState> {
   const supabase = await createClient();
   const {
     data: { user },

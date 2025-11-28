@@ -3,11 +3,7 @@
 import { supabaseAdmin } from "@/utils/supabase/admin"; // service-role client
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-
-interface ApproveResult {
-  success?: boolean;
-  error?: string;
-}
+import { ActionState } from "@/types/custom";
 
 /**
  * We assume only main_admin / parallel_admin (in farewell_members.role)
@@ -15,7 +11,7 @@ interface ApproveResult {
  */
 export async function approveJoinRequestAction(
   requestId: string
-): Promise<ApproveResult> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   // 1. Identify the current user
@@ -68,7 +64,7 @@ export async function approveJoinRequestAction(
       farewell_id: request.farewell_id,
       user_id: request.user_id,
       role: "student",
-      active: true,
+      status: "approved", // Changed from active: true to status: 'approved'
     });
 
   if (memberInsertError) {
@@ -96,7 +92,7 @@ export async function approveJoinRequestAction(
 
 export async function rejectJoinRequestAction(
   requestId: string
-): Promise<ApproveResult> {
+): Promise<ActionState> {
   const supabase = await createClient();
 
   const { data: currentUserResp, error: userError } =
@@ -165,24 +161,38 @@ export async function createFarewellAction(formData: FormData): Promise<void> {
 
   const userId = userResp.user.id;
 
-  const { data: adminRow } = await supabase
-    .from("farewell_members")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle();
+  // 1. Create Farewell
+  const { data: farewell, error: createError } = await supabase
+    .from("farewells")
+    .insert({
+      name,
+      section,
+      year,
+      created_by: userId,
+      requires_approval: requiresApproval,
+    })
+    .select()
+    .single();
 
-  if (!adminRow || !["main_admin", "parallel_admin"].includes(adminRow.role)) {
-    console.log("Not authorized");
-    return; // no return object allowed
+  if (createError) {
+    console.error("Failed to create farewell:", createError);
+    return;
   }
 
-  await supabaseAdmin.from("farewells").insert({
-    name,
-    section,
-    year,
-    created_by: userId,
-    requires_approval: requiresApproval,
-  });
+  // 2. Add Creator as Admin
+  const { error: memberError } = await supabase
+    .from("farewell_members")
+    .insert({
+      farewell_id: farewell.id,
+      user_id: userId,
+      role: "admin",
+      status: "approved",
+    });
 
-  redirect("/dashboard/admin/farewells"); // ✔ correct pattern
+  if (memberError) {
+    console.error("Failed to add creator as admin:", memberError);
+    // Should probably delete the farewell or retry
+  }
+
+  redirect("/dashboard");
 }

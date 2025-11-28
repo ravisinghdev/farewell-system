@@ -15,7 +15,9 @@ import { Loader2, Search, UserPlus, MessageSquarePlus } from "lucide-react";
 import { searchUsersAction, createDMAction } from "@/app/actions/chat-actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
+
+import { SearchResult } from "@/types/custom";
 
 interface UserSearchDialogProps {
   farewellId: string;
@@ -28,7 +30,7 @@ export function UserSearchDialog({
 }: UserSearchDialogProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, startSearch] = useTransition();
   const [isCreating, startCreate] = useTransition();
   const router = useRouter();
@@ -38,7 +40,7 @@ export function UserSearchDialog({
     setQuery(val);
     if (val.length > 1) {
       startSearch(async () => {
-        const users = await searchUsersAction(val); // Global search
+        const users = await searchUsersAction(val, farewellId); // Global search
         setResults(users);
       });
     } else {
@@ -46,21 +48,7 @@ export function UserSearchDialog({
     }
   };
 
-  const handleStartDM = (userId: string) => {
-    startCreate(async () => {
-      const result = await createDMAction(userId, farewellId);
-      if (result?.error) {
-        toast.error(result.error);
-      } else if (result?.channelId) {
-        setOpen(false);
-        router.refresh();
-        router.push(
-          `/dashboard/${farewellId}/messages?channel=${result.channelId}`
-        );
-        toast.success("Chat started!");
-      }
-    });
-  };
+  // handleStartDM moved to inner function or used from props
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -105,40 +93,12 @@ export function UserSearchDialog({
             ) : results.length > 0 ? (
               <div className="grid gap-2">
                 {results.map((user) => (
-                  <div
+                  <UserItem
                     key={user.id}
-                    className="flex items-center justify-between p-3 hover:bg-muted/50 rounded-xl transition-colors group border border-transparent hover:border-border/50"
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                        <AvatarImage src={user.avatar_url} />
-                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
-                          {user.full_name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
-                          {user.full_name}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={isCreating}
-                      onClick={() => handleStartDM(user.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 w-8 p-0"
-                    >
-                      {isCreating ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <UserPlus className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
+                    user={user}
+                    isCreating={isCreating}
+                    onStartDM={() => handleStartDM(user.id)}
+                  />
                 ))}
               </div>
             ) : query.length > 1 ? (
@@ -160,5 +120,66 @@ export function UserSearchDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+
+  function handleStartDM(userId: string) {
+    startCreate(async () => {
+      const result = await createDMAction(userId, farewellId);
+      if ("error" in result && result.error) {
+        toast(result.error);
+      } else if ("channelId" in result && result.channelId) {
+        setOpen(false);
+        router.refresh();
+        router.push(
+          `/dashboard/${farewellId}/messages?channel=${result.channelId}`
+        );
+        toast.success("Request sent!");
+      }
+    });
+  }
+}
+
+function UserItem({
+  user,
+  isCreating,
+  onStartDM,
+}: {
+  user: SearchResult;
+  isCreating: boolean;
+  onStartDM: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between p-3 hover:bg-muted/50 rounded-xl transition-colors group border border-transparent hover:border-border/50">
+      <div className="flex items-center gap-3 overflow-hidden">
+        <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+          <AvatarImage src={user.avatar_url || ""} />
+          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
+            {user.full_name?.[0]}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+            {user.full_name}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+        </div>
+      </div>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => onStartDM()}
+        disabled={isCreating}
+        className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 px-3"
+      >
+        {isCreating ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (
+          <>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Request
+          </>
+        )}
+      </Button>
+    </div>
   );
 }
