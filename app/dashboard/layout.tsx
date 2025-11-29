@@ -104,9 +104,11 @@ export default async function DashboardLayout({
         farewellYear={farewellYear}
         role={role}
       />
-      <SidebarInset>
+      <SidebarInset className="bg-gradient-to-br from-slate-950 via-violet-950/20 to-slate-950 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         <SiteHeader user={userData} />
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 bg-transparent">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

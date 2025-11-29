@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { ActionState } from "@/types/custom";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { z } from "zod";
 
 // --- TYPES ---
 
@@ -42,6 +43,31 @@ export interface ChatChannel {
   } | null;
 }
 
+// --- SCHEMAS ---
+
+const createChannelSchema = z.object({
+  name: z.string().min(1).max(50),
+  farewellId: z.string().uuid(),
+  type: z.enum(["group", "farewell"]),
+});
+
+const createDMSchema = z.object({
+  targetUserId: z.string().uuid(),
+  farewellId: z.string().uuid(),
+  initialMessage: z.string().max(5000).optional(),
+});
+
+const editMessageSchema = z.object({
+  messageId: z.string().uuid(),
+  newContent: z.string().min(1).max(5000),
+  farewellId: z.string().uuid(),
+});
+
+const addReactionSchema = z.object({
+  messageId: z.string().uuid(),
+  reaction: z.string().min(1).max(10),
+});
+
 // --- INTERNAL HELPERS ---
 
 function standardError(message: string, error?: unknown): ActionState {
@@ -73,94 +99,6 @@ export async function getChannelsAction(
 ) {
   const { supabase, user } = await getSupabaseContext();
   if (!user) return [];
-
-  // 0. Ensure "General" channel exists for this farewell (Farewell Chat)
-  if (type === "primary") {
-    const { data: generalChannel, error: generalFetchError } = await supabase
-      .from("chat_channels")
-      .select("id")
-      .eq("scope_id", farewellId)
-      .eq("type", "farewell") // Use 'farewell' type for main channel
-      .eq("is_deleted", false)
-      .single();
-
-    if (generalFetchError && generalFetchError.code !== "PGRST116") {
-      console.error("Error fetching General channel:", generalFetchError);
-    }
-
-    let generalId = generalChannel?.id;
-
-    if (!generalId && user.user_metadata?.role === "main_admin") {
-      // Create General Channel
-      console.log("Creating General channel for farewell:", farewellId);
-      const supabaseAdmin = createAdminClient();
-      const { data: newGeneral, error: genError } = await supabaseAdmin
-        .from("chat_channels")
-        .insert({
-          scope_id: farewellId,
-          name: "General",
-          type: "farewell",
-          is_deleted: false,
-        })
-        .select()
-        .single();
-
-      if (genError) {
-        console.error("Error creating General channel:", genError);
-      } else if (newGeneral) {
-        generalId = newGeneral.id;
-      }
-    } else if (!generalId) {
-      // Fallback: Try to find ANY channel for this farewell if General is missing
-      const { data: anyChannel } = await supabase
-        .from("chat_channels")
-        .select("id")
-        .eq("scope_id", farewellId)
-        .eq("is_deleted", false)
-        .limit(1)
-        .single();
-
-      if (anyChannel) generalId = anyChannel.id;
-    }
-
-    // Ensure User is Member of General
-    if (generalId) {
-      const { data: isMember, error: memberError } = await supabase
-        .from("chat_members")
-        .select("channel_id")
-        .eq("channel_id", generalId)
-        .eq("user_id", user.id)
-        .single();
-
-      if (memberError && memberError.code !== "PGRST116") {
-        console.error("Error checking General membership:", memberError);
-      }
-
-      if (!isMember) {
-        console.log("Adding user to General channel...");
-        const supabaseAdmin = createAdminClient();
-        const { error: joinError } = await supabaseAdmin
-          .from("chat_members")
-          .insert({
-            channel_id: generalId,
-            user_id: user.id,
-            status: "active",
-            is_pinned: false,
-            is_muted: false,
-          });
-
-        if (joinError) {
-          if (joinError.code === "23505") {
-            console.log(
-              "User already member of General (race condition handled)"
-            );
-          } else {
-            console.error("Error joining General channel:", joinError);
-          }
-        }
-      }
-    }
-  }
 
   const statusFilter = type === "primary" ? "active" : "pending";
 
@@ -277,13 +215,28 @@ export async function getChannelDetailsAction(channelId: string) {
   const { supabase, user } = await getSupabaseContext();
   if (!user) return null;
 
-  // 1. Get Membership
-  const { data: membership, error: memError } = await supabase
-    .from("chat_members")
-    .select("is_pinned, is_muted, status")
-    .eq("channel_id", channelId)
-    .eq("user_id", user.id)
-    .single();
+  const [membershipResult, channelResult] = await Promise.all([
+    supabase
+      .from("chat_members")
+      .select("is_pinned, is_muted, status")
+      .eq("channel_id", channelId)
+      .eq("user_id", user.id)
+      .single(),
+    supabase
+      .from("chat_channels")
+      .select(
+        `
+      *,
+      members:chat_members(user_id, last_read_at, user:users(full_name, avatar_url))
+    `
+      )
+      .eq("id", channelId)
+      .eq("is_deleted", false)
+      .single(),
+  ]);
+
+  const { data: membership, error: memError } = membershipResult;
+  const { data: channel, error: chanError } = channelResult;
 
   if (memError) {
     console.error("Error fetching membership:", memError);
@@ -291,19 +244,6 @@ export async function getChannelDetailsAction(channelId: string) {
   }
 
   if (!membership) return null;
-
-  // 2. Get Channel
-  const { data: channel, error: chanError } = await supabase
-    .from("chat_channels")
-    .select(
-      `
-      *,
-      members:chat_members(user_id, last_read_at, user:users(full_name, avatar_url))
-    `
-    )
-    .eq("id", channelId)
-    .eq("is_deleted", false)
-    .single();
 
   if (chanError) {
     console.error("Error fetching channel:", chanError);
@@ -346,11 +286,16 @@ export async function createDMAction(
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
-  // 1. Check if DM already exists
-  // Logic: Find a 'dm' channel where both users are members
-  // This is complex in pure Supabase query, often easier with RPC or two steps
-  // For now, we'll try a simplified approach:
-  // Find all DM channels I am in, then check if target is in them.
+  const parseResult = createDMSchema.safeParse({
+    targetUserId,
+    farewellId,
+    initialMessage,
+  });
+  if (!parseResult.success) {
+    return standardError(
+      "Invalid input: " + parseResult.error.issues[0].message
+    );
+  }
 
   const { data: myDMs } = await supabase
     .from("chat_members")
@@ -368,7 +313,6 @@ export async function createDMAction(
       .single();
 
     if (existingDM) {
-      // Check if it's actually a DM type
       const { data: channelType } = await supabase
         .from("chat_channels")
         .select("type")
@@ -381,13 +325,12 @@ export async function createDMAction(
     }
   }
 
-  // 2. Create new DM Channel
   const supabaseAdmin = createAdminClient();
   const { data: newChannel, error: createError } = await supabaseAdmin
     .from("chat_channels")
     .insert({
       type: "dm",
-      scope_id: null, // DMs are global or null scope
+      scope_id: null,
       is_deleted: false,
     })
     .select()
@@ -397,7 +340,6 @@ export async function createDMAction(
     return standardError("Failed to create chat", createError);
   }
 
-  // 3. Add Members (Sender & Target)
   const { error: memberError } = await supabaseAdmin
     .from("chat_members")
     .insert([
@@ -409,7 +351,7 @@ export async function createDMAction(
       {
         channel_id: newChannel.id,
         user_id: targetUserId,
-        status: "pending", // DM request
+        status: "pending",
       },
     ]);
 
@@ -417,7 +359,6 @@ export async function createDMAction(
     console.error("Failed to add members to DM:", memberError);
   }
 
-  // 4. Send Initial Message if provided
   if (initialMessage) {
     const { error: msgError } = await supabaseAdmin
       .from("chat_messages")
@@ -429,7 +370,6 @@ export async function createDMAction(
 
     if (msgError) {
       console.error("Failed to send initial message:", msgError);
-      // Don't fail the whole action, just log it
     }
   }
 
@@ -506,7 +446,7 @@ export async function restrictUserAction(
 
   const { error } = await supabase
     .from("chat_members")
-    .update({ status: "muted" }) // Changed from is_muted: true to status: 'muted'
+    .update({ status: "muted" })
     .eq("channel_id", channelId)
     .eq("user_id", user.id);
 
@@ -516,7 +456,6 @@ export async function restrictUserAction(
   return { success: true };
 }
 
-// Soft delete a channel (non-breaking: just hide everywhere using is_deleted)
 export async function deleteChannelAction(
   channelId: string,
   farewellId: string
@@ -544,6 +483,13 @@ export async function createChannelAction(
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
+  const parseResult = createChannelSchema.safeParse({ name, farewellId, type });
+  if (!parseResult.success) {
+    return standardError(
+      "Invalid input: " + parseResult.error.issues[0].message
+    );
+  }
+
   const supabaseAdmin = createAdminClient();
 
   const { data: newChannel, error } = await supabaseAdmin
@@ -553,14 +499,13 @@ export async function createChannelAction(
       name: name,
       type: type,
       is_deleted: false,
-      status: "pending", // New groups require approval
+      status: "pending",
     })
     .select()
     .single();
 
   if (error) return standardError("Failed to create channel", error);
 
-  // Add creator as admin member (using admin client to ensure it works)
   const { error: memberError } = await supabaseAdmin
     .from("chat_members")
     .insert({
@@ -582,11 +527,15 @@ export async function createChannelAction(
 
 // --- MESSAGES (Edit/Delete/Fetch) ---
 
-export async function getMessagesAction(channelId: string) {
+export async function getMessagesAction(
+  channelId: string,
+  limit: number = 50,
+  before?: string
+) {
   const { supabase, user } = await getSupabaseContext();
   if (!user) return [];
 
-  const { data: messages, error } = await supabase
+  let query = supabase
     .from("chat_messages")
     .select(
       `
@@ -595,14 +544,28 @@ export async function getMessagesAction(channelId: string) {
     `
     )
     .eq("channel_id", channelId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (before) {
+    query = query.lt("created_at", before);
+  }
+
+  const { data: messages, error } = await query;
 
   if (error) {
     console.error("Error fetching messages:", error);
     return [];
   }
-  return messages ?? [];
+
+  return messages ? messages.reverse() : [];
 }
+
+const sendMessageSchema = z.object({
+  content: z.string().max(5000).optional(),
+  channelId: z.string().uuid(),
+  replyToId: z.string().uuid().optional().nullable(),
+});
 
 export async function sendMessageAction(formData: FormData) {
   const { supabase, user } = await getSupabaseContext();
@@ -613,6 +576,18 @@ export async function sendMessageAction(formData: FormData) {
   const file = formData.get("file") as File | null;
   const replyToId = formData.get("replyToId") as string | null;
 
+  const parseResult = sendMessageSchema.safeParse({
+    content,
+    channelId,
+    replyToId: replyToId || undefined,
+  });
+
+  if (!parseResult.success) {
+    return standardError(
+      "Invalid input: " + parseResult.error.issues[0].message
+    );
+  }
+
   if ((!content && !file) || !channelId) {
     return standardError("Missing content or channel");
   }
@@ -621,6 +596,10 @@ export async function sendMessageAction(formData: FormData) {
   let messageType = "text";
 
   if (file) {
+    if (file.size > 50 * 1024 * 1024) {
+      return standardError("File too large (max 50MB)");
+    }
+
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}-${Math.random()
       .toString(36)
@@ -644,7 +623,6 @@ export async function sendMessageAction(formData: FormData) {
     messageType = file.type.startsWith("image/") ? "image" : "file";
   }
 
-  // Optional: rate limiting via RPC (see SQL section)
   try {
     const { data: canSend, error: rateError } = await supabase.rpc(
       "can_send_message",
@@ -653,7 +631,6 @@ export async function sendMessageAction(formData: FormData) {
 
     if (rateError) {
       // console.error("Rate limit check error:", rateError);
-      // Fail open (do not block message) if rate check fails or RPC missing
     } else if (canSend === false) {
       return standardError(
         "You are sending messages too quickly. Please wait a moment."
@@ -685,6 +662,17 @@ export async function editMessageAction(
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
+  const parseResult = editMessageSchema.safeParse({
+    messageId,
+    newContent,
+    farewellId,
+  });
+  if (!parseResult.success) {
+    return standardError(
+      "Invalid input: " + parseResult.error.issues[0].message
+    );
+  }
+
   const { error } = await supabase
     .from("chat_messages")
     .update({
@@ -692,7 +680,7 @@ export async function editMessageAction(
       edited_at: new Date().toISOString(),
     })
     .eq("id", messageId)
-    .eq("user_id", user.id); // Only own messages
+    .eq("user_id", user.id);
 
   if (error) return standardError("Failed to edit message", error);
   return { success: true };
@@ -709,7 +697,7 @@ export async function deleteMessageAction(
     .from("chat_messages")
     .update({
       is_deleted: true,
-      content: null, // Clear content for privacy
+      content: null,
     })
     .eq("id", messageId)
     .eq("user_id", user.id);
@@ -722,7 +710,7 @@ export async function deleteMessageAction(
 
 export async function markMessageSeenAction(
   channelId: string,
-  messageId: string // kept for compatibility, but we update channel-level read status
+  messageId: string
 ) {
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
@@ -737,43 +725,29 @@ export async function markMessageSeenAction(
   return { success: true };
 }
 
-export async function sendTypingAction(channelId: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return;
-
-  const { error } = await supabase.from("typing_state").upsert({
-    user_id: user.id,
-    channel_id: channelId,
-    last_typed_at: new Date().toISOString(),
-  });
-
-  if (error) {
-    console.error("Failed to update typing state:", error);
-  }
-}
-
 // --- REACTIONS (Optional, Non-breaking) ---
 
 export async function addReactionAction(messageId: string, reaction: string) {
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
-  const trimmed = reaction.trim();
-  if (!trimmed) return standardError("Reaction cannot be empty");
+  const parseResult = addReactionSchema.safeParse({ messageId, reaction });
+  if (!parseResult.success) {
+    return standardError(
+      "Invalid input: " + parseResult.error.issues[0].message
+    );
+  }
 
-  // 1. Delete ANY existing reaction by this user on this message
-  // This enforces "one user can only give only one reaction"
   await supabase
     .from("chat_reactions")
     .delete()
     .eq("message_id", messageId)
     .eq("user_id", user.id);
 
-  // 2. Insert the new reaction
   const { error } = await supabase.from("chat_reactions").insert({
     message_id: messageId,
     user_id: user.id,
-    reaction: trimmed, // Ensure column is 'reaction' (after SQL fix)
+    reaction: reaction.trim(),
   });
 
   if (error) return standardError("Failed to add reaction", error);
@@ -825,14 +799,10 @@ export async function unblockUserAction(targetUserId: string) {
 
 export async function searchUsersAction(query: string, farewellId: string) {
   const { supabase } = await getSupabaseContext();
-  // Simple search by name in farewell_members -> users
-  // This requires a join or a view.
-  // For simplicity, let's assume we can search users directly if they are in the farewell
-  // Or better, search farewell_members and join users.
 
   const { data, error } = await supabase
     .from("farewell_members")
-    .select("user:users(id, full_name, avatar_url)")
+    .select("user:users(id, full_name, avatar_url, email, username)")
     .eq("farewell_id", farewellId)
     .ilike("user.full_name", `%${query}%`)
     .limit(10);
@@ -842,7 +812,6 @@ export async function searchUsersAction(query: string, farewellId: string) {
     return [];
   }
 
-  // Flatten structure
   return data.map((d: any) => d.user).filter(Boolean);
 }
 
@@ -879,9 +848,6 @@ export async function addMemberToChannelAction(
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
-  // Check if user is admin of the farewell or creator of the channel (if we track that)
-  // For now, we'll allow any member to add others for simplicity, or restrict to main_admin/admin
-  // Ideally, check if current user is admin of the farewell context
   const { data: member } = await supabase
     .from("farewell_members")
     .select("role")
@@ -892,7 +858,6 @@ export async function addMemberToChannelAction(
   let isAdmin = member?.role === "admin" || member?.role === "main_admin";
 
   if (!isAdmin) {
-    // Check if it's a custom group and user is a member
     const { data: channel } = await supabase
       .from("chat_channels")
       .select("type")
@@ -920,7 +885,7 @@ export async function addMemberToChannelAction(
   const { error } = await supabase.from("chat_members").insert({
     channel_id: channelId,
     user_id: targetUserId,
-    status: "pending", // Invite system: user must accept
+    status: "pending",
     role: "member",
   });
 
@@ -942,7 +907,6 @@ export async function removeMemberFromChannelAction(
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
-  // Check if user is Farewell Admin OR Group Admin
   const { data: farewellMember } = await supabase
     .from("farewell_members")
     .select("role")
@@ -1008,7 +972,6 @@ export async function promoteMemberAction(
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
-  // Verify requester is admin
   const { data: requester } = await supabase
     .from("chat_members")
     .select("role")
@@ -1040,7 +1003,6 @@ export async function demoteMemberAction(
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
-  // Verify requester is admin
   const { data: requester } = await supabase
     .from("chat_members")
     .select("role")
@@ -1068,7 +1030,6 @@ export async function getPendingChannelsAction(farewellId: string) {
   const { supabase, user } = await getSupabaseContext();
   if (!user) return [];
 
-  // Check if user is Farewell Admin
   const { data: member } = await supabase
     .from("farewell_members")
     .select("role")
@@ -1077,7 +1038,9 @@ export async function getPendingChannelsAction(farewellId: string) {
     .single();
 
   const isFarewellAdmin =
-    member?.role === "admin" || member?.role === "main_admin";
+    member?.role === "admin" ||
+    member?.role === "main_admin" ||
+    member?.role === "parallel_admin";
 
   if (!isFarewellAdmin) return [];
 
@@ -1104,7 +1067,6 @@ export async function approveChannelAction(
   const { supabase, user } = await getSupabaseContext();
   if (!user) return standardError("Not authenticated");
 
-  // Check if user is Farewell Admin
   const { data: member } = await supabase
     .from("farewell_members")
     .select("role")
@@ -1113,7 +1075,9 @@ export async function approveChannelAction(
     .single();
 
   const isFarewellAdmin =
-    member?.role === "admin" || member?.role === "main_admin";
+    member?.role === "admin" ||
+    member?.role === "main_admin" ||
+    member?.role === "parallel_admin";
 
   if (!isFarewellAdmin) {
     return standardError("Only admins can approve groups");
@@ -1128,4 +1092,157 @@ export async function approveChannelAction(
 
   revalidatePath(`/dashboard/${farewellId}/messages`);
   return { success: true };
+}
+
+// --- COMPLAINTS & ADMIN REQUESTS ---
+
+export async function raiseComplaintAction(
+  farewellId: string,
+  reason: string = "Not added to default group",
+  type: "default_group" | "custom" = "default_group"
+) {
+  const { supabase, user } = await getSupabaseContext();
+  if (!user) return standardError("Not authenticated");
+
+  const { data: existing } = await supabase
+    .from("chat_complaints")
+    .select("id")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", user.id)
+    .eq("status", "pending")
+    .single();
+
+  if (existing) {
+    return standardError("You already have a pending complaint.");
+  }
+
+  const { error } = await supabase.from("chat_complaints").insert({
+    farewell_id: farewellId,
+    user_id: user.id,
+    status: "pending",
+    type: type,
+    reason: reason,
+  });
+
+  if (error) return standardError("Failed to raise complaint", error);
+  return { success: true };
+}
+
+export async function resolveComplaintAction(
+  complaintId: string,
+  action: "resolve" | "reject",
+  farewellId: string
+) {
+  const { supabase, user } = await getSupabaseContext();
+  if (!user) return standardError("Not authenticated");
+
+  const { data: adminMember } = await supabase
+    .from("farewell_members")
+    .select("role")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (
+    !adminMember ||
+    (adminMember.role !== "admin" &&
+      adminMember.role !== "main_admin" &&
+      adminMember.role !== "parallel_admin")
+  ) {
+    return standardError("Unauthorized");
+  }
+
+  const supabaseAdmin = createAdminClient();
+
+  if (action === "resolve") {
+    const { data: complaint } = await supabaseAdmin
+      .from("chat_complaints")
+      .select("user_id")
+      .eq("id", complaintId)
+      .single();
+
+    if (!complaint) return standardError("Complaint not found");
+
+    const { data: generalChannel } = await supabaseAdmin
+      .from("chat_channels")
+      .select("id")
+      .eq("scope_id", farewellId)
+      .eq("type", "farewell")
+      .single();
+
+    if (generalChannel) {
+      await supabaseAdmin.from("chat_members").upsert({
+        channel_id: generalChannel.id,
+        user_id: complaint.user_id,
+        status: "active",
+      });
+    }
+
+    await supabaseAdmin
+      .from("chat_complaints")
+      .update({ status: "resolved" })
+      .eq("id", complaintId);
+  } else {
+    await supabaseAdmin
+      .from("chat_complaints")
+      .update({ status: "rejected" })
+      .eq("id", complaintId);
+  }
+
+  revalidatePath(`/dashboard/${farewellId}/messages`);
+  return { success: true };
+}
+
+export async function getAdminChatRequestsAction(farewellId: string) {
+  const { supabase, user } = await getSupabaseContext();
+  if (!user) return { complaints: [], groupRequests: [] };
+
+  const { data: adminMember } = await supabase
+    .from("farewell_members")
+    .select("role")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (
+    !adminMember ||
+    (adminMember.role !== "admin" &&
+      adminMember.role !== "main_admin" &&
+      adminMember.role !== "parallel_admin")
+  ) {
+    return { complaints: [], groupRequests: [] };
+  }
+
+  const supabaseAdmin = createAdminClient();
+
+  const { data: complaints } = await supabaseAdmin
+    .from("chat_complaints")
+    .select("*, user:users(full_name, avatar_url)")
+    .eq("farewell_id", farewellId)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  const { data: groupRequests } = await supabaseAdmin
+    .from("chat_channels")
+    .select("*, members:chat_members(user:users(full_name))")
+    .eq("scope_id", farewellId)
+    .eq("status", "pending")
+    .eq("is_deleted", false);
+
+  const enrichedGroupRequests = await Promise.all(
+    (groupRequests || []).map(async (g) => {
+      const { data: ownerMember } = await supabaseAdmin
+        .from("chat_members")
+        .select("user:users(full_name, avatar_url)")
+        .eq("channel_id", g.id)
+        .eq("role", "owner")
+        .single();
+      return { ...g, creator: ownerMember?.user };
+    })
+  );
+
+  return {
+    complaints: complaints || [],
+    groupRequests: enrichedGroupRequests || [],
+  };
 }

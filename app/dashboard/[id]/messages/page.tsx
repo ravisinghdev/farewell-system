@@ -58,7 +58,9 @@ export default async function MessagesPage({
     .single();
 
   const isFarewellAdmin =
-    farewellMember?.role === "admin" || farewellMember?.role === "main_admin";
+    farewellMember?.role === "admin" ||
+    farewellMember?.role === "main_admin" ||
+    farewellMember?.role === "parallel_admin";
 
   return (
     <ChatClientWrapper

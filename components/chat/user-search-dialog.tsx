@@ -32,7 +32,7 @@ export function UserSearchDialog({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, startSearch] = useTransition();
-  const [isCreating, startCreate] = useTransition();
+
   const router = useRouter();
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,7 +96,6 @@ export function UserSearchDialog({
                   <UserItem
                     key={user.id}
                     user={user}
-                    isCreating={isCreating}
                     onStartDM={() => handleStartDM(user.id)}
                   />
                 ))}
@@ -122,32 +121,30 @@ export function UserSearchDialog({
     </Dialog>
   );
 
-  function handleStartDM(userId: string) {
-    startCreate(async () => {
-      const result = await createDMAction(userId, farewellId);
-      if ("error" in result && result.error) {
-        toast(result.error);
-      } else if ("channelId" in result && result.channelId) {
-        setOpen(false);
-        router.refresh();
-        router.push(
-          `/dashboard/${farewellId}/messages?channel=${result.channelId}`
-        );
-        toast.success("Request sent!");
-      }
-    });
+  async function handleStartDM(userId: string) {
+    const result = await createDMAction(userId, farewellId);
+    if ("error" in result && result.error) {
+      toast(result.error);
+    } else if ("channelId" in result && result.channelId) {
+      setOpen(false);
+      router.refresh();
+      router.push(
+        `/dashboard/${farewellId}/messages?channel=${result.channelId}`
+      );
+      toast.success("Request sent!");
+    }
   }
 }
 
 function UserItem({
   user,
-  isCreating,
   onStartDM,
 }: {
   user: SearchResult;
-  isCreating: boolean;
-  onStartDM: () => void;
+  onStartDM: () => Promise<void>;
 }) {
+  const [isCreating, startCreate] = useTransition();
+
   return (
     <div className="flex items-center justify-between p-3 hover:bg-muted/50 rounded-xl transition-colors group border border-transparent hover:border-border/50">
       <div className="flex items-center gap-3 overflow-hidden">
@@ -161,15 +158,21 @@ function UserItem({
           <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
             {user.full_name}
           </p>
-          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          <p className="text-xs text-muted-foreground truncate font-mono">
+            {user.username ? `@${user.username}` : user.email}
+          </p>
         </div>
       </div>
       <Button
         size="sm"
         variant="secondary"
-        onClick={() => onStartDM()}
+        onClick={() => {
+          startCreate(async () => {
+            await onStartDM();
+          });
+        }}
         disabled={isCreating}
-        className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 px-3"
+        className="transition-opacity rounded-full h-8 px-3"
       >
         {isCreating ? (
           <Loader2 className="h-3 w-3 animate-spin" />

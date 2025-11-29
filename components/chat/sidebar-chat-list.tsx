@@ -112,28 +112,43 @@ export function SidebarChatList({
 
             // Status Change (e.g. Accepted Request)
             if (updatedMember.status === "active") {
-              // Check if it was in requests
+              let foundId: string | null = null;
+
+              // 1. Remove from requests if present
               setRequests((prev) => {
                 const found = prev.find(
                   (c) => c.id === updatedMember.channel_id
                 );
                 if (found) {
-                  // Move to channels
-                  getChannelDetailsAction(updatedMember.channel_id).then(
-                    (details) => {
-                      if (details) {
-                        setChannels((curr) => {
-                          if (curr.some((c) => c.id === details.id))
-                            return curr;
-                          return [details, ...curr];
-                        });
-                      }
-                    }
-                  );
+                  foundId = found.id;
                   return prev.filter((c) => c.id !== updatedMember.channel_id);
                 }
                 return prev;
               });
+
+              // 2. If it was in requests, fetch details and add to channels
+              // We use a small timeout or just run it, but since setRequests is async in effect,
+              // we can just run this. However, to be safe and ensure we don't race,
+              // we can just fetch.
+              // Actually, since we are in an event handler (subscription callback),
+              // we can just fetch.
+
+              // Wait, we can't know 'foundId' from inside the setter immediately if we want to use it outside.
+              // But we can check the current 'requests' state if we include it in dependency?
+              // No, that would re-subscribe.
+
+              // Better approach: Fetch details regardless. If it's active, it should be in channels.
+              // If it was in requests, we remove it.
+
+              const details = await getChannelDetailsAction(
+                updatedMember.channel_id
+              );
+              if (details) {
+                setChannels((curr) => {
+                  if (curr.some((c) => c.id === details.id)) return curr;
+                  return [details, ...curr];
+                });
+              }
             }
 
             // Update pin/mute in both lists

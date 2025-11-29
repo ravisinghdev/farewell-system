@@ -23,8 +23,10 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-
+import { AdminRequestPanel } from "./admin-request-panel";
+import { ComplaintDialog } from "./complaint-dialog";
 import { User } from "@/types/custom";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ChatSidebarProps {
   channels: ChatChannel[];
@@ -45,16 +47,17 @@ export function ChatSidebar({
   currentUser,
   isFarewellAdmin,
 }: ChatSidebarProps) {
+  // ... state ...
   const [channels, setChannels] = useState<ChatChannel[]>(initialChannels);
   const [requests, setRequests] = useState<ChatChannel[]>(initialRequests);
   const [pendingGroups, setPendingGroups] = useState<ChatChannel[]>([]);
 
+  // ... effects ... (keep existing effects)
   useEffect(() => {
     setChannels(initialChannels);
     setRequests(initialRequests);
   }, [initialChannels, initialRequests]);
 
-  // Fetch pending groups if admin
   useEffect(() => {
     if (isFarewellAdmin) {
       import("@/app/actions/chat-actions").then(
@@ -66,8 +69,6 @@ export function ChatSidebar({
     }
   }, [isFarewellAdmin, farewellId]);
 
-  // Realtime Subscription
-  // Realtime Subscription
   useEffect(() => {
     const channel = supabaseClient
       .channel(`user_sidebar:${currentUser.id}`)
@@ -79,12 +80,70 @@ export function ChatSidebar({
           table: "chat_members",
           filter: `user_id=eq.${currentUser.id}`,
         },
-        async () => {
-          // Refresh channels on any membership change
-          const freshChannels = await getChannelsAction(farewellId, "primary");
-          const freshRequests = await getChannelsAction(farewellId, "requests");
-          setChannels(freshChannels);
-          setRequests(freshRequests);
+        async (payload) => {
+          // ... existing logic ...
+          if (payload.eventType === "INSERT") {
+            const newMember = payload.new;
+            const details = await getChannelDetailsAction(newMember.channel_id);
+
+            if (details) {
+              if (details.status === "active") {
+                setChannels((prev) => {
+                  if (prev.some((c) => c.id === details.id)) return prev;
+                  return [details, ...prev];
+                });
+              } else if (details.status === "pending") {
+                setRequests((prev) => {
+                  if (prev.some((c) => c.id === details.id)) return prev;
+                  return [details, ...prev];
+                });
+              }
+            }
+          } else if (payload.eventType === "UPDATE") {
+            const updatedMember = payload.new;
+            if (updatedMember.status === "active") {
+              setRequests((prev) =>
+                prev.filter((c) => c.id !== updatedMember.channel_id)
+              );
+              const details = await getChannelDetailsAction(
+                updatedMember.channel_id
+              );
+              if (details) {
+                setChannels((prev) => {
+                  if (prev.some((c) => c.id === details.id)) return prev;
+                  return [details, ...prev];
+                });
+              }
+            } else if (updatedMember.status === "muted") {
+              const updateList = (list: ChatChannel[]) =>
+                list.map((c) =>
+                  c.id === updatedMember.channel_id
+                    ? { ...c, is_muted: true }
+                    : c
+                );
+              setChannels(updateList);
+              setRequests(updateList);
+            } else {
+              const details = await getChannelDetailsAction(
+                updatedMember.channel_id
+              );
+              if (details) {
+                const updateList = (list: ChatChannel[]) =>
+                  list.map((c) => (c.id === details.id ? details : c));
+                setChannels(updateList);
+                setRequests(updateList);
+              }
+            }
+          } else if (payload.eventType === "DELETE") {
+            if (payload.old && payload.old.channel_id) {
+              setChannels((prev) =>
+                prev.filter((c) => c.id !== payload.old.channel_id)
+              );
+              setRequests((prev) =>
+                prev.filter((c) => c.id !== payload.old.channel_id)
+              );
+            }
+          }
         }
       )
       .on(
@@ -95,7 +154,6 @@ export function ChatSidebar({
           table: "chat_channels",
         },
         async (payload) => {
-          // If a channel status changes (e.g. pending -> active), refresh
           if (
             payload.new &&
             payload.old &&
@@ -134,32 +192,40 @@ export function ChatSidebar({
   const dms = unpinnedChannels.filter((c) => c.is_dm);
 
   return (
-    <div className="flex h-full flex-col bg-gradient-to-b from-muted/30 to-background backdrop-blur-xl border-r border-border/50">
-      <div className="p-4 space-y-4">
+    <div className="flex h-full flex-col bg-white/5 dark:bg-black/20 backdrop-blur-xl border-r border-white/10 dark:border-white/5 overflow-hidden">
+      <div className="p-6 space-y-6">
         <div className="flex flex-col items-center justify-between">
-          <h2 className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          <motion.h2
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-sm"
+          >
             Messages
-          </h2>
-          <UserSearchDialog farewellId={farewellId} />
+          </motion.h2>
+          <div className="flex items-center gap-2 mt-4">
+            {isFarewellAdmin && <AdminRequestPanel farewellId={farewellId} />}
+            <ComplaintDialog farewellId={farewellId} />
+            <UserSearchDialog farewellId={farewellId} />
+          </div>
         </div>
       </div>
 
       <Tabs defaultValue="chats" className="flex-1 flex flex-col">
-        <div className="px-4 pb-4">
-          <TabsList className="w-full grid grid-cols-2 bg-muted/50 p-1 rounded-xl">
+        <div className="px-6 pb-6">
+          <TabsList className="w-full grid grid-cols-2 bg-black/20 p-1 rounded-2xl border border-white/5">
             <TabsTrigger
               value="chats"
-              className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+              className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:backdrop-blur-md transition-all duration-300"
             >
               Chats
             </TabsTrigger>
             <TabsTrigger
               value="requests"
-              className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all relative"
+              className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:backdrop-blur-md transition-all duration-300 relative"
             >
               Requests
               {(requests.length > 0 || pendingGroups.length > 0) && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full shadow-sm animate-pulse">
+                <span className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] flex items-center justify-center rounded-full shadow-lg animate-pulse">
                   {requests.length + pendingGroups.length}
                 </span>
               )}
@@ -168,33 +234,35 @@ export function ChatSidebar({
         </div>
 
         <TabsContent value="chats" className="flex-1 mt-0 min-h-0">
-          <ScrollArea className="h-full px-2">
-            <div className="space-y-6 pb-4">
+          <ScrollArea className="h-full px-4">
+            <div className="space-y-8 pb-4">
               {/* Pinned */}
               {pinnedChannels.length > 0 && (
-                <div className="space-y-2">
-                  <p className="px-4 text-xs font-medium text-muted-foreground/70 uppercase tracking-widest">
+                <div className="space-y-3">
+                  <p className="px-2 text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">
                     Pinned
                   </p>
-                  <div className="space-y-1">
-                    {pinnedChannels.map((channel) => (
-                      <ChannelItem
-                        key={channel.id}
-                        channel={channel}
-                        isSelected={selectedChannelId === channel.id}
-                        onClick={() => onSelectChannel(channel.id)}
-                        farewellId={farewellId}
-                      />
-                    ))}
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {pinnedChannels.map((channel) => (
+                        <ChannelItem
+                          key={channel.id}
+                          channel={channel}
+                          isSelected={selectedChannelId === channel.id}
+                          onClick={() => onSelectChannel(channel.id)}
+                          farewellId={farewellId}
+                        />
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
 
               {/* Groups */}
               {groups.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-4">
-                    <p className="text-xs font-medium text-muted-foreground/70 uppercase tracking-widest">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">
                       Groups
                     </p>
                     <CreateChannelDialog
@@ -203,72 +271,82 @@ export function ChatSidebar({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-5 w-5 hover:bg-muted rounded-full"
+                          className="h-6 w-6 hover:bg-white/10 rounded-full transition-colors"
                         >
-                          <Plus className="h-3 w-3" />
+                          <Plus className="h-3 w-3 text-muted-foreground" />
                         </Button>
                       }
                     />
                   </div>
-                  <div className="space-y-1">
-                    {groups.map((channel) => (
-                      <ChannelItem
-                        key={channel.id}
-                        channel={channel}
-                        isSelected={selectedChannelId === channel.id}
-                        onClick={() => onSelectChannel(channel.id)}
-                        farewellId={farewellId}
-                      />
-                    ))}
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {groups.map((channel) => (
+                        <ChannelItem
+                          key={channel.id}
+                          channel={channel}
+                          isSelected={selectedChannelId === channel.id}
+                          onClick={() => onSelectChannel(channel.id)}
+                          farewellId={farewellId}
+                        />
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
 
               {/* DMs */}
               {dms.length > 0 && (
-                <div className="space-y-2">
-                  <p className="px-4 text-xs font-medium text-muted-foreground/70 uppercase tracking-widest">
+                <div className="space-y-3">
+                  <p className="px-2 text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">
                     Direct Messages
                   </p>
-                  <div className="space-y-1">
-                    {dms.map((channel) => (
-                      <ChannelItem
-                        key={channel.id}
-                        channel={channel}
-                        isSelected={selectedChannelId === channel.id}
-                        onClick={() => onSelectChannel(channel.id)}
-                        farewellId={farewellId}
-                      />
-                    ))}
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {dms.map((channel) => (
+                        <ChannelItem
+                          key={channel.id}
+                          channel={channel}
+                          isSelected={selectedChannelId === channel.id}
+                          onClick={() => onSelectChannel(channel.id)}
+                          farewellId={farewellId}
+                        />
+                      ))}
+                    </AnimatePresence>
                   </div>
                 </div>
               )}
 
               {channels.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                    <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col items-center justify-center py-20 text-center px-4"
+                >
+                  <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 flex items-center justify-center mb-4 shadow-xl backdrop-blur-sm">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground/50" />
                   </div>
-                  <p className="text-sm font-medium">No chats yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-sm font-medium text-foreground/80">
+                    No chats yet
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 mt-2 max-w-[150px]">
                     Start a conversation by searching for users.
                   </p>
-                </div>
+                </motion.div>
               )}
             </div>
           </ScrollArea>
         </TabsContent>
 
         <TabsContent value="requests" className="flex-1 mt-0 min-h-0">
-          <ScrollArea className="h-full px-2">
-            <div className="space-y-4 pb-4">
+          <ScrollArea className="h-full px-4">
+            <div className="space-y-6 pb-4">
               {/* Pending Groups (Admin Only) */}
               {pendingGroups.length > 0 && (
-                <div className="space-y-2">
-                  <p className="px-4 text-xs font-medium text-yellow-600 uppercase tracking-widest">
-                    Pending Group Approvals
+                <div className="space-y-3">
+                  <p className="px-2 text-[10px] font-bold text-yellow-500/80 uppercase tracking-[0.2em]">
+                    Pending Approvals
                   </p>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {pendingGroups.map((channel) => (
                       <ChannelItem
                         key={channel.id}
@@ -285,11 +363,11 @@ export function ChatSidebar({
 
               {/* Message Requests */}
               {requests.length > 0 && (
-                <div className="space-y-2">
-                  <p className="px-4 text-xs font-medium text-muted-foreground/70 uppercase tracking-widest">
+                <div className="space-y-3">
+                  <p className="px-2 text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em]">
                     Message Requests
                   </p>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {requests.map((channel) => (
                       <ChannelItem
                         key={channel.id}
@@ -304,15 +382,21 @@ export function ChatSidebar({
               )}
 
               {requests.length === 0 && pendingGroups.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                    <Users className="h-6 w-6 text-muted-foreground" />
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-col items-center justify-center py-20 text-center px-4"
+                >
+                  <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 flex items-center justify-center mb-4 shadow-xl backdrop-blur-sm">
+                    <Users className="h-8 w-8 text-muted-foreground/50" />
                   </div>
-                  <p className="text-sm font-medium">No new requests</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-sm font-medium text-foreground/80">
+                    No new requests
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 mt-2 max-w-[150px]">
                     Message requests and group approvals will appear here.
                   </p>
-                </div>
+                </motion.div>
               )}
             </div>
           </ScrollArea>
@@ -321,6 +405,7 @@ export function ChatSidebar({
     </div>
   );
 }
+
 function ChannelItem({
   channel,
   isSelected,
@@ -357,63 +442,81 @@ function ChannelItem({
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <Button
-          variant="ghost"
+        <motion.button
+          layout
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
           className={cn(
-            "w-full justify-start h-14 px-3 rounded-xl transition-all duration-200 group relative overflow-hidden",
+            "w-full flex items-center gap-4 p-3 rounded-2xl transition-all duration-300 group relative overflow-hidden text-left",
             isSelected
-              ? "bg-primary/10 text-primary hover:bg-primary/15"
-              : "hover:bg-muted/60"
+              ? "bg-gradient-to-r from-indigo-500/20 to-purple-500/20 shadow-lg border border-indigo-500/30"
+              : "hover:bg-white/5 border border-transparent hover:border-white/5"
           )}
           onClick={onClick}
         >
           {isSelected && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary rounded-r-full" />
+            <motion.div
+              layoutId="active-channel-indicator"
+              className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-2xl"
+              initial={false}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
           )}
-          <div className="flex items-center gap-3 w-full overflow-hidden z-10">
+
+          <div className="relative z-10 flex items-center gap-4 w-full">
             {channel.is_dm ? (
-              <Avatar className="h-9 w-9 border-2 border-background shadow-sm group-hover:scale-105 transition-transform">
-                <AvatarImage src={channel.avatar_url || ""} />
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs">
-                  {getInitials(channel.name)}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-10 w-10 border-2 border-white/10 shadow-md group-hover:scale-105 transition-transform duration-300">
+                  <AvatarImage src={channel.avatar_url || ""} />
+                  <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
+                    {getInitials(channel.name)}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Online Indicator (Mockup) */}
+                <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-black shadow-sm" />
+              </div>
             ) : (
               <div
                 className={cn(
-                  "h-9 w-9 rounded-full flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform",
+                  "h-10 w-10 rounded-2xl flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-300 border border-white/10",
                   isSelected
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
+                    : "bg-white/5 text-muted-foreground"
                 )}
               >
-                <Hash className="h-4 w-4" />
+                <Hash className="h-5 w-5" />
               </div>
             )}
 
-            <div className="flex-1 text-left truncate">
-              <div className="flex items-center justify-between">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-0.5">
                 <p
                   className={cn(
-                    "text-sm font-medium truncate transition-colors",
-                    isSelected ? "text-primary" : "text-foreground"
+                    "text-sm font-semibold truncate transition-colors",
+                    isSelected ? "text-indigo-300" : "text-foreground/90"
                   )}
                 >
                   {channel.name || "Unknown Channel"}
                 </p>
                 {isPendingApproval && (
-                  <span className="text-[10px] bg-yellow-500/10 text-yellow-600 px-1.5 py-0.5 rounded-full font-medium border border-yellow-500/20">
-                    Pending
+                  <span className="text-[9px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-bold border border-yellow-500/30 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                    PENDING
                   </span>
                 )}
               </div>
+              <p className="text-xs text-muted-foreground/60 truncate">
+                {channel.is_dm
+                  ? "Click to chat"
+                  : `${channel.members?.length || 0} members`}
+              </p>
             </div>
           </div>
-        </Button>
+        </motion.button>
       </ContextMenuTrigger>
-      <ContextMenuContent>
+      <ContextMenuContent className="bg-black/80 backdrop-blur-xl border-white/10 text-white">
         <ContextMenuItem
-          className="text-destructive focus:text-destructive"
+          className="text-red-400 focus:text-red-400 focus:bg-red-500/10 cursor-pointer"
           onClick={handleDelete}
         >
           <Trash2 className="mr-2 h-4 w-4" />

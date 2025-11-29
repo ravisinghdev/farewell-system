@@ -10,6 +10,7 @@ export interface SearchResult {
   full_name: string | null;
   avatar_url: string | null;
   email: string | null;
+  username?: string | null;
 }
 
 export type ActionState<T = void> = {
