@@ -1,65 +1,132 @@
-import React, { JSX } from "react";
+import React from "react";
 import Link from "next/link";
+import { Github, Twitter, Linkedin, Heart } from "lucide-react";
 
-export default function Footer(): JSX.Element {
+export default function Footer() {
   return (
-    <footer className="border-t border-white/10 glass-strong backdrop-blur-2xl mt-20">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          {/* Logo and Tagline */}
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 via-pink-600 to-cyan-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-purple-500/50">
-              F
-            </div>
-            <div>
-              <div className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
-                Farewell
+    <footer className="bg-card border-t border-border pt-16 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          <div className="col-span-1 md:col-span-2">
+            <Link href="/" className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+                <img
+                  src="/images/logo.jpg"
+                  alt="Farewell Logo"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <div className="text-xs text-slate-500">
-                organise · collect · celebrate
-              </div>
-            </div>
+              <span className="text-xl font-bold">Farewell System</span>
+            </Link>
+            <p className="text-muted-foreground max-w-sm leading-relaxed">
+              The all-in-one platform for organizing school and college
+              farewells. Manage contributions, memories, and events with ease.
+            </p>
           </div>
 
-          {/* Links */}
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <Link
-              href="/privacy"
-              className="text-slate-400 hover:text-purple-400 transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-slate-400 hover:text-cyan-400 transition-colors"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/auth"
-              className="text-slate-400 hover:text-pink-400 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/auth"
-              className="text-slate-400 hover:text-purple-400 transition-colors"
-            >
-              Sign Up
-            </Link>
+          <div>
+            <h4 className="font-bold mb-4">Product</h4>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li>
+                <Link
+                  href="#features"
+                  className="hover:text-primary transition-colors"
+                >
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="#how-it-works"
+                  className="hover:text-primary transition-colors"
+                >
+                  How it Works
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/auth"
+                  className="hover:text-primary transition-colors"
+                >
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/auth"
+                  className="hover:text-primary transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </li>
+            </ul>
           </div>
 
-          {/* Copyright */}
-          <div className="text-sm text-slate-500">
-            © {new Date().getFullYear()} Farewell. All rights reserved.
+          <div>
+            <h4 className="font-bold mb-4">Legal</h4>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li>
+                <Link
+                  href="/privacy"
+                  className="hover:text-primary transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="hover:text-primary transition-colors"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="hover:text-primary transition-colors"
+                >
+                  Contact Us
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="mt-8 pt-8 border-t border-white/10 text-center">
-          <p className="text-xs text-slate-500">
-            Built with Next.js, Supabase, and ❤️
+        <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground text-center md:text-left">
+            © {new Date().getFullYear()} Farewell System. All rights reserved.
           </p>
+
+          <div className="flex items-center gap-6">
+            <Link
+              href="https://github.com"
+              target="_blank"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Github className="w-5 h-5" />
+            </Link>
+            <Link
+              href="https://twitter.com"
+              target="_blank"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Twitter className="w-5 h-5" />
+            </Link>
+            <Link
+              href="https://linkedin.com"
+              target="_blank"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Linkedin className="w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <span>Made with</span>
+          <Heart className="w-3 h-3 text-red-500 fill-red-500" />
+          <span>for students everywhere</span>
         </div>
       </div>
     </footer>

@@ -63,28 +63,32 @@ import Link from "next/link";
 
 import { SidebarChatList } from "@/components/chat/sidebar-chat-list";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 // Define types for the props
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  user: {
-    name: string;
-    email: string;
-    avatar: string;
-    id: string;
-  };
-  farewellId: string;
-  farewellName: string;
-  farewellYear: string | number;
-  role: string;
+  // Props are now optional/unused as we use context
+  user?: any;
+  farewellId?: string;
+  farewellName?: string;
+  farewellYear?: string | number;
+  role?: string;
 }
 
 export function AppSidebar({
-  user,
-  farewellId,
-  farewellName,
-  farewellYear,
-  role,
+  user: propUser,
+  farewellId: propFarewellId,
+  farewellName: propFarewellName,
+  farewellYear: propFarewellYear,
+  role: propRole,
   ...props
 }: AppSidebarProps) {
+  const { user, farewell } = useFarewell();
+
+  const farewellId = farewell.id;
+  const farewellName = farewell.name;
+  const farewellYear = farewell.year;
+  const role = farewell.role;
   // Helper to prefix links
   const p = (path: string) => {
     // If path is exactly /dashboard, append ID.
@@ -149,6 +153,11 @@ export function AppSidebar({
           href: "/dashboard/contributions/leaderboard",
           label: "Top Contributors",
           icon: Trophy,
+        },
+        {
+          href: "/dashboard/budget",
+          label: "Budget & Expenses",
+          icon: Wallet,
         },
       ],
     },
@@ -261,7 +270,11 @@ export function AppSidebar({
           label: "Organizing Committees",
           icon: ClipboardCheck,
         },
-        { href: "/dashboard/budget", label: "Budget & Expenses", icon: Wallet },
+        {
+          href: "/dashboard/duties",
+          label: "Duties & Assignments",
+          icon: ClipboardList,
+        },
         {
           href: "/dashboard/permissions",
           label: "Access & Roles",
@@ -313,13 +326,18 @@ export function AppSidebar({
   ];
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      collapsible="icon"
+      {...props}
+      className="border-r backdrop-blur-md z-50"
+    >
       <SidebarHeader>
         <FarewellHeader name={farewellName} year={farewellYear} />
       </SidebarHeader>
       <SidebarContent>
         {/* Chat List Integration with Message Links */}
-        <SidebarChatList farewellId={farewellId} currentUserId={user.id}>
+        {/* Chat List Integration with Message Links - DISABLED */}
+        {/* <SidebarChatList farewellId={farewellId} currentUserId={user.id}>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Farewell Messages">
               <Link href={p("/dashboard/messages")}>
@@ -352,7 +370,7 @@ export function AppSidebar({
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-        </SidebarChatList>
+        </SidebarChatList> */}
 
         {navGroups.map((group) => (
           <SidebarGroup key={group.title}>

@@ -1,8 +1,10 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { ActionState } from "@/types/custom";
 
 // Schema for validation
 const contributionSchema = z.object({
@@ -12,7 +14,36 @@ const contributionSchema = z.object({
   farewellId: z.string().min(1, "Farewell ID is required"),
 });
 
-import { ActionState } from "@/types/custom";
+async function isFarewellAdmin(
+  supabase: any,
+  userId: string,
+  farewellId: string
+) {
+  // Check global role first (optimization)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (
+    user?.user_metadata?.role &&
+    ["admin", "main_admin", "parallel_admin"].includes(user.user_metadata.role)
+  ) {
+    return true;
+  }
+
+  // Check farewell specific role
+  const { data: member } = await supabase
+    .from("farewell_members")
+    .select("role")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", userId)
+    .single();
+
+  return (
+    member?.role === "admin" ||
+    member?.role === "main_admin" ||
+    member?.role === "parallel_admin"
+  );
+}
 
 export async function createContributionAction(
   formData: FormData
@@ -68,7 +99,6 @@ export async function createContributionAction(
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
-      // Proceeding without screenshot if upload fails is risky, let's fail.
       return { error: "Failed to upload screenshot" };
     }
 
@@ -110,7 +140,7 @@ export async function getContributionsAction(farewellId: string) {
 
   const { data, error } = await supabase
     .from("contributions")
-    .select("*")
+    .select("*, users:user_id(full_name, avatar_url)")
     .eq("farewell_id", farewellId)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -121,4 +151,146 @@ export async function getContributionsAction(farewellId: string) {
   }
 
   return data;
+}
+
+export async function getAllContributionsAction(farewellId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  if (!authorized) return [];
+
+  // Use admin client to bypass RLS for farewell admins
+  const { data, error } = await supabaseAdmin
+    .from("contributions")
+    .select("*, users:user_id(full_name, avatar_url)")
+    .eq("farewell_id", farewellId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Fetch all contributions error:", error);
+    return [];
+  }
+
+  return data;
+}
+
+export async function updateContributionStatusAction(
+  contributionId: string,
+  status: "verified" | "rejected"
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // Need to fetch contribution to get farewell_id to check permissions
+  const { data: contribution } = await supabaseAdmin
+    .from("contributions")
+    .select("farewell_id")
+    .eq("id", contributionId)
+    .single();
+
+  if (!contribution) return { error: "Contribution not found" };
+
+  const authorized = await isFarewellAdmin(
+    supabase,
+    user.id,
+    contribution.farewell_id
+  );
+  if (!authorized) return { error: "Unauthorized" };
+
+  const { error } = await supabaseAdmin
+    .from("contributions")
+    .update({ status })
+    .eq("id", contributionId);
+
+  if (error) {
+    console.error("Update contribution status error:", error);
+    return { error: "Failed to update status" };
+  }
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function getContributionStatsAction(farewellId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { total: 0 };
+
+  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  if (!authorized) return { total: 0 };
+
+  const { data, error } = await supabaseAdmin
+    .from("contributions")
+    .select("amount")
+    .eq("farewell_id", farewellId)
+    .eq("status", "verified");
+
+  if (error) {
+    console.error("Fetch stats error:", error);
+    return { total: 0 };
+  }
+
+  const total = data.reduce((sum, c) => sum + Number(c.amount), 0);
+  return { total };
+}
+
+export async function getLeaderboardAction(farewellId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  // Fetch all verified contributions with user details
+  // We use admin client to get everyone's data for the leaderboard
+  const { data, error } = await supabaseAdmin
+    .from("contributions")
+    .select(
+      "amount, user_id, users!contributions_user_id_fkey(full_name, avatar_url)"
+    )
+    .eq("farewell_id", farewellId)
+    .eq("status", "verified");
+
+  if (error) {
+    console.error("Fetch leaderboard error:", error);
+    return [];
+  }
+
+  // Aggregate by user
+  const leaderboardMap = new Map<
+    string,
+    { userId: string; name: string; avatar: string; amount: number }
+  >();
+
+  data.forEach((c: any) => {
+    if (!c.user_id) return;
+
+    const current = leaderboardMap.get(c.user_id) || {
+      userId: c.user_id,
+      name: c.users?.full_name || "Anonymous",
+      avatar: c.users?.avatar_url || "",
+      amount: 0,
+    };
+
+    current.amount += Number(c.amount);
+    leaderboardMap.set(c.user_id, current);
+  });
+
+  // Convert to array and sort
+  return Array.from(leaderboardMap.values())
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 50); // Top 50
 }

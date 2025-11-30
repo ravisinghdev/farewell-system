@@ -1,6 +1,6 @@
 import { getHighlightsAction } from "@/app/actions/dashboard-actions";
 import { CreateHighlightDialog } from "@/components/dashboard/create-highlight-dialog";
-import { HighlightCard } from "@/components/dashboard/highlight-card";
+import { RealtimeHighlights } from "@/components/dashboard/realtime-highlights";
 import { createClient } from "@/utils/supabase/server";
 import { Star } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -55,11 +55,10 @@ export default async function HighlightsPage({ params }: HighlightsPageProps) {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {highlights.map((highlight) => (
-                <HighlightCard key={highlight.id} highlight={highlight} />
-              ))}
-            </div>
+            <RealtimeHighlights
+              initialHighlights={highlights}
+              farewellId={id}
+            />
           )}
         </div>
       </div>

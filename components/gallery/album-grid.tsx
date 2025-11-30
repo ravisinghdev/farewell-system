@@ -20,7 +20,13 @@ interface AlbumGridProps {
   farewellId: string;
 }
 
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
+
 export function AlbumGrid({ albums, farewellId }: AlbumGridProps) {
+  useRealtimeSubscription({
+    table: "albums",
+    filter: `farewell_id=eq.${farewellId}`,
+  });
   if (albums.length === 0) {
     return (
       <div className="text-center py-12 border rounded-lg bg-muted/20 border-dashed">

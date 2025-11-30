@@ -2,6 +2,8 @@ import React, { JSX } from "react";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
+import HowItWorks from "@/components/landing/HowItWorks";
+import Stats from "@/components/landing/Stats";
 import DownloadSection from "@/components/landing/DownloadSection";
 import FAQ from "@/components/landing/FAQ";
 import Footer from "@/components/landing/Footer";
@@ -16,11 +18,13 @@ export default function Page(): JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+        <div className="min-h-screen">
           <Navbar />
           <main>
             <Hero />
+            <Stats />
             <Features />
+            <HowItWorks />
             <DownloadSection />
             <FAQ />
           </main>

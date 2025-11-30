@@ -30,13 +30,17 @@ interface E2EEContextType {
 
 const E2EEContext = createContext<E2EEContextType | null>(null);
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 export function E2EEProvider({
   children,
-  currentUserId,
+  currentUserId: propUserId,
 }: {
   children: React.ReactNode;
-  currentUserId: string;
+  currentUserId?: string;
 }) {
+  const { user } = useFarewell();
+  const currentUserId = user.id;
   const [publicKey, setPublicKey] = useState<CryptoKey | null>(null);
   const [privateKey, setPrivateKey] = useState<CryptoKey | null>(null);
   const [isReady, setIsReady] = useState(false);

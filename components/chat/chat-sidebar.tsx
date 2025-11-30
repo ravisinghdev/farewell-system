@@ -28,13 +28,16 @@ import { ComplaintDialog } from "./complaint-dialog";
 import { User } from "@/types/custom";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 interface ChatSidebarProps {
   channels: ChatChannel[];
   requests: ChatChannel[];
   selectedChannelId: string;
   onSelectChannel: (id: string) => void;
-  farewellId: string;
-  currentUser: User;
+  // Props are now optional/unused as we use context
+  farewellId?: string;
+  currentUser?: User;
   isFarewellAdmin?: boolean;
 }
 
@@ -43,10 +46,22 @@ export function ChatSidebar({
   requests: initialRequests,
   selectedChannelId,
   onSelectChannel,
-  farewellId,
-  currentUser,
-  isFarewellAdmin,
 }: ChatSidebarProps) {
+  const { user, farewell } = useFarewell();
+  const farewellId = farewell.id;
+  // Map context user to component expected user structure if needed, or just use ID
+  const currentUser = {
+    id: user.id,
+    email: user.email || "",
+    full_name: user.name,
+    avatar_url: user.avatar,
+    created_at: "", // Mock or unused
+    updated_at: "", // Mock or unused
+  } as User;
+
+  const isFarewellAdmin = ["admin", "parallel_admin", "main_admin"].includes(
+    farewell.role || ""
+  );
   // ... state ...
   const [channels, setChannels] = useState<ChatChannel[]>(initialChannels);
   const [requests, setRequests] = useState<ChatChannel[]>(initialRequests);
@@ -470,7 +485,7 @@ function ChannelItem({
                 <Avatar className="h-10 w-10 border-2 border-white/10 shadow-md group-hover:scale-105 transition-transform duration-300">
                   <AvatarImage src={channel.avatar_url || ""} />
                   <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
-                    {getInitials(channel.name)}
+                    {getInitials(channel.name || "")}
                   </AvatarFallback>
                 </Avatar>
                 {/* Online Indicator (Mockup) */}

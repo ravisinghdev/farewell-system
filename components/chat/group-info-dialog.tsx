@@ -45,25 +45,31 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 interface GroupInfoDialogProps {
   channelId: string;
-  farewellId: string;
   members: ChatMember[];
   channelName: string;
-  currentUserId: string;
   trigger?: React.ReactNode;
+  // Props are now optional/unused as we use context
+  farewellId?: string;
+  currentUserId?: string;
   isFarewellAdmin?: boolean;
 }
 
 export function GroupInfoDialog({
   channelId,
-  farewellId,
   members,
   channelName,
-  currentUserId,
   trigger,
-  isFarewellAdmin,
 }: GroupInfoDialogProps) {
+  const { user, farewell } = useFarewell();
+  const farewellId = farewell.id;
+  const currentUserId = user.id;
+  const isFarewellAdmin = ["admin", "parallel_admin", "main_admin"].includes(
+    farewell.role || ""
+  );
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -202,7 +208,7 @@ export function GroupInfoDialog({
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={user.avatar_url || ""} />
                             <AvatarFallback>
-                              {getInitials(user.full_name)}
+                              {getInitials(user.full_name || "")}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium">
@@ -245,7 +251,7 @@ export function GroupInfoDialog({
                         <Avatar className="h-10 w-10 border border-border/50">
                           <AvatarImage src={member.user?.avatar_url || ""} />
                           <AvatarFallback>
-                            {getInitials(member.user?.full_name)}
+                            {getInitials(member.user?.full_name || "")}
                           </AvatarFallback>
                         </Avatar>
                         <div>

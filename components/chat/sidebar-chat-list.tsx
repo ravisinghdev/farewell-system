@@ -36,17 +36,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserSearchDialog } from "./user-search-dialog";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 interface SidebarChatListProps {
-  farewellId: string;
-  currentUserId: string;
+  // Props are now optional/unused as we use context
+  farewellId?: string;
+  currentUserId?: string;
   children?: React.ReactNode;
 }
 
-export function SidebarChatList({
-  farewellId,
-  currentUserId,
-  children,
-}: SidebarChatListProps) {
+export function SidebarChatList({ children }: SidebarChatListProps) {
+  const { user, farewell } = useFarewell();
+  const farewellId = farewell.id;
+  const currentUserId = user.id;
   const [channels, setChannels] = useState<ChatChannel[]>([]);
   const [requests, setRequests] = useState<ChatChannel[]>([]);
   const [loading, setLoading] = useState(true);

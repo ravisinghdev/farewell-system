@@ -17,7 +17,7 @@ export default function AccountSecurity() {
       const { data: sdata } = await supabase.auth.getSession();
       const userId = sdata.session?.user?.id;
       if (!userId) {
-        router.push("/auth/login");
+        router.push("/auth");
         return;
       }
       const { data: prof } = await supabase

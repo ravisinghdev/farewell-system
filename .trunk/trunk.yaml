@@ -26,6 +26,16 @@ lint:
     - svgo@4.0.0
     - taplo@0.10.0
     - trufflehog@3.91.1
+  ignore:
+    - linters: [prettier, eslint]
+      paths:
+        # Ignore shadcn/ui components to prevent formatting conflicts
+        - components/ui/**
+        # Ignore build outputs
+        - .next/**
+        - out/**
+        - android/**
+        - ios/**
 actions:
   disabled:
     - trunk-announce

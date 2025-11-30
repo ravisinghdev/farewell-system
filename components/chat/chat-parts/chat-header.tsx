@@ -26,6 +26,8 @@ import { GroupInfoDialog } from "../group-info-dialog";
 import { ChatMember } from "@/app/actions/chat-actions";
 import { motion } from "framer-motion";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 interface ChatHeaderProps {
   channelName?: string;
   isPinned?: boolean;
@@ -34,12 +36,13 @@ interface ChatHeaderProps {
   isRequest?: boolean;
   members: ChatMember[];
   channelId: string;
-  farewellId: string;
-  currentUserId: string;
-  isFarewellAdmin?: boolean;
   onPin: () => void;
   onRestrict: () => void;
   onBlock: () => void;
+  // Props are now optional/unused as we use context
+  farewellId?: string;
+  currentUserId?: string;
+  isFarewellAdmin?: boolean;
 }
 
 export function ChatHeader({
@@ -50,13 +53,16 @@ export function ChatHeader({
   isRequest,
   members,
   channelId,
-  farewellId,
-  currentUserId,
-  isFarewellAdmin,
   onPin,
   onRestrict,
   onBlock,
 }: ChatHeaderProps) {
+  const { user, farewell } = useFarewell();
+  const farewellId = farewell.id;
+  const currentUserId = user.id;
+  const isFarewellAdmin = ["admin", "parallel_admin", "main_admin"].includes(
+    farewell.role || ""
+  );
   const otherMember = members.find((m) => m.user_id === otherUserId);
   const avatarUrl = otherMember?.user?.avatar_url;
 
@@ -145,11 +151,8 @@ export function ChatHeader({
           {!otherUserId && (
             <GroupInfoDialog
               channelId={channelId}
-              farewellId={farewellId}
               members={members}
               channelName={channelName || "Group Chat"}
-              currentUserId={currentUserId}
-              isFarewellAdmin={isFarewellAdmin}
               trigger={
                 <Button
                   variant="ghost"

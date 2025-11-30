@@ -8,10 +8,17 @@
 
 import type { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
-import { getClaims, getFarewellRole } from "@/lib/auth/claims";
+import { getClaims } from "@/lib/auth/claims";
+import { getFarewellRoleFromDB } from "@/lib/auth/roles";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { ProfileProvider } from "@/components/profile-provider";
+import { SettingsProvider } from "@/components/settings/settings-provider";
+import { redirect } from "next/navigation";
+import { AppearanceProvider } from "@/components/settings/appearance-provider";
+import { FarewellProvider } from "@/components/providers/farewell-provider";
+import { AdminNotifications } from "@/components/admin/admin-notifications";
 
 // Metadata for dashboard pages
 export const metadata: Metadata = {
@@ -45,12 +52,23 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    return redirect("/auth");
+  }
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
   // Fallback for user data if not logged in (middleware should catch this, but for safety)
-  const userData = {
-    name: user?.user_metadata?.full_name || "User",
-    email: user?.email || "",
-    avatar: user?.user_metadata?.avatar_url || "",
-    id: user?.id || "",
+  const initialUser = {
+    ...userData,
+    email: user.email,
+    name: userData?.full_name || user.user_metadata?.full_name || "User",
+    avatar: userData?.avatar_url || user.user_metadata?.avatar_url || "",
+    id: user.id,
   };
 
   const claims = getClaims(user);
@@ -74,9 +92,10 @@ export default async function DashboardLayout({
     }
   }
 
-  const role = user
-    ? getFarewellRole(user, farewellId || "") || "student"
-    : "student";
+  const role =
+    user && farewellId
+      ? (await getFarewellRoleFromDB(farewellId, user.id)) || "student"
+      : "student";
 
   // Fetch farewell details for the sidebar
   let farewellName = "Farewell System";
@@ -95,21 +114,39 @@ export default async function DashboardLayout({
     }
   }
 
+  // Fetch initial settings
+  const { data: settings } = await supabase
+    .from("user_settings")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
   return (
-    <SidebarProvider>
-      <AppSidebar
-        user={userData}
-        farewellId={farewellId || ""}
-        farewellName={farewellName}
-        farewellYear={farewellYear}
-        role={role}
-      />
-      <SidebarInset className="bg-gradient-to-br from-slate-950 via-violet-950/20 to-slate-950 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-        <SiteHeader user={userData} />
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 bg-transparent">
-          {children}
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <FarewellProvider
+      user={initialUser}
+      farewell={{
+        id: farewellId || "",
+        name: farewellName,
+        year: farewellYear,
+        role: role as any,
+      }}
+    >
+      <SidebarProvider>
+        <ProfileProvider initialUser={initialUser}>
+          <SettingsProvider initialSettings={settings} userId={user.id}>
+            <AppearanceProvider>
+              <AppSidebar />
+              <SidebarInset>
+                <SiteHeader />
+                <div className="flex flex-1 flex-col gap-4 p-2 pt-0 bg-transparent">
+                  {children}
+                </div>
+              </SidebarInset>
+              <AdminNotifications userId={user.id} role={role} />
+            </AppearanceProvider>
+          </SettingsProvider>
+        </ProfileProvider>
+      </SidebarProvider>
+    </FarewellProvider>
   );
 }

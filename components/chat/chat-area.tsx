@@ -27,11 +27,14 @@ import { ChatInput } from "./chat-parts/chat-input";
 import { MessageList } from "./chat-parts/message-list";
 import { Message, Reaction, User } from "./chat-types";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 interface ChatAreaProps {
   initialMessages: Message[];
   channelId: string;
-  farewellId: string;
-  currentUser: User;
+  // Props are now optional/unused as we use context
+  farewellId?: string;
+  currentUser?: User;
   isRequest?: boolean;
   channelName?: string;
   otherUserId?: string;
@@ -44,16 +47,26 @@ interface ChatAreaProps {
 export function ChatArea({
   initialMessages,
   channelId,
-  farewellId,
-  currentUser,
   isRequest,
   channelName,
   otherUserId,
   isPinned: initialIsPinned,
   members = [],
-  isFarewellAdmin,
   channelStatus,
 }: ChatAreaProps) {
+  const { user, farewell } = useFarewell();
+  const farewellId = farewell.id;
+  const currentUser = {
+    id: user.id,
+    email: user.email || "",
+    full_name: user.name,
+    avatar_url: user.avatar,
+    created_at: "",
+    updated_at: "",
+  } as User;
+  const isFarewellAdmin = ["admin", "parallel_admin", "main_admin"].includes(
+    farewell.role || ""
+  );
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [channelMembers, setChannelMembers] = useState<ChatMember[]>(members);
   const [isPending, startTransition] = useTransition();

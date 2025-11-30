@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import { PlayCircle } from "lucide-react";
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 interface Media {
   id: string;
@@ -10,9 +13,14 @@ interface Media {
 
 interface MediaGridProps {
   media: Media[];
+  albumId: string; // Need albumId for filter
 }
 
-export function MediaGrid({ media }: MediaGridProps) {
+export function MediaGrid({ media, albumId }: MediaGridProps) {
+  useRealtimeSubscription({
+    table: "gallery_media",
+    filter: `album_id=eq.${albumId}`,
+  });
   if (media.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">

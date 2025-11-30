@@ -90,7 +90,9 @@ export interface Database {
           id: string;
           farewell_id: string;
           user_id: string;
-          role: "admin" | "student" | "guest";
+          role: "admin" | "student" | "guest" | "teacher" | "junior";
+          grade: number | null;
+          section: string | null;
           status: "pending" | "approved" | "rejected";
           joined_at: string | null;
         };
@@ -98,7 +100,9 @@ export interface Database {
           id?: string;
           farewell_id: string;
           user_id: string;
-          role?: "admin" | "student" | "guest";
+          role?: "admin" | "student" | "guest" | "teacher" | "junior";
+          grade?: number | null;
+          section?: string | null;
           status?: "pending" | "approved" | "rejected";
           joined_at?: string | null;
         };
@@ -106,7 +110,9 @@ export interface Database {
           id?: string;
           farewell_id?: string;
           user_id?: string;
-          role?: "admin" | "student" | "guest";
+          role?: "admin" | "student" | "guest" | "teacher" | "junior";
+          grade?: number | null;
+          section?: string | null;
           status?: "pending" | "approved" | "rejected";
           joined_at?: string | null;
         };
@@ -401,17 +407,229 @@ export interface Database {
           created_at?: string | null;
         };
       };
+      duties: {
+        Row: {
+          id: string;
+          farewell_id: string;
+          title: string;
+          description: string | null;
+          expense_limit: number | null;
+          deadline: string | null;
+          status: "pending" | "in_progress" | "completed";
+          created_by: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          farewell_id: string;
+          title: string;
+          description?: string | null;
+          expense_limit?: number | null;
+          deadline?: string | null;
+          status?: "pending" | "in_progress" | "completed";
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          farewell_id?: string;
+          title?: string;
+          description?: string | null;
+          expense_limit?: number | null;
+          deadline?: string | null;
+          status?: "pending" | "in_progress" | "completed";
+          created_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
+      duty_assignments: {
+        Row: {
+          id: string;
+          duty_id: string;
+          user_id: string;
+          assigned_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          duty_id: string;
+          user_id: string;
+          assigned_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          duty_id?: string;
+          user_id?: string;
+          assigned_at?: string | null;
+        };
+      };
+      duty_receipts: {
+        Row: {
+          id: string;
+          duty_assignment_id: string;
+          uploader_id: string;
+          amount: number;
+          currency: string | null;
+          receipt_url: string | null;
+          notes: string | null;
+          status: "pending" | "verified" | "rejected";
+          rejection_reason: string | null;
+          approved_at: string | null;
+          approved_by: string | null;
+          rejected_at: string | null;
+          rejected_by: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          duty_assignment_id: string;
+          uploader_id: string;
+          amount: number;
+          currency?: string | null;
+          receipt_url?: string | null;
+          notes?: string | null;
+          status?: "pending" | "verified" | "rejected";
+          rejection_reason?: string | null;
+          approved_at?: string | null;
+          approved_by?: string | null;
+          rejected_at?: string | null;
+          rejected_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          duty_assignment_id?: string;
+          uploader_id?: string;
+          amount?: number;
+          currency?: string | null;
+          receipt_url?: string | null;
+          notes?: string | null;
+          status?: "pending" | "verified" | "rejected";
+          rejection_reason?: string | null;
+          approved_at?: string | null;
+          approved_by?: string | null;
+          rejected_at?: string | null;
+          rejected_by?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
+      ledger_entries: {
+        Row: {
+          id: string;
+          farewell_id: string;
+          user_id: string;
+          amount: number;
+          type: string;
+          currency: string | null;
+          meta: Json | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          farewell_id: string;
+          user_id: string;
+          amount: number;
+          type: string;
+          currency?: string | null;
+          meta?: Json | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          farewell_id?: string;
+          user_id?: string;
+          amount?: number;
+          type?: string;
+          currency?: string | null;
+          meta?: Json | null;
+          created_at?: string | null;
+        };
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          type:
+            | "message"
+            | "mention"
+            | "system"
+            | "request"
+            | "finance"
+            | "duty";
+          title: string;
+          body: string | null;
+          link: string | null;
+          is_read: boolean | null;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          type:
+            | "message"
+            | "mention"
+            | "system"
+            | "request"
+            | "finance"
+            | "duty";
+          title: string;
+          body?: string | null;
+          link?: string | null;
+          is_read?: boolean | null;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          type?:
+            | "message"
+            | "mention"
+            | "system"
+            | "request"
+            | "finance"
+            | "duty";
+          title?: string;
+          body?: string | null;
+          link?: string | null;
+          is_read?: boolean | null;
+          created_at?: string | null;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      assign_duty: {
+        Args: {
+          _duty_id: string;
+          _user_ids: string[];
+        };
+        Returns: Json;
+      };
+      approve_duty_receipt: {
+        Args: {
+          _receipt_id: string;
+        };
+        Returns: Json;
+      };
+      reject_duty_receipt: {
+        Args: {
+          _receipt_id: string;
+          _reason: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       user_status: "online" | "offline" | "away" | "busy";
       farewell_status: "active" | "archived";
-      farewell_role: "admin" | "student" | "guest";
+      farewell_role: "admin" | "student" | "guest" | "teacher" | "junior";
       join_status: "pending" | "approved" | "rejected";
       channel_type: "dm" | "group" | "farewell" | "class";
       member_role: "owner" | "admin" | "member";

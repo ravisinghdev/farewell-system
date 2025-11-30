@@ -21,11 +21,14 @@ import { Session, User } from "@supabase/supabase-js";
  * Each farewell can assign different roles to users, allowing for
  * granular permission control across multiple farewells.
  *
- * @typedef {("student" | "teacher" | "parallel_admin" | "main_admin")} FarewellRole
+ * @typedef {("admin" | "student" | "guest" | "teacher" | "junior" | "parallel_admin" | "main_admin")} FarewellRole
  */
 export type FarewellRole =
+  | "admin"
   | "student"
+  | "guest"
   | "teacher"
+  | "junior"
   | "parallel_admin"
   | "main_admin";
 
@@ -102,7 +105,7 @@ export function getClaims(user: User | null): UserClaims {
  * @example
  * // Check if user can manage a farewell
  * const role = getFarewellRole(user, 'farewell-123');
- * if (role === 'main_admin' || role === 'parallel_admin') {
+ * if (role === 'main_admin' || role === 'parallel_admin' || role === 'admin') {
  *   // User can modify farewell settings
  * }
  *
@@ -119,6 +122,7 @@ export function getFarewellRole(
   farewellId: string
 ): FarewellRole | null {
   const claims = getClaims(user);
+  console.log("claims", claims);
   if (!claims.farewells) return null;
   return claims.farewells[farewellId] || null;
 }

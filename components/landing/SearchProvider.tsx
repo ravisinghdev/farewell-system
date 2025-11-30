@@ -29,6 +29,8 @@ type SearchContextValue = {
   focusedMatchIndex: number | null;
   setFocusedMatchIndex: React.Dispatch<React.SetStateAction<number | null>>;
   clear: () => void;
+  isSearchOpen: boolean;
+  setIsSearchOpen: (open: boolean) => void;
 };
 
 const SearchContext = createContext<SearchContextValue | null>(null);
@@ -42,6 +44,7 @@ export function useSearch(): SearchContextValue {
 export function SearchProvider({ children }: { children: React.ReactNode }) {
   const itemsRef = useRef<Map<string, SearchItem>>(new Map());
   const [query, setQuery] = useState<string>("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [focusedMatchIndex, setFocusedMatchIndex] = useState<number | null>(
     null
   );
@@ -94,6 +97,8 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
       focusedMatchIndex,
       setFocusedMatchIndex,
       clear,
+      isSearchOpen,
+      setIsSearchOpen,
     }),
     [
       register,
@@ -105,6 +110,8 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
       focusedMatchIndex,
       setFocusedMatchIndex,
       clear,
+      isSearchOpen,
+      setIsSearchOpen,
     ]
   );
 

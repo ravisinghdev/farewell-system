@@ -69,7 +69,7 @@ export async function getAlbumMediaAction(albumId: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("media")
+    .from("gallery_media")
     .select("*, uploaded_by_user:users(full_name)")
     .eq("album_id", albumId)
     .order("created_at", { ascending: false });
@@ -122,7 +122,7 @@ export async function uploadMediaAction(
     .getPublicUrl(fileName);
 
   // 3. Insert into DB
-  const { error: dbError } = await supabase.from("media").insert({
+  const { error: dbError } = await supabase.from("gallery_media").insert({
     album_id: albumId,
     url: publicUrlData.publicUrl,
     type,

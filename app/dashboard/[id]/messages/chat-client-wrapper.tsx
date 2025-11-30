@@ -9,14 +9,17 @@ import { MessageSquarePlus } from "lucide-react";
 import { E2EEProvider } from "@/components/chat/e2ee-provider";
 import { useEffect, useState, useTransition } from "react";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 interface ChatClientWrapperProps {
   channels: ChatChannel[];
   requests: ChatChannel[];
   activeChannelId: string;
   activeChannel: ChatChannel | null;
-  messages: any[]; // We can refine this if we export Message type
-  farewellId: string;
-  user: any;
+  messages: any[];
+  // Props are now optional/unused as we use context
+  farewellId?: string;
+  user?: any;
   isFarewellAdmin?: boolean;
 }
 
@@ -26,10 +29,12 @@ export function ChatClientWrapper({
   activeChannelId: initialActiveChannelId,
   activeChannel: initialActiveChannel,
   messages: initialMessages,
-  farewellId,
-  user,
-  isFarewellAdmin,
 }: ChatClientWrapperProps) {
+  const { user, farewell } = useFarewell();
+  const farewellId = farewell.id;
+  const isFarewellAdmin = ["admin", "parallel_admin", "main_admin"].includes(
+    farewell.role || ""
+  );
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -92,7 +97,7 @@ export function ChatClientWrapper({
   }
 
   return (
-    <E2EEProvider currentUserId={user.id}>
+    <E2EEProvider>
       <ChatLayout
         sidebar={
           <ChatSidebar
@@ -100,9 +105,6 @@ export function ChatClientWrapper({
             requests={requests}
             selectedChannelId={activeChannelId}
             onSelectChannel={handleChannelSelect}
-            farewellId={farewellId}
-            currentUser={user}
-            isFarewellAdmin={isFarewellAdmin}
           />
         }
       >
@@ -112,14 +114,11 @@ export function ChatClientWrapper({
               key={activeChannelId} // Force re-mount on channel change to reset internal state
               initialMessages={messages}
               channelId={activeChannelId}
-              farewellId={farewellId}
-              currentUser={user}
               isRequest={isRequest}
               channelName={activeChannel.name || "Chat"}
               otherUserId={otherUserId}
               isPinned={activeChannel.is_pinned}
               members={activeChannel.members}
-              isFarewellAdmin={isFarewellAdmin}
               channelStatus={activeChannel.status}
             />
           ) : (

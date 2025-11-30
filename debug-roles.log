@@ -1,0 +1,742 @@
+2025-11-30T17:22:08.099Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:22:08.100Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:08.101Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:22:08.102Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:08.139Z: getUserRoleFromDb found role: admin
+2025-11-30T17:22:08.141Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:22:09.977Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:22:09.978Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:09.979Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:22:09.979Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:09.997Z: getUserRoleFromDb found role: admin
+2025-11-30T17:22:09.998Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:22:10.748Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:22:10.749Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:10.750Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:22:10.750Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:10.766Z: getUserRoleFromDb found role: admin
+2025-11-30T17:22:10.767Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:22:11.433Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:22:11.435Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:11.435Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:22:11.436Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:11.448Z: getUserRoleFromDb found role: admin
+2025-11-30T17:22:11.449Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:22:48.372Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:48.374Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:22:48.375Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:22:49.074Z: getUserRoleFromDb found role: admin
+2025-11-30T17:22:49.080Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:23:25.121Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:23:25.123Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:23:25.124Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:23:25.124Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:23:25.717Z: getUserRoleFromDb found role: admin
+2025-11-30T17:23:25.718Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:24:14.902Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:24:14.904Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:24:14.904Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:24:14.905Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:24:14.941Z: getUserRoleFromDb found role: admin
+2025-11-30T17:24:14.942Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:25:30.446Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:25:30.447Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:25:30.448Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:25:30.835Z: getUserRoleFromDb found role: admin
+2025-11-30T17:25:30.836Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:26:38.482Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:26:38.483Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:26:38.485Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:26:38.530Z: getUserRoleFromDb found role: admin
+2025-11-30T17:26:38.531Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:27:08.004Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:27:08.005Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:27:08.006Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:27:08.020Z: getUserRoleFromDb found role: admin
+2025-11-30T17:27:08.021Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:31:09.454Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:31:09.458Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:31:09.459Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:31:10.154Z: getUserRoleFromDb found role: admin
+2025-11-30T17:31:10.155Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:31:47.319Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:31:47.320Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:31:47.321Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:31:47.345Z: getUserRoleFromDb found role: admin
+2025-11-30T17:31:47.346Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:33:56.505Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:33:56.508Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:33:56.510Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:34:07.223Z: getUserRoleFromDb error or no data: {"message":"TypeError: fetch failed","details":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:15845:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async getUserRoleFromDb (P:\\farewell-system\\.next\\dev\\server\\chunks\\ssr\\[root-of-the-server]__3dd95a7f._.js:198:33)\n    at async getCurrentUserWithRole (P:\\farewell-system\\.next\\dev\\server\\chunks\\ssr\\[root-of-the-server]__3dd95a7f._.js:260:24)\n    at async BudgetPage (P:\\farewell-system\\.next\\dev\\server\\chunks\\ssr\\[root-of-the-server]__5cc4b18b._.js:382:18)","hint":"","code":""}
+2025-11-30T17:34:07.230Z: [CurrentUser] Found role in DB: student
+2025-11-30T17:35:06.417Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:06.418Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:06.419Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:06.437Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:06.438Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:35:07.697Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:07.698Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:07.698Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:07.718Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:07.719Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:35:08.582Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:08.583Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:08.583Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:08.608Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:08.609Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:35:13.028Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:13.028Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:13.030Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:13.045Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:13.046Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:35:13.953Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:13.954Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:13.954Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:13.972Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:13.973Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:35:15.306Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:15.306Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:15.307Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:15.321Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:15.322Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:35:36.340Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:35:38.893Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:38.894Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:38.895Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:39.417Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:39.418Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:35:39.478Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:39.480Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:39.480Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:39.632Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:39.633Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:35:45.406Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:45.407Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:35:45.408Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:35:45.755Z: getUserRoleFromDb found role: admin
+2025-11-30T17:35:45.756Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:36:00.064Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:36:00.086Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:36:00.087Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:36:00.089Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:36:00.457Z: getUserRoleFromDb found role: admin
+2025-11-30T17:36:00.457Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:37:09.597Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:37:09.598Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:37:09.599Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:37:09.825Z: getUserRoleFromDb found role: admin
+2025-11-30T17:37:09.826Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:37:34.833Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:37:34.836Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:37:34.838Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:37:34.879Z: getUserRoleFromDb found role: admin
+2025-11-30T17:37:34.881Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:39:12.095Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:39:12.098Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:39:12.100Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:39:12.171Z: getUserRoleFromDb found role: admin
+2025-11-30T17:39:12.175Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:39:30.149Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:39:30.151Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:39:30.152Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:39:30.600Z: getUserRoleFromDb found role: admin
+2025-11-30T17:39:30.600Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:39:40.445Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:39:40.446Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:39:40.447Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:39:40.578Z: getUserRoleFromDb found role: admin
+2025-11-30T17:39:40.579Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:40:07.505Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:07.506Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:40:07.506Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:07.948Z: getUserRoleFromDb found role: admin
+2025-11-30T17:40:07.948Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:40:11.054Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:11.055Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:40:11.055Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:11.168Z: getUserRoleFromDb found role: admin
+2025-11-30T17:40:11.169Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:40:21.875Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:21.879Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:40:21.880Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:22.120Z: getUserRoleFromDb found role: admin
+2025-11-30T17:40:22.121Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:40:25.491Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:25.491Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:40:25.492Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:25.519Z: getUserRoleFromDb found role: admin
+2025-11-30T17:40:25.521Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:40:27.889Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:27.890Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:40:27.891Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:27.981Z: getUserRoleFromDb found role: admin
+2025-11-30T17:40:27.982Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:40:31.367Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:31.368Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:40:31.370Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:31.472Z: getUserRoleFromDb found role: admin
+2025-11-30T17:40:31.473Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:40:49.924Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:49.925Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:40:49.926Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:40:50.046Z: getUserRoleFromDb found role: admin
+2025-11-30T17:40:50.047Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:43:16.569Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:43:16.573Z: [CurrentUser] Role is student or missing, checking DB...
+2025-11-30T17:43:16.574Z: getUserRoleFromDb called for user 217e7031-c38a-4da4-9300-4abb124b5b8b, farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:43:16.807Z: getUserRoleFromDb found role: admin
+2025-11-30T17:43:16.808Z: [CurrentUser] Found role in DB: admin
+2025-11-30T17:43:19.373Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:43:19.374Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:43:30.308Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:43:30.309Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:43:31.543Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:43:31.544Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:43:36.678Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:43:38.909Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:43:38.910Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:43:39.395Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:43:39.396Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:43:56.173Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:43:56.174Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:44:24.191Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:44:24.191Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:48:10.471Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:48:11.913Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:48:11.914Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:49:01.789Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:49:01.789Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:49:46.578Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:49:46.579Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:49:46.580Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:49:53.079Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:49:53.080Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:50:56.980Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:50:58.931Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:50:58.932Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:00.069Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:00.070Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:04.889Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:04.890Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:04.892Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:05.592Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:05.593Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:05.593Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:09.604Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:09.605Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:09.606Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:12.471Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:12.474Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:12.475Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:19.932Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:19.933Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:19.935Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:21.000Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:21.001Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:21.001Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:21.563Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:21.567Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:21.568Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:22.027Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:22.028Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:22.028Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:22.587Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:22.588Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:22.589Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:23.354Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:23.354Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:23.355Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:23.763Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:23.764Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:23.765Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:24.190Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:24.191Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:24.192Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:25.275Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:25.277Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:25.277Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:25.700Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:25.701Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:25.702Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:26.153Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:26.154Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:26.154Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:26.588Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:26.588Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:26.589Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:27.103Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:27.103Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:27.104Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:27.554Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:27.559Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:27.559Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:28.070Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:28.071Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:28.071Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:29.442Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:29.442Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:29.443Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:29.879Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:29.879Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:29.880Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:30.447Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:30.448Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:30.448Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:31.317Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:31.319Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:31.320Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:31.754Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:31.755Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:31.755Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:32.148Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:32.148Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:32.156Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:32.970Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:32.971Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:32.971Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:33.448Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:33.448Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:33.449Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:33.934Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:33.935Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:33.935Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:34.298Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:34.299Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:34.300Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:34.765Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:34.766Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:34.766Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:35.157Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:35.157Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:35.158Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:35.579Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:35.580Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:35.580Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:37.391Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:37.393Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:37.394Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:40.194Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:40.197Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:40.198Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:42.689Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:42.690Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:42.690Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:43.294Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:43.295Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:43.295Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:43.809Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:43.810Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:43.811Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:44.277Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:44.278Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:44.278Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:44.752Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:44.752Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:44.753Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:45.270Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:45.271Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:45.271Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:45.711Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:45.712Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:45.712Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:46.124Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:46.125Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:46.125Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:46.626Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:46.627Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:46.627Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:47.056Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:47.057Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:47.057Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:47.513Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:47.514Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:47.514Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:47.977Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:47.978Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:47.979Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:48.343Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:48.345Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:48.345Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:48.700Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:48.701Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:48.701Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:49.077Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:49.078Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:49.078Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:49.499Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:49.501Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:49.502Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:49.980Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:49.981Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:49.981Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:50.393Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:50.394Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:50.394Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:50.883Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:50.884Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:50.884Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:51.383Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:51.384Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:51.385Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:51.863Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:51.864Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:51.865Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:52.316Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:52.317Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:52.318Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:52.755Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:52.756Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:52.756Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:53.101Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:53.101Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:53.102Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:53.502Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:53.502Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:53.503Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:54.052Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:54.053Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:54.053Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:54.447Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:54.448Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:54.449Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:54.831Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:54.832Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:54.832Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:55.254Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:55.255Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:55.256Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:55.679Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:55.680Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:55.680Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:56.148Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:56.149Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:56.150Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:56.572Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:56.573Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:56.573Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:57.097Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:57.098Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:57.099Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:57.615Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:57.616Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:57.616Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:57.999Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:58.000Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:58.000Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:58.503Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:58.504Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:58.505Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:59.015Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:59.016Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:59.016Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:51:59.569Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:51:59.569Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:51:59.570Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:00.067Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:00.068Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:00.068Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:00.554Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:00.554Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:00.555Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:01.087Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:01.088Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:01.088Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:01.590Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:01.591Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:01.591Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:02.063Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:02.063Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:02.064Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:02.612Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:02.613Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:02.613Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:02.988Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:02.989Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:02.989Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:03.379Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:03.380Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:03.380Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:04.311Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:04.312Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:04.312Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:04.676Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:04.677Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:04.677Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:05.453Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:05.454Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:05.455Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:06.032Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:06.033Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:06.034Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:06.709Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:06.710Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:06.712Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:07.423Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:07.425Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:07.425Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:08.221Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:08.222Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:08.223Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:08.704Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:08.705Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:08.705Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:10.159Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:10.160Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:10.161Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:10.647Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:10.647Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:10.648Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:11.096Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:11.097Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:11.097Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:11.724Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:11.725Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:11.725Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:12.195Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:12.196Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:12.196Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:12.642Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:12.643Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:12.643Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:13.121Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:13.122Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:13.122Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:13.572Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:13.572Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:13.573Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:14.002Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:14.003Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:14.003Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:14.398Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:14.399Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:14.399Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:15.666Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:15.668Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:15.668Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:16.847Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:16.848Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:16.849Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:17.266Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:17.267Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:17.267Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:17.726Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:17.727Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:17.727Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:18.116Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:18.117Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:18.117Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:18.557Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:18.557Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:18.557Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:19.756Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:19.757Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:19.758Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:20.182Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:20.183Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:20.183Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:20.639Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:20.640Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:20.640Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:21.038Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:21.039Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:21.039Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:21.582Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:21.582Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:21.583Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:21.963Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:21.964Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:21.964Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:22.368Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:22.369Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:22.369Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:22.800Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:22.801Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:22.801Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:23.228Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:23.230Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:23.230Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:23.702Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:23.702Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:23.703Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:24.076Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:24.077Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:24.077Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:24.503Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:24.504Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:24.504Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:24.980Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:24.981Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:24.981Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:25.364Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:25.365Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:25.365Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:25.887Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:25.887Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:25.888Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:26.315Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:26.316Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:26.317Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:26.692Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:26.693Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:26.693Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:27.079Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:27.080Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:27.081Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:28.522Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:28.522Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:28.523Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:28.985Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:28.986Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:28.987Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:29.443Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:29.444Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:29.444Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:29.844Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:29.845Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:29.846Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:30.272Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:30.273Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:30.274Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:30.683Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:30.683Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:30.684Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:31.060Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:31.061Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:31.061Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:31.497Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:31.497Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:31.498Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:31.850Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:31.851Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:31.851Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:32.238Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:32.239Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:32.239Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:32.622Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:32.623Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:32.623Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:33.298Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:33.300Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:33.300Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:33.756Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:33.757Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:33.758Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:34.300Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:34.300Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:34.302Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:35.209Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:35.210Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:35.210Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:35.689Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:35.689Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:35.690Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:36.108Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:36.109Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:36.109Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:36.749Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:36.750Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:36.751Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:37.453Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:37.454Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:37.454Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:38.042Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:38.043Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:38.044Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:38.548Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:38.549Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:38.549Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:39.143Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:39.144Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:39.144Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:39.631Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:39.632Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:39.633Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:40.388Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:40.388Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:40.389Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:40.747Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:40.747Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:40.748Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:41.099Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:41.099Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:41.100Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:41.552Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:41.553Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:41.554Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:41.889Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:41.890Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:41.890Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:42.203Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:42.204Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:42.204Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:42.602Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:42.602Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:42.603Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:42.963Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:42.963Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:42.964Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:43.313Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:43.314Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:43.314Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:43.688Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:43.688Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:43.689Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:45.022Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:45.022Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:45.023Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:45.402Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:45.403Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:45.403Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:45.726Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:45.727Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:45.727Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:46.141Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:46.141Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:46.142Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:46.632Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:46.632Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:46.633Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:52:47.234Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:52:47.235Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:52:47.235Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:59:16.223Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T17:59:16.232Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:59:16.233Z: [CurrentUser] Found role in claims: admin
+2025-11-30T17:59:47.680Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T17:59:47.682Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:01:49.846Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T18:01:49.848Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:01:49.849Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:01:51.315Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T18:01:51.316Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:01:51.316Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:12:37.914Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T18:12:37.925Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:12:37.925Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:15:12.397Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T18:15:12.400Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:15:12.400Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:15:14.560Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T18:15:14.561Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:15:14.562Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:15:18.811Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T18:15:18.812Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:15:18.813Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:15:18.855Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:15:18.856Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:17:40.411Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T18:17:40.425Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:17:40.425Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:21:26.993Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell undefined
+2025-11-30T18:33:19.527Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:33:19.535Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:35:56.093Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:35:56.095Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:42:13.307Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:42:13.327Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:44:29.137Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:44:29.139Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:44:29.497Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:44:29.499Z: [CurrentUser] Found role in claims: admin
+2025-11-30T18:48:28.670Z: [CurrentUser] Fetching user 217e7031-c38a-4da4-9300-4abb124b5b8b for farewell c18617f6-9221-40a7-b801-c2808a44c7cb
+2025-11-30T18:48:28.676Z: [CurrentUser] Found role in claims: admin

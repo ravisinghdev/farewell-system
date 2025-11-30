@@ -1,6 +1,6 @@
 import { getTimelineEventsAction } from "@/app/actions/dashboard-actions";
 import { CreateEventDialog } from "@/components/dashboard/create-event-dialog";
-import { TimelineView } from "@/components/dashboard/timeline-view";
+import { RealtimeTimeline } from "@/components/dashboard/realtime-timeline";
 import { createClient } from "@/utils/supabase/server";
 import { CalendarClock } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -55,7 +55,7 @@ export default async function TimelinePage({ params }: TimelinePageProps) {
               </div>
             </div>
           ) : (
-            <TimelineView events={events} />
+            <RealtimeTimeline initialEvents={events} farewellId={id} />
           )}
         </div>
       </div>

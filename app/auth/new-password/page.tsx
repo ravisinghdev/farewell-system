@@ -22,7 +22,7 @@ export default function NewPasswordPage() {
     setLoading(false);
 
     if (error) alert(error.message);
-    else router.push("/auth/login");
+    else router.push("/auth/auth");
   }
 
   return (

@@ -7,6 +7,22 @@
  * @module lib/auth/roles-db
  */
 
+import { supabaseAdmin } from "@/utils/supabase/admin";
+import fs from "fs";
+import path from "path";
+
+function logToFile(message: string) {
+  try {
+    const logPath = path.join(process.cwd(), "debug-roles.log");
+    fs.appendFileSync(
+      logPath,
+      new Date().toISOString() + ": " + message + "\n"
+    );
+  } catch (e) {
+    // ignore logging errors
+  }
+}
+
 /**
  * Available user roles in the Farewell Management System.
  *
@@ -22,38 +38,44 @@ export type UserRoleName =
   | "student"
   | "teacher"
   | "parallel_admin"
-  | "main_admin";
+  | "main_admin"
+  | "admin";
 
 /**
- * Fetches a user's role from the database based on their user ID.
+ * Fetches a user's role from the database based on their user ID and farewell ID.
  *
- * This function queries the database to retrieve the role assigned to a specific user.
- * The role determines the user's permissions and access level throughout the application.
+ * This function queries the database to retrieve the role assigned to a specific user
+ * for a specific farewell event.
  *
  * @async
  * @param {string} userId - The unique identifier of the user
+ * @param {string} farewellId - The unique identifier of the farewell
  * @returns {Promise<UserRoleName>} The user's role
- *
- * @example
- * const role = await getUserRoleFromDb("user-123");
- * if (role === "main_admin") {
- *   // Grant admin access
- * }
- *
- * @todo Implement actual database query to fetch role from users table
- * @todo Add error handling for invalid/non-existent users
- * @todo Consider caching role data for performance
  */
-export async function getUserRoleFromDb(userId: string): Promise<UserRoleName> {
-  // TODO: Implement actual role fetching from database
-  // Example implementation:
-  // const { data } = await supabase
-  //   .from('users')
-  //   .select('role')
-  //   .eq('id', userId)
-  //   .single();
-  // return data?.role || 'student';
+export async function getUserRoleFromDb(
+  userId: string,
+  farewellId: string
+): Promise<UserRoleName> {
+  logToFile(
+    `getUserRoleFromDb called for user ${userId}, farewell ${farewellId}`
+  );
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("farewell_members")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("farewell_id", farewellId)
+      .single();
 
-  // For now, return default role
-  return "student";
+    if (error || !data) {
+      logToFile(`getUserRoleFromDb error or no data: ${JSON.stringify(error)}`);
+      return "student";
+    }
+
+    logToFile(`getUserRoleFromDb found role: ${data.role}`);
+    return (data.role as UserRoleName) || "student";
+  } catch (e) {
+    logToFile(`getUserRoleFromDb exception: ${e}`);
+    return "student";
+  }
 }

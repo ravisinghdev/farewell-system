@@ -1,18 +1,9 @@
-/**
- * Root layout for the entire application.
- *
- * This layout wraps all pages and provides:
- * - Global styles
- * - Theme provider
- * - Toast notifications
- * - HTML metadata
- */
-
 import React from "react";
 import type { Metadata, Viewport } from "next";
 import Provider from "./Provider";
 import "./globals.css";
 import { Toaster } from "sonner";
+import { GeminiAssistant } from "@/components/ai/GeminiAssistant";
 
 // Metadata configuration for SEO and social sharing
 export const metadata: Metadata = {
@@ -87,6 +78,7 @@ export default function RootLayout({
         <Provider>
           {children}
           <Toaster />
+          <GeminiAssistant />
         </Provider>
       </body>
     </html>

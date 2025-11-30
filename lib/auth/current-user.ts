@@ -10,6 +10,20 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { getUserRoleFromDb, type UserRoleName } from "./roles-db";
+import fs from "fs";
+import path from "path";
+
+function logToFile(message: string) {
+  try {
+    const logPath = path.join(process.cwd(), "debug-roles.log");
+    fs.appendFileSync(
+      logPath,
+      new Date().toISOString() + ": [CurrentUser] " + message + "\n"
+    );
+  } catch (e) {
+    // ignore
+  }
+}
 
 /**
  * Authenticated user object with role information.
@@ -25,6 +39,7 @@ import { getUserRoleFromDb, type UserRoleName } from "./roles-db";
  */
 export interface AuthUserWithRole {
   id: string;
+  name: string;
   email: string;
   role: UserRoleName;
   raw: any;
@@ -79,17 +94,44 @@ export interface AuthUserWithRole {
  *   // User has admin privileges
  * }
  */
-export async function getCurrentUserWithRole(): Promise<AuthUserWithRole | null> {
+export async function getCurrentUserWithRole(
+  farewellId?: string
+): Promise<AuthUserWithRole | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
 
   if (error || !data?.user) return null;
 
   const user = data.user;
-  const role = await getUserRoleFromDb(user.id);
+  let role: UserRoleName = "student";
+
+  logToFile(`Fetching user ${user.id} for farewell ${farewellId}`);
+
+  // Try to get role from Custom Claims (app_metadata)
+  if (farewellId && user.app_metadata?.farewells) {
+    const farewellRoles = user.app_metadata.farewells as Record<
+      string,
+      UserRoleName
+    >;
+    if (farewellRoles[farewellId]) {
+      role = farewellRoles[farewellId];
+      logToFile(`Found role in claims: ${role}`);
+    }
+  }
+
+  // Fallback: Fetch from DB if claims are missing or to ensure latest data
+  if (farewellId && role === "student") {
+    logToFile(`Role is student or missing, checking DB...`);
+    const dbRole = await getUserRoleFromDb(user.id, farewellId);
+    if (dbRole) {
+      role = dbRole;
+      logToFile(`Found role in DB: ${role}`);
+    }
+  }
 
   return {
     id: user.id,
+    name: user.user_metadata.full_name,
     email: user.email ?? "",
     role,
     raw: user,

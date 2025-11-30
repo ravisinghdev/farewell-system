@@ -102,10 +102,7 @@ export async function updateSession(request: NextRequest) {
           member = data;
         }
 
-        console.log("Middleware: DB Fallback Member:", member);
-
         if (!member) {
-          console.log("Middleware: Redirecting to /welcome");
           return NextResponse.redirect(new URL("/welcome", request.url));
         }
       }

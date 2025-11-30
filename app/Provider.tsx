@@ -1,5 +1,6 @@
 import { ThemeProvider } from "next-themes";
 import { FC, ReactNode } from "react";
+import { SearchProvider } from "@/components/landing/SearchProvider";
 
 interface IProviderProps {
   children: ReactNode;
@@ -13,7 +14,7 @@ const Provider: FC<IProviderProps> = ({ children }) => {
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <SearchProvider>{children}</SearchProvider>
     </ThemeProvider>
   );
 };
