@@ -443,3 +443,16 @@ export async function getDashboardStatsAction(
     members: membersCount || 0,
   };
 }
+
+export async function getRecentTransactionsAction(farewellId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("contributions")
+    .select("*, users:user_id(full_name, avatar_url)")
+    .eq("farewell_id", farewellId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) return [];
+  return data;
+}

@@ -14,6 +14,8 @@ const contributionSchema = z.object({
   farewellId: z.string().min(1, "Farewell ID is required"),
 });
 
+import { checkIsAdmin } from "@/lib/auth/roles";
+
 async function isFarewellAdmin(
   supabase: any,
   userId: string,
@@ -23,10 +25,8 @@ async function isFarewellAdmin(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (
-    user?.user_metadata?.role &&
-    ["admin", "main_admin", "parallel_admin"].includes(user.user_metadata.role)
-  ) {
+
+  if (user?.user_metadata?.role && checkIsAdmin(user.user_metadata.role)) {
     return true;
   }
 
@@ -38,11 +38,7 @@ async function isFarewellAdmin(
     .eq("user_id", userId)
     .single();
 
-  return (
-    member?.role === "admin" ||
-    member?.role === "main_admin" ||
-    member?.role === "parallel_admin"
-  );
+  return checkIsAdmin(member?.role);
 }
 
 export async function createContributionAction(
@@ -179,10 +175,7 @@ export async function getAllContributionsAction(farewellId: string) {
   return data;
 }
 
-export async function updateContributionStatusAction(
-  contributionId: string,
-  status: "verified" | "rejected"
-) {
+export async function verifyContributionAction(contributionId: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -190,7 +183,6 @@ export async function updateContributionStatusAction(
 
   if (!user) return { error: "Not authenticated" };
 
-  // Need to fetch contribution to get farewell_id to check permissions
   const { data: contribution } = await supabaseAdmin
     .from("contributions")
     .select("farewell_id")
@@ -208,42 +200,125 @@ export async function updateContributionStatusAction(
 
   const { error } = await supabaseAdmin
     .from("contributions")
-    .update({ status })
+    .update({ status: "verified" })
     .eq("id", contributionId);
 
   if (error) {
-    console.error("Update contribution status error:", error);
-    return { error: "Failed to update status" };
+    console.error("Verify contribution error:", error);
+    return { error: "Failed to verify contribution" };
   }
 
-  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/${contribution.farewell_id}/admin/contributions`);
+  revalidatePath(`/dashboard/${contribution.farewell_id}/contributions/manage`);
   return { success: true };
 }
 
-export async function getContributionStatsAction(farewellId: string) {
+export async function approveContributionAction(contributionId: string) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return { total: 0 };
+  if (!user) return { error: "Not authenticated" };
 
-  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
-  if (!authorized) return { total: 0 };
-
-  const { data, error } = await supabaseAdmin
+  const { data: contribution } = await supabaseAdmin
     .from("contributions")
-    .select("amount")
-    .eq("farewell_id", farewellId)
-    .eq("status", "verified");
+    .select("farewell_id")
+    .eq("id", contributionId)
+    .single();
+
+  if (!contribution) return { error: "Contribution not found" };
+
+  const authorized = await isFarewellAdmin(
+    supabase,
+    user.id,
+    contribution.farewell_id
+  );
+  if (!authorized) return { error: "Unauthorized" };
+
+  // Call the atomic RPC function
+  const { data, error } = await supabaseAdmin.rpc("approve_contribution", {
+    _contribution_id: contributionId,
+    _admin_id: user.id,
+  });
 
   if (error) {
-    console.error("Fetch stats error:", error);
-    return { total: 0 };
+    console.error("Approve contribution error:", error);
+    return { error: error.message };
   }
 
-  const total = data.reduce((sum, c) => sum + Number(c.amount), 0);
-  return { total };
+  if (!data.success) {
+    return { error: data.error || "Failed to approve contribution" };
+  }
+
+  revalidatePath(`/dashboard/${contribution.farewell_id}/admin/contributions`);
+  revalidatePath(`/dashboard/${contribution.farewell_id}/contributions/manage`);
+  revalidatePath(`/dashboard/${contribution.farewell_id}`);
+  return { success: true };
+}
+
+export async function rejectContributionAction(contributionId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: contribution } = await supabaseAdmin
+    .from("contributions")
+    .select("farewell_id")
+    .eq("id", contributionId)
+    .single();
+
+  if (!contribution) return { error: "Contribution not found" };
+
+  const authorized = await isFarewellAdmin(
+    supabase,
+    user.id,
+    contribution.farewell_id
+  );
+  if (!authorized) return { error: "Unauthorized" };
+
+  const { error } = await supabaseAdmin
+    .from("contributions")
+    .update({ status: "rejected" })
+    .eq("id", contributionId);
+
+  if (error) {
+    console.error("Reject contribution error:", error);
+    return { error: "Failed to reject contribution" };
+  }
+
+  revalidatePath(`/dashboard/${contribution.farewell_id}/admin/contributions`);
+  revalidatePath(`/dashboard/${contribution.farewell_id}/contributions/manage`);
+  return { success: true };
+}
+
+export async function getFinancialStatsAction(farewellId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { total_collected: 0, balance: 0, contribution_count: 0 };
+
+  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  if (!authorized)
+    return { total_collected: 0, balance: 0, contribution_count: 0 };
+
+  const { data, error } = await supabaseAdmin
+    .from("farewell_financials")
+    .select("*")
+    .eq("farewell_id", farewellId)
+    .single();
+
+  if (error) {
+    // If no record, return zeros (might be first time)
+    return { total_collected: 0, balance: 0, contribution_count: 0 };
+  }
+
+  return data;
 }
 
 export async function getLeaderboardAction(farewellId: string) {
@@ -293,4 +368,125 @@ export async function getLeaderboardAction(farewellId: string) {
   return Array.from(leaderboardMap.values())
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 50); // Top 50
+}
+
+export async function getReceiptDetailsAction(receiptId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // First try to fetch as normal user (RLS will handle own records)
+  let { data, error } = await supabase
+    .from("contributions")
+    .select("*, users:user_id(full_name, email)")
+    .eq("id", receiptId)
+    .single();
+
+  if (data) return { data };
+
+  // If not found, check if admin
+  if (error || !data) {
+    // We need to know the farewellId to check admin status.
+    // But we don't have it easily from just receiptId without querying.
+    // So let's query admin client to find the farewellId first.
+    const { data: adminData } = await supabaseAdmin
+      .from("contributions")
+      .select("farewell_id")
+      .eq("id", receiptId)
+      .single();
+
+    if (!adminData) return { error: "Receipt not found" };
+
+    const authorized = await isFarewellAdmin(
+      supabase,
+      user.id,
+      adminData.farewell_id
+    );
+
+    if (authorized) {
+      const { data: adminReceipt } = await supabaseAdmin
+        .from("contributions")
+        .select("*, users:user_id(full_name, email)")
+        .eq("id", receiptId)
+        .single();
+      return { data: adminReceipt };
+    }
+  }
+
+  return { error: "Receipt not found or unauthorized" };
+}
+
+export async function searchMembersAction(farewellId: string, query: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // Check admin
+  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  if (!authorized) return { error: "Unauthorized" };
+
+  const { data, error } = await supabase
+    .from("farewell_members")
+    .select("user_id, users(full_name, email)")
+    .eq("farewell_id", farewellId)
+    .ilike("users.email", `%${query}%`) // Simple search by email for now
+    .limit(10);
+
+  if (error) {
+    console.error("Search members error:", error);
+    return { error: "Failed to search members" };
+  }
+
+  // Flatten structure
+  const results = data.map((item: any) => ({
+    userId: item.user_id,
+    name: item.users?.full_name || "Unknown",
+    email: item.users?.email || "No Email",
+  }));
+
+  return { success: true, data: results };
+}
+
+export async function createManualContributionAction(
+  farewellId: string,
+  userId: string,
+  amount: number,
+  method: string,
+  transactionId: string | null,
+  notes: string | null
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  if (!authorized) return { error: "Unauthorized" };
+
+  const { error } = await supabaseAdmin.from("contributions").insert({
+    user_id: userId,
+    farewell_id: farewellId,
+    amount,
+    method: method as any,
+    transaction_id: transactionId,
+    status: "verified", // Auto-verify manual entries
+    metadata: { notes, added_by: user.id },
+  });
+
+  if (error) {
+    console.error("Manual contribution error:", error);
+    return { error: "Failed to create contribution" };
+  }
+
+  revalidatePath(`/dashboard/${farewellId}/admin/contributions`);
+  revalidatePath(`/dashboard/${farewellId}/contributions/manage`);
+  return { success: true };
 }

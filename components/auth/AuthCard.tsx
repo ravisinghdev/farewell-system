@@ -80,7 +80,10 @@ function strengthLabel(strength: PasswordStrength) {
 /* Component                                                          */
 /* ------------------------------------------------------------------ */
 
+import { useRouter } from "next/navigation";
+
 export function AuthCard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [loginLoading, setLoginLoading] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
@@ -113,8 +116,11 @@ export function AuthCard() {
           description: result.error,
           action: { label: "Close", onClick: () => toast.dismiss() },
         });
+      } else if (result?.redirectUrl) {
+        toast.success("Login successful!");
+        router.push(result.redirectUrl);
+        return; // Prevent finally block from stopping loading state immediately if desired, or just let it run
       }
-      // if loginAction redirects, we might never hit this line in production
     } catch (err) {
       console.error("Login error:", err);
       setLoginError("Unexpected error. Please try again.");
@@ -122,6 +128,12 @@ export function AuthCard() {
         description: "Something went wrong during login.",
       });
     } finally {
+      // Keep loading true if redirecting to prevent UI flash, or set to false
+      // If we redirect, the page will unload anyway.
+      // But if we setLoginLoading(false) immediately, the user might click again.
+      // Let's check if we are redirecting.
+      // Actually, since we don't have access to result here easily without refactoring,
+      // let's just set it false. The navigation will happen.
       setLoginLoading(false);
     }
   }

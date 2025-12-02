@@ -20,14 +20,9 @@ interface AnnouncementsClientProps {
 export default function AnnouncementsClient({
   announcements,
 }: AnnouncementsClientProps) {
-  const { user, farewell } = useFarewell();
+  const { user, farewell, isAdmin } = useFarewell();
   const farewellId = farewell.id;
   const userId = user.id;
-
-  // Check admin role from context
-  const isAdmin = ["admin", "parallel_admin", "main_admin"].includes(
-    farewell.role || ""
-  );
   const [filter, setFilter] = useState<"all" | "pinned" | "recent">("all");
 
   const filters = [

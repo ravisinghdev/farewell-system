@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -107,7 +108,8 @@ export async function uploadMediaAction(
   // Determine type
   const type = file.type.startsWith("video/") ? "video" : "image";
 
-  const { error: uploadError } = await supabase.storage
+  const adminClient = createAdminClient();
+  const { error: uploadError } = await adminClient.storage
     .from("memories")
     .upload(fileName, file);
 

@@ -41,8 +41,8 @@ export function TimelineView({ events }: TimelineViewProps) {
             )}
           >
             {/* Icon */}
-            <div className="absolute left-0 md:left-1/2 -translate-x-1/2 flex items-center justify-center w-10 h-10 rounded-full border bg-background shadow-sm z-10 group-hover:scale-110 transition-transform duration-300 group-hover:border-primary">
-              <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <div className="absolute left-0 md:left-1/2 -translate-x-1/2 flex items-center justify-center w-10 h-10 rounded-full border shadow-sm z-10 group-hover:scale-110 transition-transform duration-300 group-hover:border-primary">
+              <Icon className="w-5 h-5 transition-colors" />
             </div>
 
             {/* Content */}
@@ -55,18 +55,16 @@ export function TimelineView({ events }: TimelineViewProps) {
               <Card className="hover:shadow-md transition-shadow duration-300">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full">
                       {format(new Date(event.event_date), "MMM d, yyyy")}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs">
                       {format(new Date(event.event_date), "h:mm a")}
                     </span>
                   </div>
                   <h3 className="font-bold text-lg mb-1">{event.title}</h3>
                   {event.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {event.description}
-                    </p>
+                    <p className="text-sm">{event.description}</p>
                   )}
                 </CardContent>
               </Card>

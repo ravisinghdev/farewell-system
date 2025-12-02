@@ -21,6 +21,8 @@ import {
   Download,
   FileText,
   Filter,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import Link from "next/link";
+import { toast } from "sonner";
+import {
+  approveContributionAction,
+  rejectContributionAction,
+} from "@/app/actions/contribution-actions";
 
 export type Transaction = {
   id: string;
@@ -61,169 +68,14 @@ export type Transaction = {
   metadata?: any;
 };
 
-export const columns: ColumnDef<Transaction>[] = [
-  {
-    accessorKey: "users.full_name",
-    id: "full_name",
-    header: "User",
-    cell: ({ row }) => {
-      const user = row.original.users;
-      return (
-        <div className="flex items-center gap-2">
-          {user?.avatar_url ? (
-            <img
-              src={user.avatar_url}
-              alt={user.full_name}
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
-              {user?.full_name?.charAt(0) || "?"}
-            </div>
-          )}
-          <div className="flex flex-col">
-            <span className="font-medium">{user?.full_name || "Unknown"}</span>
-            <span className="text-xs text-muted-foreground">{user?.email}</span>
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "amount",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-      const formatted = new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR",
-      }).format(amount);
-
-      return <div className="font-bold">{formatted}</div>;
-    },
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string;
-      return (
-        <Badge
-          variant={
-            status === "verified"
-              ? "default" // Emerald/Green usually
-              : status === "rejected"
-              ? "destructive"
-              : "secondary"
-          }
-          className={`capitalize ${
-            status === "verified" ? "bg-emerald-500 hover:bg-emerald-600" : ""
-          }`}
-        >
-          {status}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "method",
-    header: "Method",
-    cell: ({ row }) => {
-      return (
-        <div className="capitalize">
-          {(row.getValue("method") as string).replace("_", " ")}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "created_at",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return (
-        <div className="text-muted-foreground text-sm">
-          {format(new Date(row.getValue("created_at")), "MMM d, yyyy HH:mm")}
-        </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const payment = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy Payment ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/dashboard/${
-                  // We need farewellId here, but it's not in the row data explicitly unless we add it or pass it.
-                  // Assuming we are in the context where we can get it or it's in the URL.
-                  // Actually, let's just use the ID from the URL in the page component,
-                  // but here we might need to construct the link.
-                  // For now, let's assume the parent passes a handler or we just link to the receipt page.
-                  // Wait, the receipt page is /dashboard/[id]/contributions/receipt/[receiptId]
-                  // We don't have [id] (farewellId) here easily.
-                  // Let's assume we pass farewellId as a prop to the table or use a callback.
-                  // For simplicity, I'll just show "View Receipt" if I can get the URL.
-                  "#"
-                }`}
-                className="cursor-pointer"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // This is a bit hacky, better to pass farewellId
-                }}
-              >
-                View Details
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
 export function TransactionTable({
   data,
   farewellId,
+  isAdmin = false,
 }: {
   data: Transaction[];
   farewellId: string;
+  isAdmin?: boolean;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -232,6 +84,211 @@ export function TransactionTable({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [isProcessing, setIsProcessing] = React.useState(false);
+
+  const handleApprove = async (id: string) => {
+    setIsProcessing(true);
+    try {
+      const result = await approveContributionAction(id);
+      if (result.success) {
+        toast.success("Contribution approved successfully");
+      } else {
+        toast.error(result.error || "Failed to approve contribution");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    setIsProcessing(true);
+    try {
+      const result = await rejectContributionAction(id);
+      if (result.success) {
+        toast.success("Contribution rejected");
+      } else {
+        toast.error(result.error || "Failed to reject contribution");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const columns: ColumnDef<Transaction>[] = [
+    {
+      accessorKey: "users.full_name",
+      id: "full_name",
+      header: "User",
+      cell: ({ row }) => {
+        const user = row.original.users;
+        return (
+          <div className="flex items-center gap-2">
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.full_name}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
+                {user?.full_name?.charAt(0) || "?"}
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="font-medium">
+                {user?.full_name || "Unknown"}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {user?.email}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "amount",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Amount
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("amount"));
+        const formatted = new Intl.NumberFormat("en-IN", {
+          style: "currency",
+          currency: "INR",
+        }).format(amount);
+
+        return <div className="font-bold">{formatted}</div>;
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <Badge
+            variant={
+              status === "verified"
+                ? "default" // Emerald/Green usually
+                : status === "rejected"
+                ? "destructive"
+                : "secondary"
+            }
+            className={`capitalize ${
+              status === "verified" ? "bg-emerald-500 hover:bg-emerald-600" : ""
+            }`}
+          >
+            {status}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "method",
+      header: "Method",
+      cell: ({ row }) => {
+        return (
+          <div className="capitalize">
+            {(row.getValue("method") as string).replace("_", " ")}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Date
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        return (
+          <div className="text-muted-foreground text-sm">
+            {format(new Date(row.getValue("created_at")), "MMM d, yyyy HH:mm")}
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const payment = row.original;
+
+        return (
+          <div className="flex items-center gap-2">
+            {isAdmin && payment.status === "pending" && (
+              <>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                  onClick={() => handleApprove(payment.id)}
+                  disabled={isProcessing}
+                  title="Approve"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                  onClick={() => handleReject(payment.id)}
+                  disabled={isProcessing}
+                  title="Reject"
+                >
+                  <XCircle className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => navigator.clipboard.writeText(payment.id)}
+                >
+                  Copy Payment ID
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/dashboard/${farewellId}/contributions/receipt/${payment.id}`}
+                    className="cursor-pointer"
+                  >
+                    View Receipt
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      },
+    },
+  ];
 
   const table = useReactTable({
     data,

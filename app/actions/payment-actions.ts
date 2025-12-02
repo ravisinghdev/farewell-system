@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { supabaseAdmin } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 export async function recordCashPaymentAction(
   farewellId: string,
@@ -13,10 +14,7 @@ export async function recordCashPaymentAction(
   const user = await getCurrentUserWithRole(farewellId);
   if (!user) return { error: "Not authenticated" };
 
-  const isAdmin =
-    user.role === "main_admin" ||
-    user.role === "parallel_admin" ||
-    user.role === "admin";
+  const isAdmin = checkIsAdmin(user.role);
   if (!isAdmin) return { error: "Unauthorized" };
 
   const supabase = await createClient();

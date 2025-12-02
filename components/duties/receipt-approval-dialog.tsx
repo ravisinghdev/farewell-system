@@ -11,10 +11,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { approveReceiptAction, rejectReceiptAction } from "@/actions/duties";
+import {
+  approveDutyReceiptAction,
+  rejectDutyReceiptAction,
+} from "@/app/actions/duty-actions";
 import { toast } from "sonner";
 import { Loader2, Check, X } from "lucide-react";
 import Image from "next/image";
+import { useFarewell } from "@/components/providers/farewell-provider";
 
 interface ReceiptApprovalDialogProps {
   receipt: any;
@@ -29,6 +33,7 @@ export function ReceiptApprovalDialog({
   onOpenChange,
   onSuccess,
 }: ReceiptApprovalDialogProps) {
+  const { farewell } = useFarewell();
   const [rejecting, setRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
@@ -38,7 +43,7 @@ export function ReceiptApprovalDialog({
   const handleApprove = async () => {
     setProcessing(true);
     try {
-      await approveReceiptAction(receipt.id);
+      await approveDutyReceiptAction(farewell.id, receipt.id);
       toast.success("Receipt approved");
       onSuccess();
       onOpenChange(false);
@@ -53,7 +58,7 @@ export function ReceiptApprovalDialog({
     if (!rejectionReason) return;
     setProcessing(true);
     try {
-      await rejectReceiptAction(receipt.id, rejectionReason);
+      await rejectDutyReceiptAction(farewell.id, receipt.id, rejectionReason);
       toast.success("Receipt rejected");
       onSuccess();
       onOpenChange(false);

@@ -33,19 +33,17 @@ export function HighlightCard({ highlight }: HighlightCardProps) {
       )}
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start gap-2">
-          <h3 className="font-bold text-xl leading-tight group-hover:text-primary transition-colors">
+          <h3 className="font-bold text-xl leading-tight transition-colors">
             {highlight.title}
           </h3>
-          <span className="text-xs text-muted-foreground whitespace-nowrap mt-1">
+          <span className="text-xs whitespace-nowrap mt-1">
             {format(new Date(highlight.created_at), "MMM d")}
           </span>
         </div>
       </CardHeader>
       <CardContent className="flex-1">
         {highlight.description && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {highlight.description}
-          </p>
+          <p className="text-sm line-clamp-3">{highlight.description}</p>
         )}
       </CardContent>
       {highlight.link && (

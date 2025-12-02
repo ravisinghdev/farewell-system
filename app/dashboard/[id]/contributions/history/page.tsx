@@ -6,6 +6,7 @@ import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
 import { TransactionTable } from "@/components/admin/transaction-table";
 import { GlassCard } from "@/components/ui/glass-card";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 export default async function HistoryPage({
   params,
@@ -17,10 +18,7 @@ export default async function HistoryPage({
 
   if (!user) redirect("/auth");
 
-  const isAdmin =
-    user.role === "main_admin" ||
-    user.role === "parallel_admin" ||
-    user.role === "admin";
+  const isAdmin = checkIsAdmin(user.role);
 
   // Fetch data based on role
   // Admins see ALL transactions
@@ -43,7 +41,11 @@ export default async function HistoryPage({
       </div>
 
       <GlassCard className="p-6">
-        <TransactionTable data={transactions as any} farewellId={id} />
+        <TransactionTable
+          data={transactions as any}
+          farewellId={id}
+          isAdmin={isAdmin}
+        />
       </GlassCard>
     </div>
   );

@@ -1,13 +1,15 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+
 import { useReactToPrint } from "react-to-print";
 import { Button } from "@/components/ui/button";
 import { ReceiptView } from "@/components/contributions/receipt-view";
-import { ArrowLeft, Printer, Loader2 } from "lucide-react";
+import { ArrowLeft, Printer, Loader2, Download } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client";
 import { useParams } from "next/navigation";
+import { getReceiptDetailsAction } from "@/app/actions/contribution-actions";
 
 export default function ReceiptDetailsPage() {
   const params = useParams();
@@ -17,33 +19,91 @@ export default function ReceiptDetailsPage() {
   const componentRef = useRef<HTMLDivElement>(null);
   const [contribution, setContribution] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
     documentTitle: `Receipt-${receiptId}`,
   });
 
+  const handleDownload = async () => {
+    if (!componentRef.current) return;
+
+    try {
+      // Dynamic import to avoid SSR issues
+      const html2canvas = (await import("html2canvas")).default;
+      const jsPDF = (await import("jspdf")).default;
+
+      const canvas = await html2canvas(componentRef.current, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`Receipt-${receiptId}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
+
   useEffect(() => {
     async function fetchReceipt() {
-      const supabase = createClient();
+      try {
+        const result = await getReceiptDetailsAction(receiptId);
 
-      // Fetch contribution with user details
-      const { data, error } = await supabase
-        .from("contributions")
-        .select("*, users(full_name, email)")
-        .eq("id", receiptId)
-        .single();
-
-      if (data) {
-        setContribution({
-          ...data,
-          user: Array.isArray(data.users) ? data.users[0] : data.users,
-        });
+        if (result.error) {
+          console.error("Error fetching receipt:", result.error);
+          setError(result.error);
+        } else if (result.data) {
+          const data = result.data;
+          setContribution({
+            ...data,
+            user: Array.isArray(data.users) ? data.users[0] : data.users,
+          });
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        setError("An unexpected error occurred");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     fetchReceipt();
+
+    // Real-time subscription
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`receipt-${receiptId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "contributions",
+          filter: `id=eq.${receiptId}`,
+        },
+        () => {
+          fetchReceipt();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [receiptId]);
 
   if (loading) {
@@ -74,15 +134,24 @@ export default function ReceiptDetailsPage() {
         >
           <ArrowLeft className="w-4 h-4" /> Back to List
         </Link>
-        <Button
-          onClick={() => handlePrint()}
-          className="bg-white text-black hover:bg-white/90"
-        >
-          <Printer className="w-4 h-4 mr-2" /> Print / Download PDF
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={handleDownload}
+            variant="outline"
+            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+          >
+            <Download className="w-4 h-4 mr-2" /> Download PDF
+          </Button>
+          <Button
+            onClick={() => handlePrint()}
+            className="bg-white text-black hover:bg-white/90"
+          >
+            <Printer className="w-4 h-4 mr-2" /> Print Receipt
+          </Button>
+        </div>
       </div>
 
-      <div className="bg-zinc-900/50 p-8 rounded-xl border border-white/10 overflow-hidden">
+      <div className="bg-zinc-900/50 p-8 rounded-xl border border-white/10 overflow-x-auto">
         <div className="scale-[0.8] origin-top md:scale-100">
           <ReceiptView
             ref={componentRef}

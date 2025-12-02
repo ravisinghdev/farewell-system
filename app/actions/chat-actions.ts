@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { ActionState } from "@/types/custom";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { z } from "zod";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 // --- TYPES ---
 
@@ -855,7 +856,7 @@ export async function addMemberToChannelAction(
     .eq("user_id", user.id)
     .single();
 
-  let isAdmin = member?.role === "admin" || member?.role === "main_admin";
+  let isAdmin = checkIsAdmin(member?.role);
 
   if (!isAdmin) {
     const { data: channel } = await supabase

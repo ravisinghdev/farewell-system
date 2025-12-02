@@ -81,37 +81,45 @@ export async function verifyPaymentAction(
         .single();
 
       if (existing) {
-        return { success: true, alreadyProcessed: true };
+        return {
+          success: true,
+          alreadyProcessed: true,
+          contributionId: existing.id,
+        };
       }
 
       // Fetch full payment details from Razorpay
       const payment = await razorpay.payments.fetch(razorpayPaymentId);
 
       // Insert contribution
-      const { error } = await supabase.from("contributions").insert({
-        user_id: user.id,
-        farewell_id: farewellId,
-        amount: amount, // Amount in rupees
-        method: "razorpay",
-        transaction_id: razorpayPaymentId,
-        razorpay_order_id: razorpayOrderId,
-        razorpay_payment_id: razorpayPaymentId,
-        razorpay_signature: razorpaySignature,
-        status: "verified",
-        metadata: {
-          email: payment.email,
-          contact: payment.contact,
-          method: payment.method,
-          wallet: payment.wallet,
-          vpa: payment.vpa,
-          invoice_id: payment.invoice_id,
-          bank: payment.bank,
-          card_id: payment.card_id,
-          fee: payment.fee,
-          tax: payment.tax,
-          created_at: payment.created_at,
-        },
-      });
+      const { data, error } = await supabase
+        .from("contributions")
+        .insert({
+          user_id: user.id,
+          farewell_id: farewellId,
+          amount: amount, // Amount in rupees
+          method: "razorpay",
+          transaction_id: razorpayPaymentId,
+          razorpay_order_id: razorpayOrderId,
+          razorpay_payment_id: razorpayPaymentId,
+          razorpay_signature: razorpaySignature,
+          status: "paid_pending_admin_verification",
+          metadata: {
+            email: payment.email,
+            contact: payment.contact,
+            method: payment.method,
+            wallet: payment.wallet,
+            vpa: payment.vpa,
+            invoice_id: payment.invoice_id,
+            bank: payment.bank,
+            card_id: payment.card_id,
+            fee: payment.fee,
+            tax: payment.tax,
+            created_at: payment.created_at,
+          },
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error("DB Insert Error:", error);
@@ -119,7 +127,7 @@ export async function verifyPaymentAction(
       }
 
       revalidatePath(`/dashboard/${farewellId}/contributions`);
-      return { success: true };
+      return { success: true, contributionId: data.id };
     } else {
       return { error: "Invalid signature" };
     }

@@ -8,6 +8,7 @@ import {
 } from "@/app/actions/dashboard-actions";
 import { AnnouncementCard } from "./announcement-card";
 import { Bell } from "lucide-react";
+import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 
 import { useFarewell } from "@/components/providers/farewell-provider";
 
@@ -30,56 +31,13 @@ export function RealtimeAnnouncements({
   const isAdmin = ["admin", "parallel_admin", "main_admin"].includes(
     farewell.role || ""
   );
-  const [announcements, setAnnouncements] =
-    useState<Announcement[]>(initialAnnouncements);
-  const supabase = createClient();
+  useRealtimeSubscription({
+    table: "announcements",
+    filter: `farewell_id=eq.${farewellId}`,
+  });
 
-  useEffect(() => {
-    setAnnouncements(initialAnnouncements);
-  }, [initialAnnouncements]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel(`announcements-${farewellId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "announcements",
-          filter: `farewell_id=eq.${farewellId}`,
-        },
-        async (payload) => {
-          console.log("🔔 Realtime event:", payload.eventType, payload);
-
-          // Fetch fresh data for INSERT and UPDATE
-          if (
-            payload.eventType === "INSERT" ||
-            payload.eventType === "UPDATE"
-          ) {
-            const newData = await getAnnouncementsAction(farewellId);
-            setAnnouncements(newData);
-          }
-          // Optimistically remove for DELETE
-          else if (payload.eventType === "DELETE") {
-            setAnnouncements((prev) =>
-              prev.filter((a) => a.id !== payload.old.id)
-            );
-          }
-        }
-      )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          console.log("✅ Realtime connected for announcements");
-        } else if (status === "CHANNEL_ERROR") {
-          console.error("❌ Realtime connection error");
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [farewellId, supabase]);
+  // We can just use the prop directly since router.refresh() will update it
+  const announcements = initialAnnouncements;
 
   // Filter announcements based on filter prop
   const filteredAnnouncements = announcements.filter((announcement) => {
@@ -97,8 +55,8 @@ export function RealtimeAnnouncements({
   if (filteredAnnouncements.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
-        <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
-          <Bell className="h-10 w-10 text-muted-foreground/50" />
+        <div className="h-20 w-20 rounded-full flex items-center justify-center">
+          <Bell className="h-10 w-10 opacity-50" />
         </div>
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">
@@ -108,7 +66,7 @@ export function RealtimeAnnouncements({
               ? "No recent announcements"
               : "No announcements yet"}
           </h3>
-          <p className="text-muted-foreground max-w-sm">
+          <p className="max-w-sm">
             {filter === "all"
               ? "Check back later for updates from the organizers."
               : "Try changing the filter to see more announcements."}

@@ -2,12 +2,13 @@ import { ContributionDashboard } from "@/components/contributions/contribution-d
 import {
   getAllContributionsAction,
   getContributionsAction,
-  getContributionStatsAction,
+  getFinancialStatsAction,
 } from "@/app/actions/contribution-actions";
 import { getFarewellBudgetDetailsAction } from "@/app/actions/budget-actions";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
 import { BudgetManager } from "@/components/admin/budget-manager";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 export default async function ContributionOverviewPage({
   params,
@@ -19,7 +20,7 @@ export default async function ContributionOverviewPage({
 
   if (!user) redirect("/auth");
 
-  const isAdmin = user.role === "main_admin" || user.role === "parallel_admin";
+  const isAdmin = checkIsAdmin(user.role);
 
   // Fetch contributions based on role
   const contributionsResult = isAdmin
@@ -31,8 +32,8 @@ export default async function ContributionOverviewPage({
     : (contributionsResult as any).contributions || [];
 
   // Fetch stats
-  const statsResult = await getContributionStatsAction(id);
-  const stats = { total: statsResult.total || 0 };
+  const statsResult = await getFinancialStatsAction(id);
+  const stats = { total: statsResult.totalCollected || 0 };
 
   // Fetch budget details
   const budgetResult = await getFarewellBudgetDetailsAction(id);

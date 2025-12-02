@@ -19,7 +19,7 @@ export default async function ReceiptPage({
 
   const contributions = await getContributionsAction(id);
   const verifiedContributions = contributions.filter(
-    (c) => c.status === "verified"
+    (c) => c.status === "verified" || c.status === "approved"
   );
 
   return (
@@ -102,7 +102,9 @@ export default async function ReceiptPage({
                       ₹{c.amount.toLocaleString()}
                     </p>
                     <p className="text-xs text-emerald-500 font-medium uppercase tracking-wider">
-                      Paid & Verified
+                      {c.status === "approved"
+                        ? "Paid & Approved"
+                        : "Paid & Verified"}
                     </p>
                   </div>
                   <Link href={`/dashboard/${id}/contributions/receipt/${c.id}`}>

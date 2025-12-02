@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { CalendarClock } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getFarewellRole } from "@/lib/auth/claims";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 interface TimelinePageProps {
   params: Promise<{
@@ -23,7 +24,7 @@ export default async function TimelinePage({ params }: TimelinePageProps) {
 
   const events = await getTimelineEventsAction(id);
   const role = getFarewellRole(user, id);
-  const isAdmin = role === "parallel_admin" || role === "main_admin";
+  const isAdmin = checkIsAdmin(role);
 
   return (
     <div className="flex flex-col h-full bg-muted/10">

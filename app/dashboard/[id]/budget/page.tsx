@@ -1,5 +1,5 @@
 import { getFarewellBudgetDetailsAction } from "@/app/actions/budget-actions";
-import { getContributionStatsAction } from "@/app/actions/contribution-actions";
+import { getFinancialStatsAction } from "@/app/actions/contribution-actions";
 import { getExpensesAction } from "@/app/actions/expense-actions";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
@@ -19,6 +19,7 @@ import {
 import { BudgetCharts } from "@/components/admin/budget-charts";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 export default async function BudgetPage({
   params,
@@ -32,10 +33,7 @@ export default async function BudgetPage({
     redirect("/auth");
   }
 
-  const isAdmin =
-    user.role === "main_admin" ||
-    user.role === "parallel_admin" ||
-    user.role === "admin";
+  const isAdmin = checkIsAdmin(user.role);
 
   if (!isAdmin) {
     return (
@@ -72,13 +70,13 @@ export default async function BudgetPage({
   // Fetch data
   const [budgetResult, statsResult, expensesResult] = await Promise.all([
     getFarewellBudgetDetailsAction(id),
-    getContributionStatsAction(id),
+    getFinancialStatsAction(id),
     getExpensesAction(id),
   ]);
 
   const budgetGoal = budgetResult.budgetGoal || 0;
   const members = budgetResult.members || [];
-  const totalCollected = statsResult.total || 0;
+  const totalCollected = statsResult.total_collected || 0;
   const expenses = expensesResult.expenses || [];
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 

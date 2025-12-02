@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
+
 import {
   Table,
   TableBody,
@@ -20,11 +22,14 @@ import {
 } from "@/components/ui/dialog";
 import {
   getAllContributionsAction,
-  updateContributionStatusAction,
+  verifyContributionAction,
+  approveContributionAction,
+  rejectContributionAction,
 } from "@/app/actions/contribution-actions";
 import { format } from "date-fns";
-import { Loader2, Check, X, Eye } from "lucide-react";
+import { Loader2, Check, X, Eye, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { AddTransactionDialog } from "./add-transaction-dialog";
 import Image from "next/image";
 
 interface ContributionManagerProps {
@@ -44,6 +49,27 @@ export function ContributionManager({
     if (initialData.length === 0) {
       loadContributions();
     }
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("admin-contributions")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "contributions",
+          filter: `farewell_id=eq.${farewellId}`,
+        },
+        () => {
+          loadContributions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [farewellId]);
 
   async function loadContributions() {
@@ -53,17 +79,38 @@ export function ContributionManager({
     setLoading(false);
   }
 
-  async function handleStatusUpdate(
-    id: string,
-    status: "verified" | "rejected"
-  ) {
+  async function handleVerify(id: string) {
     setProcessingId(id);
-    const result = await updateContributionStatusAction(id, status);
+    const result = await verifyContributionAction(id);
     if (result.success) {
-      toast.success(`Contribution ${status}`);
+      toast.success("Contribution verified");
       loadContributions();
     } else {
-      toast.error("Failed to update status");
+      toast.error("Failed to verify");
+    }
+    setProcessingId(null);
+  }
+
+  async function handleApprove(id: string) {
+    setProcessingId(id);
+    const result = await approveContributionAction(id);
+    if (result.success) {
+      toast.success("Contribution approved & synced to ledger");
+      loadContributions();
+    } else {
+      toast.error(result.error || "Failed to approve");
+    }
+    setProcessingId(null);
+  }
+
+  async function handleReject(id: string) {
+    setProcessingId(id);
+    const result = await rejectContributionAction(id);
+    if (result.success) {
+      toast.success("Contribution rejected");
+      loadContributions();
+    } else {
+      toast.error("Failed to reject");
     }
     setProcessingId(null);
   }
@@ -78,7 +125,14 @@ export function ContributionManager({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">Contributions</h2>
+        <AddTransactionDialog
+          farewellId={farewellId}
+          onSuccess={loadContributions}
+        />
+      </div>
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -97,10 +151,10 @@ export function ContributionManager({
               <TableRow key={c.id}>
                 <TableCell>
                   <div className="font-medium">
-                    {c.profiles?.full_name || "Unknown"}
+                    {c.users?.full_name || "Unknown"}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {c.profiles?.email}
+                    {c.users?.email}
                   </div>
                 </TableCell>
                 <TableCell>₹{c.amount}</TableCell>
@@ -143,28 +197,51 @@ export function ContributionManager({
                   <StatusBadge status={c.status} />
                 </TableCell>
                 <TableCell className="text-right">
-                  {c.status === "pending" && (
-                    <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2">
+                    {/* Verify Action (for manual/pending) */}
+                    {c.status === "pending" && (
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                        onClick={() => handleStatusUpdate(c.id, "verified")}
+                        className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        onClick={() => handleVerify(c.id)}
                         disabled={!!processingId}
+                        title="Verify Details"
                       >
                         <Check className="h-4 w-4" />
                       </Button>
+                    )}
+
+                    {/* Approve Action (Final Step) */}
+                    {(c.status === "verified" ||
+                      c.status === "paid_pending_admin_verification") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50 gap-1"
+                        onClick={() => handleApprove(c.id)}
+                        disabled={!!processingId}
+                        title="Approve & Sync to Ledger"
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        <span className="text-xs">Approve</span>
+                      </Button>
+                    )}
+
+                    {/* Reject Action */}
+                    {c.status !== "approved" && c.status !== "rejected" && (
                       <Button
                         size="sm"
                         variant="outline"
                         className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleStatusUpdate(c.id, "rejected")}
+                        onClick={() => handleReject(c.id)}
                         disabled={!!processingId}
+                        title="Reject"
                       >
                         <X className="h-4 w-4" />
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -183,11 +260,28 @@ export function ContributionManager({
 }
 
 function StatusBadge({ status }: { status: string }) {
-  if (status === "verified") {
-    return <Badge className="bg-green-500 hover:bg-green-600">Verified</Badge>;
+  switch (status) {
+    case "approved":
+      return (
+        <Badge className="bg-green-600 hover:bg-green-700">Approved</Badge>
+      );
+    case "verified":
+      return <Badge className="bg-blue-500 hover:bg-blue-600">Verified</Badge>;
+    case "paid_pending_admin_verification":
+      return (
+        <Badge className="bg-purple-500 hover:bg-purple-600">
+          Paid (Review)
+        </Badge>
+      );
+    case "rejected":
+      return <Badge variant="destructive">Rejected</Badge>;
+    case "awaiting_payment":
+      return (
+        <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+          Awaiting Payment
+        </Badge>
+      );
+    default:
+      return <Badge variant="secondary">Pending</Badge>;
   }
-  if (status === "rejected") {
-    return <Badge variant="destructive">Rejected</Badge>;
-  }
-  return <Badge variant="secondary">Pending</Badge>;
 }

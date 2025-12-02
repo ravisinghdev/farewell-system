@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 export type Expense = {
   id: string;

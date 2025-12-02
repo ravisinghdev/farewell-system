@@ -12,23 +12,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { uploadReceiptAction } from "@/actions/duties";
+import { uploadDutyReceiptAction } from "@/app/actions/duty-actions";
 import { toast } from "sonner";
 import { Loader2, Upload } from "lucide-react";
+import { useFarewell } from "@/components/providers/farewell-provider";
 
 interface ReceiptUploadDialogProps {
-  assignmentId: string;
+  dutyId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
 
 export function ReceiptUploadDialog({
-  assignmentId,
+  dutyId,
   open,
   onOpenChange,
   onSuccess,
 }: ReceiptUploadDialogProps) {
+  const { farewell } = useFarewell();
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -40,7 +42,13 @@ export function ReceiptUploadDialog({
 
     setSubmitting(true);
     try {
-      await uploadReceiptAction(assignmentId, parseFloat(amount), notes, file);
+      const formData = new FormData();
+      formData.append("dutyId", dutyId);
+      formData.append("amount", amount);
+      formData.append("notes", notes);
+      formData.append("file", file);
+
+      await uploadDutyReceiptAction(farewell.id, formData);
       toast.success("Receipt uploaded successfully");
       onSuccess();
       onOpenChange(false);

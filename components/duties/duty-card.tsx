@@ -206,7 +206,7 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
 
       {myAssignment && (
         <ReceiptUploadDialog
-          assignmentId={myAssignment.id}
+          dutyId={duty.id}
           open={uploadOpen}
           onOpenChange={setUploadOpen}
           onSuccess={onUpdate}

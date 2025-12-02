@@ -115,11 +115,10 @@ export function DonateForm({
             setStatus("idle");
 
             if (verifyResult.success) {
-              // Fetch the latest contribution ID if possible, or we can just link to the list
-              // For now, we'll just link to the list or try to find it.
-              // Actually, verifyPaymentAction could return the ID.
-              // But let's just assume success for now.
               setShowSuccess(true);
+              if (verifyResult.contributionId) {
+                setLastContributionId(verifyResult.contributionId);
+              }
               // @ts-ignore
               confetti({
                 particleCount: 100,
@@ -196,17 +195,26 @@ export function DonateForm({
             <DialogDescription className="text-white/60 text-center max-w-xs">
               Thank you for your contribution of{" "}
               <span className="text-white font-bold">₹{amount}</span>. Your
-              support means a lot!
+              payment is now <strong>pending admin verification</strong>. You
+              will be notified once approved.
             </DialogDescription>
             <div className="flex flex-col w-full gap-2 mt-4">
               <Button
                 className="w-full bg-white text-black hover:bg-white/90"
                 onClick={() => {
                   setShowSuccess(false);
-                  router.push(`/dashboard/${farewellId}/contributions/receipt`);
+                  if (lastContributionId) {
+                    router.push(
+                      `/dashboard/${farewellId}/contributions/receipt/${lastContributionId}`
+                    );
+                  } else {
+                    router.push(
+                      `/dashboard/${farewellId}/contributions/overview`
+                    );
+                  }
                 }}
               >
-                Download Receipt
+                View Receipt
               </Button>
               <Button
                 variant="outline"

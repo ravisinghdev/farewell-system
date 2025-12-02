@@ -7,6 +7,7 @@ import {
   markAllAsReadAction,
   markAsReadAction,
 } from "@/app/actions/notifications";
+import { createClient } from "@/utils/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,26 +29,34 @@ interface NotificationListProps {
 }
 
 export function NotificationList({
-  initialNotifications = [],
+  initialNotifications,
   onMarkAsRead,
 }: NotificationListProps) {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(initialNotifications);
-  const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(
+    initialNotifications || []
+  );
+  const [loading, setLoading] = useState(!initialNotifications);
 
   useEffect(() => {
-    if (initialNotifications.length > 0) {
+    if (initialNotifications) {
       setNotifications(initialNotifications);
+      setLoading(false);
     } else {
       loadNotifications();
     }
   }, [initialNotifications]);
 
   const loadNotifications = async () => {
-    setLoading(true);
-    const data = await getNotificationsAction();
-    setNotifications(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const data = await getNotificationsAction();
+      setNotifications(data);
+    } catch (error) {
+      console.error("Failed to load notifications", error);
+      toast.error("Failed to load notifications");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleMarkAllAsRead = async () => {
@@ -89,9 +98,33 @@ export function NotificationList({
     }
   };
 
+  // Real-time subscription for the list
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("notifications-list")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+        },
+        () => {
+          loadNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   if (loading && notifications.length === 0) {
     return (
-      <div className="p-4 text-center text-sm text-muted-foreground">
+      <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         Loading...
       </div>
     );
@@ -99,60 +132,76 @@ export function NotificationList({
 
   if (notifications.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[300px] text-center p-4">
-        <Bell className="h-10 w-10 text-muted-foreground/30 mb-2" />
-        <p className="text-sm text-muted-foreground">No notifications yet</p>
+      <div className="flex flex-col items-center justify-center h-[300px] text-center p-6 space-y-3">
+        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+          <Bell className="h-6 w-6 text-muted-foreground/50" />
+        </div>
+        <div className="space-y-1">
+          <p className="font-medium">No notifications</p>
+          <p className="text-xs text-muted-foreground">You're all caught up!</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full max-h-[500px]">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h4 className="font-semibold">Notifications</h4>
+      <div className="flex items-center justify-between p-4 border-b bg-muted/5">
+        <h4 className="font-semibold text-sm">Notifications</h4>
         {notifications.some((n) => !n.is_read) && (
           <Button
             variant="ghost"
             onClick={handleMarkAllAsRead}
-            className="text-xs h-7 gap-1"
+            className="text-xs h-7 gap-1.5 hover:bg-primary/10 hover:text-primary"
           >
-            <CheckCheck className="h-3 w-3" />
+            <CheckCheck className="h-3.5 w-3.5" />
             Mark all read
           </Button>
         )}
       </div>
       <ScrollArea className="flex-1">
-        <div className="flex flex-col">
+        <div className="flex flex-col divide-y">
           {notifications.map((notification) => (
             <div
               key={notification.id}
               className={cn(
-                "flex gap-3 p-4 border-b hover:bg-muted/50 transition-colors cursor-pointer relative group",
-                !notification.is_read && "bg-muted/20"
+                "flex gap-4 p-4 hover:bg-muted/50 transition-all cursor-pointer relative group",
+                !notification.is_read ? "bg-primary/5" : "bg-background"
               )}
               onClick={() => handleMarkAsRead(notification.id)}
             >
-              <div className="mt-1">{getIcon(notification.type)}</div>
-              <div className="flex-1 space-y-1">
-                <p
-                  className={cn(
-                    "text-sm font-medium leading-none",
-                    !notification.is_read && "font-semibold"
-                  )}
-                >
-                  {notification.title}
-                </p>
-                <p className="text-sm text-muted-foreground line-clamp-2">
+              <div
+                className={cn(
+                  "mt-1 h-8 w-8 rounded-full flex items-center justify-center shrink-0",
+                  !notification.is_read ? "bg-background shadow-sm" : "bg-muted"
+                )}
+              >
+                {getIcon(notification.type)}
+              </div>
+              <div className="flex-1 space-y-1.5 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <p
+                    className={cn(
+                      "text-sm leading-none truncate pr-4",
+                      !notification.is_read
+                        ? "font-semibold text-foreground"
+                        : "font-medium text-muted-foreground"
+                    )}
+                  >
+                    {notification.title}
+                  </p>
+                  <span className="text-[10px] text-muted-foreground shrink-0 whitespace-nowrap">
+                    {formatDistanceToNow(new Date(notification.created_at), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {notification.message}
-                </p>
-                <p className="text-xs text-muted-foreground pt-1">
-                  {formatDistanceToNow(new Date(notification.created_at), {
-                    addSuffix: true,
-                  })}
                 </p>
               </div>
               {!notification.is_read && (
-                <div className="absolute right-4 top-4 h-2 w-2 rounded-full bg-primary" />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary ring-4 ring-primary/10" />
               )}
             </div>
           ))}

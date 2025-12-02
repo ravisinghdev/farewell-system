@@ -59,12 +59,6 @@ export async function updateSession(request: NextRequest) {
       // Use the helper from lib/auth/claims.ts
       // This reads from user.app_metadata which is in the JWT
       const hasFarewell = hasAnyFarewell(user);
-      console.log(
-        "Middleware: User",
-        user.id,
-        "Has Farewell Claims:",
-        hasFarewell
-      );
 
       if (!hasFarewell) {
         // FALLBACK: Check DB directly

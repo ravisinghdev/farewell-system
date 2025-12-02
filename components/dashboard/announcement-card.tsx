@@ -152,11 +152,8 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
               isAdmin ? "right-12" : "right-2"
             } z-10`}
           >
-            <div className="bg-primary/10 backdrop-blur-sm rounded-full p-1.5">
-              <Pin
-                className="h-3.5 w-3.5 text-primary rotate-45"
-                fill="currentColor"
-              />
+            <div className="backdrop-blur-sm rounded-full p-1.5">
+              <Pin className="h-3.5 w-3.5 rotate-45" fill="currentColor" />
             </div>
           </div>
         )}
@@ -166,7 +163,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
             <div className="flex items-center gap-3 flex-1">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={announcement.creator?.avatar_url || ""} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                <AvatarFallback className="font-semibold">
                   {getInitials(announcement.creator?.full_name || "Admin")}
                 </AvatarFallback>
               </Avatar>
@@ -175,11 +172,11 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
                   {announcement.title}
                 </h3>
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm">
                     {announcement.creator?.full_name || "Admin"}
                   </span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs">•</span>
+                  <span className="text-xs">
                     {format(
                       new Date(announcement.created_at),
                       "MMM d, yyyy • h:mm a"
@@ -222,7 +219,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setShowDeleteDialog(true)}
-                    className="text-destructive focus:text-destructive"
+                    className="focus:text-destructive"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
@@ -234,7 +231,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+          <p className="text-sm whitespace-pre-wrap leading-relaxed">
             {announcement.content}
           </p>
 
@@ -243,7 +240,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
             <Button
               variant="ghost"
               size="sm"
-              className={`gap-2 ${reactions.userLiked ? "text-red-500" : ""}`}
+              className={`gap-2 ${reactions.userLiked ? "" : ""}`}
               onClick={() => handleToggleReaction("like")}
               disabled={isPending}
             >
@@ -259,9 +256,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
             <Button
               variant="ghost"
               size="sm"
-              className={`gap-2 ${
-                reactions.userBookmarked ? "text-primary" : ""
-              }`}
+              className={`gap-2 ${reactions.userBookmarked ? "" : ""}`}
               onClick={() => handleToggleReaction("bookmark")}
               disabled={isPending}
             >
@@ -309,7 +304,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className=""
             >
               {isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+
 import {
   BarChart,
   Bar,
@@ -33,22 +35,39 @@ export default function AnalyticsPage({
     async function load() {
       const { id } = await params;
       setFarewellId(id);
-      // For analytics, we might want ALL contributions if admin, but let's stick to user's view or aggregate if we had an aggregate action.
-      // Since this is "Analytics & Insights", it implies personal + global stats.
-      // For now, let's just show personal stats to be safe, or if we want global we need a new action.
-      // The prompt implies a general dashboard. Let's assume personal for now to avoid leaking data if not admin,
-      // BUT usually analytics in this context means "How is the farewell doing?".
-      // Let's use the leaderboard action to get global stats implicitly or just fetch personal.
-      // Actually, let's just fetch personal contributions for now to be safe and consistent with "My Dashboard".
-      // Wait, the user asked for "Analytics & Insights" which usually means global.
-      // I'll fetch personal for now.
-
       const res = await getContributionsAction(id);
       setData(res);
       setLoading(false);
     }
     load();
   }, [params]);
+
+  // Real-time subscription
+  useEffect(() => {
+    if (!farewellId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("analytics-contributions")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "contributions",
+          filter: `farewell_id=eq.${farewellId}`,
+        },
+        () => {
+          // Re-fetch data
+          getContributionsAction(farewellId).then(setData);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [farewellId]);
 
   if (loading) {
     return (
@@ -59,7 +78,9 @@ export default function AnalyticsPage({
   }
 
   // Process Data
-  const verified = data.filter((c) => c.status === "verified");
+  const verified = data.filter(
+    (c) => c.status === "verified" || c.status === "approved"
+  );
   const totalAmount = verified.reduce((sum, c) => sum + Number(c.amount), 0);
 
   // Daily Stats

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export interface Notification {
@@ -26,7 +27,8 @@ export async function getNotificationsAction(limit = 20, offset = 0) {
     return [];
   }
 
-  const { data, error } = await supabase
+  const adminClient = createAdminClient();
+  const { data, error } = await adminClient
     .from("notifications")
     .select("*")
     .eq("user_id", user.id)
@@ -51,7 +53,8 @@ export async function getUnreadCountAction() {
     return 0;
   }
 
-  const { count, error } = await supabase
+  const adminClient = createAdminClient();
+  const { count, error } = await adminClient
     .from("notifications")
     .select("*", { count: "exact", head: true })
     .eq("user_id", user.id)
@@ -75,7 +78,8 @@ export async function markAsReadAction(notificationId: string) {
     return { error: "Unauthorized" };
   }
 
-  const { error } = await supabase
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
     .from("notifications")
     .update({ is_read: true })
     .eq("id", notificationId)
@@ -100,7 +104,8 @@ export async function markAllAsReadAction() {
     return { error: "Unauthorized" };
   }
 
-  const { error } = await supabase
+  const adminClient = createAdminClient();
+  const { error } = await adminClient
     .from("notifications")
     .update({ is_read: true })
     .eq("user_id", user.id)
@@ -128,8 +133,9 @@ export async function registerPushTokenAction(
     return { error: "Unauthorized" };
   }
 
+  const adminClient = createAdminClient();
   // Upsert the token
-  const { error } = await supabase.from("push_subscriptions").upsert(
+  const { error } = await adminClient.from("push_subscriptions").upsert(
     {
       user_id: user.id,
       token,

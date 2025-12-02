@@ -24,6 +24,7 @@ import { Countdown } from "@/components/dashboard/countdown";
 import {
   getAnnouncementsAction,
   getDashboardStatsAction,
+  getRecentTransactionsAction,
 } from "@/app/actions/dashboard-actions";
 import { RealtimeDashboard } from "@/components/dashboard/realtime-dashboard";
 
@@ -63,10 +64,11 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   }
 
   // Fetch data in parallel
-  const [farewellRes, announcements, stats] = await Promise.all([
+  const [farewellRes, announcements, stats, transactions] = await Promise.all([
     supabase.from("farewells").select("*").eq("id", id).single(),
     getAnnouncementsAction(id),
     getDashboardStatsAction(id),
+    getRecentTransactionsAction(id),
   ]);
 
   const farewell = farewellRes.data;
@@ -79,6 +81,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
     <RealtimeDashboard
       initialAnnouncements={announcements}
       initialStats={stats}
+      initialTransactions={transactions}
       farewellId={id}
       farewellName={farewell.name}
       farewellYear={farewell.year}

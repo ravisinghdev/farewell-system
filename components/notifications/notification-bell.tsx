@@ -36,15 +36,20 @@ export function NotificationBell({ userId, className }: NotificationBellProps) {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "notifications",
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log("🔔 New notification received:", payload);
-          setUnreadCount((prev) => prev + 1);
-          toast.info("New notification received");
+          console.log("🔔 Notification update:", payload);
+          // Re-fetch count on any change (new, read, deleted)
+          getUnreadCountAction().then(setUnreadCount);
+
+          // Show toast only for new notifications
+          if (payload.eventType === "INSERT") {
+            toast.info("New notification received");
+          }
         }
       )
       .subscribe();

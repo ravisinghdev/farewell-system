@@ -72,14 +72,10 @@ export function RealtimeDashboardOverview({
       <div className="md:col-span-2 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Bell className="h-6 w-6 text-primary" />
+            <Bell className="h-6 w-6" />
             Latest Announcements
           </h2>
-          <Button
-            variant="ghost"
-            asChild
-            className="text-muted-foreground hover:text-primary"
-          >
+          <Button variant="ghost" asChild className="">
             <Link href={`/dashboard/${farewellId}/announcements`}>
               View All
             </Link>
@@ -96,8 +92,8 @@ export function RealtimeDashboardOverview({
             ))}
           </div>
         ) : (
-          <Card className="bg-muted/50 border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Bell className="h-12 w-12 mb-4 opacity-20" />
               <p>No announcements yet.</p>
             </CardContent>
@@ -109,7 +105,7 @@ export function RealtimeDashboardOverview({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Star className="h-6 w-6 text-yellow-500" />
+            <Star className="h-6 w-6" />
             Highlights
           </h2>
         </div>
@@ -122,7 +118,7 @@ export function RealtimeDashboardOverview({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg bg-muted aspect-video flex items-center justify-center text-muted-foreground">
+            <div className="rounded-lg aspect-video flex items-center justify-center">
               <ImageIcon className="h-10 w-10 opacity-20" />
             </div>
             <Button asChild className="w-full">

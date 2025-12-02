@@ -64,6 +64,7 @@ import Link from "next/link";
 import { SidebarChatList } from "@/components/chat/sidebar-chat-list";
 
 import { useFarewell } from "@/components/providers/farewell-provider";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 // Define types for the props
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -159,6 +160,15 @@ export function AppSidebar({
           label: "Budget & Expenses",
           icon: Wallet,
         },
+        ...(checkIsAdmin(role)
+          ? [
+              {
+                href: "/dashboard/contributions/manage",
+                label: "Manage Contributions",
+                icon: Shield,
+              },
+            ]
+          : []),
       ],
     },
 

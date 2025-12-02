@@ -9,7 +9,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/utils/supabase/server";
 import { getClaims } from "@/lib/auth/claims";
-import { getFarewellRoleFromDB } from "@/lib/auth/roles";
+import { getFarewellRoleFromDB } from "@/lib/auth/roles-server";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -138,7 +138,7 @@ export default async function DashboardLayout({
               <AppSidebar />
               <SidebarInset>
                 <SiteHeader />
-                <div className="flex flex-1 flex-col gap-4 p-2 pt-0 bg-transparent">
+                <div className="flex flex-1 flex-col gap-4 p-2 pt-0">
                   {children}
                 </div>
               </SidebarInset>

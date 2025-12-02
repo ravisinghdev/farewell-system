@@ -1,6 +1,6 @@
 import { ContributionManager } from "@/components/admin/contribution-manager";
 import { Separator } from "@/components/ui/separator";
-import { getContributionStatsAction } from "@/app/actions/contribution-actions";
+import { getFinancialStatsAction } from "@/app/actions/contribution-actions";
 
 interface AdminContributionsPageProps {
   params: Promise<{
@@ -12,7 +12,7 @@ export default async function AdminContributionsPage({
   params,
 }: AdminContributionsPageProps) {
   const { id } = await params;
-  const stats = await getContributionStatsAction(id);
+  const stats = await getFinancialStatsAction(id);
 
   return (
     <div className="space-y-6">
@@ -33,7 +33,7 @@ export default async function AdminContributionsPage({
           <div className="text-sm font-medium text-muted-foreground">
             Total Verified
           </div>
-          <div className="text-2xl font-bold">₹{stats.total}</div>
+          <div className="text-2xl font-bold">₹{stats.total_collected}</div>
         </div>
       </div>
 

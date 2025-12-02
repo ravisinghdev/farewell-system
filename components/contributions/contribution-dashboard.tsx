@@ -47,12 +47,18 @@ interface Contribution {
   id: string;
   amount: number;
   method: "upi" | "cash" | "bank_transfer" | "stripe" | "razorpay";
-  status: "pending" | "verified" | "rejected";
+  status:
+    | "pending"
+    | "verified"
+    | "rejected"
+    | "approved"
+    | "paid_pending_admin_verification"
+    | "awaiting_payment";
   created_at: string;
   transaction_id?: string;
   user_id?: string;
   users?: {
-    name: string;
+    full_name: string;
     avatar_url?: string;
   };
 }
@@ -93,7 +99,8 @@ export function ContributionDashboard({
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     const userName =
-      (Array.isArray(c.users) ? c.users[0]?.name : c.users?.name) || "";
+      (Array.isArray(c.users) ? c.users[0]?.full_name : c.users?.full_name) ||
+      "";
     const transactionId = c.transaction_id || "";
     const method = c.method || "";
 
@@ -110,7 +117,7 @@ export function ContributionDashboard({
       setDisplayAmount(stats.total);
     } else {
       const myTotal = contributions
-        .filter((c) => c.status !== "rejected")
+        .filter((c) => c.status === "approved" || c.status === "verified")
         .reduce((sum, c) => sum + Number(c.amount), 0);
       setDisplayAmount(myTotal);
     }
@@ -124,7 +131,7 @@ export function ContributionDashboard({
       .filter(
         (c) =>
           format(new Date(c.created_at), "yyyy-MM-dd") === dateStr &&
-          c.status === "verified"
+          (c.status === "approved" || c.status === "verified")
       )
       .reduce((sum, c) => sum + Number(c.amount), 0);
     return {
@@ -147,38 +154,59 @@ export function ContributionDashboard({
             ? `farewell_id=eq.${farewellId}`
             : `farewell_id=eq.${farewellId}&user_id=eq.${userId}`,
         },
-        (payload) => {
+        async (payload) => {
           if (payload.eventType === "INSERT") {
-            const newContribution = payload.new as Contribution;
-            setContributions((prev) => [newContribution, ...prev]);
+            // Fetch full details including user
+            const { data: fullContribution } = await supabase
+              .from("contributions")
+              .select("*, users:user_id(full_name, avatar_url)")
+              .eq("id", payload.new.id)
+              .single();
 
-            if (newContribution.status === "verified" && isAdmin) {
-              setStats((prev) => ({
-                total: prev.total + Number(newContribution.amount),
-              }));
+            if (fullContribution) {
+              setContributions((prev) => {
+                // Deduplicate
+                if (prev.some((c) => c.id === fullContribution.id)) return prev;
+                return [fullContribution, ...prev];
+              });
+
+              if (fullContribution.status === "approved" && isAdmin) {
+                setStats((prev) => ({
+                  total: prev.total + Number(fullContribution.amount),
+                }));
+              }
             }
           } else if (payload.eventType === "UPDATE") {
-            const updatedContribution = payload.new as Contribution;
-            setContributions((prev) =>
-              prev.map((c) =>
-                c.id === updatedContribution.id ? updatedContribution : c
-              )
-            );
-            if (isAdmin) {
-              if (
-                updatedContribution.status === "verified" &&
-                payload.old.status !== "verified"
-              ) {
-                setStats((prev) => ({
-                  total: prev.total + Number(updatedContribution.amount),
-                }));
-              } else if (
-                updatedContribution.status !== "verified" &&
-                payload.old.status === "verified"
-              ) {
-                setStats((prev) => ({
-                  total: prev.total - Number(updatedContribution.amount),
-                }));
+            // For updates, we might also want to re-fetch if status changed significantly,
+            // but usually the user data doesn't change. However, to be safe and consistent:
+            const { data: fullContribution } = await supabase
+              .from("contributions")
+              .select("*, users:user_id(full_name, avatar_url)")
+              .eq("id", payload.new.id)
+              .single();
+
+            if (fullContribution) {
+              setContributions((prev) =>
+                prev.map((c) =>
+                  c.id === fullContribution.id ? fullContribution : c
+                )
+              );
+              if (isAdmin) {
+                if (
+                  fullContribution.status === "approved" &&
+                  payload.old.status !== "approved"
+                ) {
+                  setStats((prev) => ({
+                    total: prev.total + Number(fullContribution.amount),
+                  }));
+                } else if (
+                  fullContribution.status !== "approved" &&
+                  payload.old.status === "approved"
+                ) {
+                  setStats((prev) => ({
+                    total: prev.total - Number(fullContribution.amount),
+                  }));
+                }
               }
             }
           }
@@ -199,7 +227,7 @@ export function ContributionDashboard({
     const currentLength = contributions.length;
     const { data, error } = await supabase
       .from("contributions")
-      .select("*")
+      .select("*, users:user_id(full_name, avatar_url)")
       .eq("farewell_id", farewellId)
       .match(isAdmin ? {} : { user_id: userId })
       .order("created_at", { ascending: false })
@@ -211,7 +239,15 @@ export function ContributionDashboard({
       if (data.length < 10) {
         setHasMore(false);
       }
-      setContributions((prev) => [...prev, ...data]);
+      setContributions((prev) => {
+        const uniqueMap = new Map(prev.map((c) => [c.id, c]));
+        data.forEach((c) => uniqueMap.set(c.id, c));
+        // Convert back to array and sort by created_at desc to maintain order
+        return Array.from(uniqueMap.values()).sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      });
     }
     setIsLoadingMore(false);
   }, [
@@ -312,7 +348,7 @@ export function ContributionDashboard({
             <div className="absolute top-0 right-0 p-6 opacity-20">
               <Wallet className="w-32 h-32" />
             </div>
-            <div className="flex justify-between items-start relative z-10">
+            <div className="flex justify-between items-start relative z-1">
               <div>
                 <p className="text-black/60 font-medium mb-1">
                   {isAdmin ? "Total Balance" : "My Contribution"}
@@ -325,7 +361,7 @@ export function ContributionDashboard({
                 <CreditCard className="w-6 h-6 text-black/80" />
               </div>
             </div>
-            <div className="flex gap-4 relative z-10">
+            <div className="flex gap-4 relative z-1">
               <div className="bg-black/5 px-4 py-2 rounded-xl backdrop-blur-sm border border-black/5">
                 <p className="text-xs font-semibold text-black/50 uppercase tracking-wider">
                   {isAdmin ? "Goal" : "Assigned"}
@@ -431,8 +467,8 @@ export function ContributionDashboard({
             <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar">
               {recentTransactions.map((c) => {
                 const userName = Array.isArray(c.users)
-                  ? c.users[0]?.name
-                  : c.users?.name;
+                  ? c.users[0]?.full_name
+                  : c.users?.full_name;
                 const userAvatar = Array.isArray(c.users)
                   ? c.users[0]?.avatar_url
                   : c.users?.avatar_url;
@@ -484,10 +520,14 @@ export function ContributionDashboard({
           <GlassCard className="h-full flex flex-col">
             <h3 className="text-lg font-bold text-white mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 gap-3">
-              {contributions.some((c) => c.status === "verified") ? (
+              {contributions.some(
+                (c) => c.status === "verified" || c.status === "approved"
+              ) ? (
                 <Link
                   href={`/dashboard/${farewellId}/contributions/receipt/${
-                    contributions.find((c) => c.status === "verified")?.id
+                    contributions.find(
+                      (c) => c.status === "verified" || c.status === "approved"
+                    )?.id
                   }`}
                 >
                   <Button
@@ -578,8 +618,8 @@ export function ContributionDashboard({
 
           {filteredContributions.map((c) => {
             const userName = Array.isArray(c.users)
-              ? c.users[0]?.name
-              : c.users?.name;
+              ? c.users[0]?.full_name
+              : c.users?.full_name;
             const userAvatar = Array.isArray(c.users)
               ? c.users[0]?.avatar_url
               : c.users?.avatar_url;

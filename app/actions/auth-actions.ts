@@ -141,5 +141,5 @@ export async function loginAction(form: LoginInput) {
   }
 
   revalidatePath("/", "layout");
-  redirect(destinationUrl);
+  return { success: true, redirectUrl: destinationUrl };
 }

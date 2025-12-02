@@ -57,12 +57,12 @@ export function RealtimeHighlights({
   if (highlights.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
-        <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
-          <Star className="h-10 w-10 text-muted-foreground/50" />
+        <div className="h-20 w-20 rounded-full flex items-center justify-center">
+          <Star className="h-10 w-10 opacity-50" />
         </div>
         <div className="space-y-2">
           <h3 className="text-xl font-semibold">No highlights yet</h3>
-          <p className="text-muted-foreground max-w-sm">
+          <p className="max-w-sm">
             Stay tuned for featured content and updates.
           </p>
         </div>

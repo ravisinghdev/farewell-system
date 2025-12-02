@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { Star } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getFarewellRole } from "@/lib/auth/claims";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 interface HighlightsPageProps {
   params: Promise<{
@@ -23,7 +24,7 @@ export default async function HighlightsPage({ params }: HighlightsPageProps) {
 
   const highlights = await getHighlightsAction(id);
   const role = getFarewellRole(user, id);
-  const isAdmin = role === "parallel_admin" || role === "main_admin";
+  const isAdmin = checkIsAdmin(role);
 
   return (
     <div className="flex flex-col h-full bg-muted/10">

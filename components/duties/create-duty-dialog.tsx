@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createDutyAction } from "@/actions/duties";
+import { createDutyAction } from "@/app/actions/duty-actions";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -50,13 +50,12 @@ export function CreateDutyDialog({ onSuccess }: CreateDutyDialogProps) {
 
     setSubmitting(true);
     try {
-      await createDutyAction(
-        farewellId,
+      await createDutyAction(farewellId, {
         title,
         description,
-        expenseLimit ? parseFloat(expenseLimit) : undefined,
-        deadline?.toISOString()
-      );
+        expenseLimit: expenseLimit ? parseFloat(expenseLimit) : 0,
+        deadline: deadline?.toISOString(),
+      });
       toast.success("Duty created successfully");
       setOpen(false);
       setTitle("");

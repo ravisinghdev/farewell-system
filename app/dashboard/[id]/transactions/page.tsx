@@ -6,6 +6,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 export default async function TransactionsPage({
   params,
@@ -17,10 +18,7 @@ export default async function TransactionsPage({
 
   if (!user) redirect("/auth");
 
-  const isAdmin =
-    user.role === "main_admin" ||
-    user.role === "parallel_admin" ||
-    user.role === "admin";
+  const isAdmin = checkIsAdmin(user.role);
 
   if (!isAdmin) {
     return (
@@ -62,7 +60,11 @@ export default async function TransactionsPage({
       </div>
 
       <GlassCard className="p-6">
-        <TransactionTable data={transactions as any} farewellId={id} />
+        <TransactionTable
+          data={transactions as any}
+          farewellId={id}
+          isAdmin={isAdmin}
+        />
       </GlassCard>
     </div>
   );

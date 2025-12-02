@@ -16,16 +16,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ==========================================
 CREATE TYPE user_status AS ENUM ('online', 'offline', 'away', 'busy');
 CREATE TYPE farewell_status AS ENUM ('active', 'archived');
-CREATE TYPE farewell_role AS ENUM ('admin', 'student', 'guest', 'teacher', 'junior');
+CREATE TYPE farewell_role AS ENUM ('admin', 'student', 'guest', 'teacher', 'junior', 'parallel_admin', 'main_admin');
 CREATE TYPE join_status AS ENUM ('pending', 'approved', 'rejected');
 CREATE TYPE channel_type AS ENUM ('dm', 'group', 'farewell', 'class');
 CREATE TYPE member_role AS ENUM ('owner', 'admin', 'member');
 CREATE TYPE member_status AS ENUM ('active', 'muted', 'blocked', 'left', 'pending');
 CREATE TYPE message_type AS ENUM ('text', 'image', 'file', 'system');
-CREATE TYPE contribution_status AS ENUM ('pending', 'verified', 'rejected');
+CREATE TYPE contribution_status AS ENUM ('pending', 'awaiting_payment', 'paid_pending_admin_verification', 'verified', 'approved', 'rejected', 'mismatch_error');
 CREATE TYPE media_type AS ENUM ('image', 'video');
 CREATE TYPE duty_status AS ENUM ('pending', 'in_progress', 'completed');
-CREATE TYPE notif_type AS ENUM ('message', 'mention', 'system', 'request', 'finance', 'duty');
+CREATE TYPE notif_type AS ENUM ('message', 'mention', 'system', 'request', 'finance', 'duty', 'info', 'success', 'warning', 'error', 'announcement', 'chat');
 
 -- ==========================================
 -- 3. TABLE DEFINITIONS
@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS public.farewell_members (
   grade INTEGER, -- e.g., 11, 12
   section TEXT,  -- e.g., 'A', 'B', 'Science'
   status join_status DEFAULT 'approved',
+  active BOOLEAN DEFAULT TRUE,
   joined_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(farewell_id, user_id)
 );
@@ -155,12 +156,26 @@ CREATE TABLE IF NOT EXISTS public.contributions (
   farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
   amount NUMERIC NOT NULL,
-  method TEXT NOT NULL,
+  method TEXT NOT NULL CHECK (method IN ('upi', 'cash', 'bank_transfer', 'stripe', 'razorpay')),
   transaction_id TEXT,
   screenshot_url TEXT,
   status contribution_status DEFAULT 'pending',
   verified_by UUID REFERENCES public.users(id),
+  razorpay_order_id TEXT,
+  razorpay_payment_id TEXT,
+  razorpay_signature TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- FAREWELL FINANCIALS
+CREATE TABLE IF NOT EXISTS public.farewell_financials (
+  farewell_id UUID PRIMARY KEY REFERENCES public.farewells(id) ON DELETE CASCADE,
+  total_collected NUMERIC DEFAULT 0,
+  total_spent NUMERIC DEFAULT 0,
+  balance NUMERIC DEFAULT 0,
+  contribution_count INTEGER DEFAULT 0,
+  last_updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- EXPENSES
@@ -213,9 +228,9 @@ CREATE TABLE IF NOT EXISTS public.duties (
   farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
-  expense_limit NUMERIC,
+  expense_limit NUMERIC(10, 2) DEFAULT 0,
   deadline TIMESTAMPTZ,
-  status duty_status DEFAULT 'pending',
+  status TEXT CHECK (status IN ('pending', 'in_progress', 'completed')) DEFAULT 'pending',
   created_by UUID REFERENCES public.users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -233,20 +248,16 @@ CREATE TABLE IF NOT EXISTS public.duty_assignments (
 -- DUTY RECEIPTS
 CREATE TABLE IF NOT EXISTS public.duty_receipts (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  duty_assignment_id UUID REFERENCES public.duty_assignments(id) ON DELETE CASCADE,
+  duty_id UUID REFERENCES public.duties(id) ON DELETE CASCADE,
   uploader_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-  amount NUMERIC NOT NULL,
-  currency TEXT DEFAULT 'INR',
-  receipt_url TEXT,
+  amount NUMERIC(10, 2) NOT NULL,
+  image_url TEXT,
   notes TEXT,
-  status contribution_status DEFAULT 'pending', -- reusing contribution_status (pending, verified, rejected) or create new enum? Using contribution_status for now as it maps well (verified=approved)
-  rejection_reason TEXT,
-  approved_at TIMESTAMPTZ,
-  approved_by UUID REFERENCES public.users(id),
-  rejected_at TIMESTAMPTZ,
-  rejected_by UUID REFERENCES public.users(id),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  status TEXT CHECK (status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+  admin_notes TEXT,
+  reviewed_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- LEDGER ENTRIES
@@ -258,19 +269,110 @@ CREATE TABLE IF NOT EXISTS public.ledger_entries (
   type TEXT NOT NULL, -- 'reimbursement', 'contribution', 'deduction', 'adjustment'
   currency TEXT DEFAULT 'INR',
   meta JSONB, -- Stores context like receipt_id, duty_id, etc.
+  audit_hash TEXT,
+  approved_by UUID REFERENCES public.users(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE OR REPLACE FUNCTION public.approve_contribution(
+  _contribution_id UUID,
+  _admin_id UUID
+)
+RETURNS JSONB AS $$
+DECLARE
+  _contribution RECORD;
+  _farewell_id UUID;
+  _amount NUMERIC;
+  _user_id UUID;
+  _ledger_id UUID;
+BEGIN
+  -- 1. Lock the contribution row
+  SELECT * INTO _contribution 
+  FROM public.contributions 
+  WHERE id = _contribution_id 
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Contribution not found');
+  END IF;
+
+  IF _contribution.status = 'approved' THEN
+    RETURN jsonb_build_object('success', true, 'message', 'Already approved');
+  END IF;
+
+  IF _contribution.status NOT IN ('verified', 'paid_pending_admin_verification') THEN
+     RETURN jsonb_build_object('success', false, 'error', 'Contribution not in verifiable state');
+  END IF;
+
+  _farewell_id := _contribution.farewell_id;
+  _amount := _contribution.amount;
+  _user_id := _contribution.user_id;
+
+  -- 2. Update Contribution Status
+  UPDATE public.contributions
+  SET 
+    status = 'approved',
+    verified_by = _admin_id
+  WHERE id = _contribution_id;
+
+  -- 3. Create Ledger Entry
+  INSERT INTO public.ledger_entries (
+    farewell_id,
+    user_id,
+    amount,
+    type,
+    approved_by,
+    audit_hash,
+    meta
+  ) VALUES (
+    _farewell_id,
+    _user_id,
+    _amount,
+    'contribution',
+    _admin_id,
+    md5(CONCAT(_farewell_id, _user_id, _amount, NOW())),
+    jsonb_build_object('contribution_id', _contribution_id, 'method', _contribution.method)
+  ) RETURNING id INTO _ledger_id;
+
+  -- 4. Update Financials
+  INSERT INTO public.farewell_financials (farewell_id, total_collected, balance, contribution_count)
+  VALUES (_farewell_id, _amount, _amount, 1)
+  ON CONFLICT (farewell_id) DO UPDATE SET
+    total_collected = farewell_financials.total_collected + EXCLUDED.total_collected,
+    balance = farewell_financials.balance + EXCLUDED.balance,
+    contribution_count = farewell_financials.contribution_count + 1,
+    last_updated_at = NOW();
+
+  RETURN jsonb_build_object('success', true, 'ledger_id', _ledger_id);
+
+EXCEPTION WHEN OTHERS THEN
+  RETURN jsonb_build_object('success', false, 'error', SQLERRM);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- NOTIFICATIONS
 CREATE TABLE IF NOT EXISTS public.notifications (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-  type notif_type NOT NULL,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
-  body TEXT,
+  message TEXT NOT NULL,
+  type notif_type NOT NULL DEFAULT 'info',
   link TEXT,
   is_read BOOLEAN DEFAULT FALSE,
+  metadata JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- PUSH SUBSCRIPTIONS
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  token TEXT NOT NULL,
+  platform TEXT CHECK (platform IN ('web', 'android', 'ios')) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_used_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, token)
 );
 
 -- AUDIT LOGS
@@ -279,7 +381,10 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
   farewell_id UUID REFERENCES public.farewells(id) ON DELETE SET NULL,
   user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
   action TEXT NOT NULL,
-  details JSONB,
+  target_id UUID,
+  target_type TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  details JSONB, -- Legacy column support
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -350,11 +455,71 @@ CREATE TABLE IF NOT EXISTS public.yearbook_entries (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  student_name TEXT,
   quote TEXT,
+  section TEXT,
   photo_url TEXT,
   future_plans TEXT,
+  created_by UUID REFERENCES public.users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(farewell_id, user_id)
+);
+
+-- ANNOUNCEMENTS
+CREATE TABLE IF NOT EXISTS public.announcements (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_pinned BOOLEAN DEFAULT FALSE,
+  created_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ANNOUNCEMENT REACTIONS
+CREATE TABLE IF NOT EXISTS public.announcement_reactions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  announcement_id UUID REFERENCES public.announcements(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  reaction_type TEXT CHECK (reaction_type IN ('like', 'bookmark')) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(announcement_id, user_id, reaction_type)
+);
+
+-- CONTACT MESSAGES
+CREATE TABLE IF NOT EXISTS public.contact_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT DEFAULT 'new' CHECK (status IN ('new', 'read', 'replied')),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- TIMELINE EVENTS
+CREATE TABLE IF NOT EXISTS public.timeline_events (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  event_date TIMESTAMPTZ NOT NULL,
+  icon TEXT DEFAULT 'calendar',
+  created_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- HIGHLIGHTS
+CREATE TABLE IF NOT EXISTS public.highlights (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  image_url TEXT,
+  link TEXT,
+  created_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ==========================================
@@ -375,7 +540,11 @@ ALTER TABLE public.albums ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.song_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.duties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.duty_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.duty_receipts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ledger_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.polls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.poll_options ENABLE ROW LEVEL SECURITY;
@@ -384,6 +553,11 @@ ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.confessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.artworks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.yearbook_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.announcement_reactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.timeline_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.highlights ENABLE ROW LEVEL SECURITY;
 
 -- ==========================================
 -- 5. HELPER FUNCTIONS
@@ -406,7 +580,7 @@ BEGIN
     SELECT 1 FROM public.farewell_members
     WHERE farewell_id = _farewell_id
     AND user_id = auth.uid()
-    AND role = 'admin'
+    AND role IN ('admin', 'parallel_admin', 'main_admin')
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -540,7 +714,8 @@ CREATE POLICY "Manage reactions" ON public.chat_reactions FOR ALL USING (
 
 -- CONTRIBUTIONS
 CREATE POLICY "View contributions" ON public.contributions FOR SELECT USING (
-  public.is_farewell_member(farewell_id)
+  public.is_farewell_member(farewell_id) OR
+  user_id = auth.uid()
 );
 CREATE POLICY "Manage contributions" ON public.contributions FOR ALL USING (
   user_id = auth.uid() OR
@@ -584,19 +759,78 @@ CREATE POLICY "Manage songs" ON public.song_requests FOR ALL USING (
 );
 
 -- DUTIES
-CREATE POLICY "View duties" ON public.duties FOR SELECT USING (
+CREATE POLICY "Members can view duties" ON public.duties FOR SELECT USING (
   public.is_farewell_member(farewell_id)
 );
-CREATE POLICY "Manage duties" ON public.duties FOR ALL USING (
+CREATE POLICY "Admins can manage duties" ON public.duties FOR ALL USING (
+  public.is_farewell_admin(farewell_id)
+);
+
+-- DUTY ASSIGNMENTS
+CREATE POLICY "Members can view assignments" ON public.duty_assignments FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM duties
+    JOIN farewell_members ON farewell_members.farewell_id = duties.farewell_id
+    WHERE duties.id = duty_assignments.duty_id
+    AND farewell_members.user_id = auth.uid()
+  )
+);
+CREATE POLICY "Admins can manage assignments" ON public.duty_assignments FOR ALL USING (
+  EXISTS (
+    SELECT 1 FROM duties
+    JOIN farewell_members ON farewell_members.farewell_id = duties.farewell_id
+    WHERE duties.id = duty_assignments.duty_id
+    AND farewell_members.user_id = auth.uid()
+    AND farewell_members.role IN ('admin', 'parallel_admin')
+  )
+);
+
+-- DUTY RECEIPTS
+CREATE POLICY "Members can view receipts for their farewell" ON public.duty_receipts FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM duties
+    JOIN farewell_members ON farewell_members.farewell_id = duties.farewell_id
+    WHERE duties.id = duty_receipts.duty_id
+    AND farewell_members.user_id = auth.uid()
+  )
+);
+CREATE POLICY "Assigned users can upload receipts" ON public.duty_receipts FOR INSERT WITH CHECK (
+  auth.uid() = uploader_id AND
+  EXISTS (
+    SELECT 1 FROM duty_assignments
+    WHERE duty_assignments.duty_id = duty_receipts.duty_id
+    AND duty_assignments.user_id = auth.uid()
+  )
+);
+CREATE POLICY "Admins can manage receipts" ON public.duty_receipts FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM duties
+    JOIN farewell_members ON farewell_members.farewell_id = duties.farewell_id
+    WHERE duties.id = duty_receipts.duty_id
+    AND farewell_members.user_id = auth.uid()
+    AND farewell_members.role IN ('admin', 'parallel_admin')
+  )
+);
+
+-- LEDGER ENTRIES
+CREATE POLICY "View ledger" ON public.ledger_entries FOR SELECT USING (
+  user_id = auth.uid() OR
+  public.is_farewell_admin(farewell_id)
+);
+CREATE POLICY "Manage ledger" ON public.ledger_entries FOR ALL USING (
   public.is_farewell_admin(farewell_id)
 );
 
 -- NOTIFICATIONS
-CREATE POLICY "View own notifications" ON public.notifications FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "Update own notifications" ON public.notifications FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can view their own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can update their own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Authenticated users can insert notifications" ON public.notifications FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- PUSH SUBSCRIPTIONS
+CREATE POLICY "Users can manage their own subscriptions" ON public.push_subscriptions FOR ALL USING (auth.uid() = user_id);
 
 -- AUDIT LOGS
-CREATE POLICY "Admins view audit logs" ON public.audit_logs FOR SELECT USING (
+CREATE POLICY "Admins can view audit logs" ON public.audit_logs FOR SELECT USING (
   public.is_farewell_admin(farewell_id)
 );
 
@@ -653,177 +887,48 @@ CREATE POLICY "Manage yearbook" ON public.yearbook_entries FOR ALL USING (
   public.is_farewell_admin(farewell_id)
 );
 
--- DUTY ASSIGNMENTS
-ALTER TABLE public.duty_assignments ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "View assignments" ON public.duty_assignments FOR SELECT USING (
-  user_id = auth.uid() OR
-  public.is_farewell_admin((SELECT farewell_id FROM public.duties WHERE id = duty_id))
+-- ANNOUNCEMENTS
+CREATE POLICY "View announcements" ON public.announcements FOR SELECT USING (
+  public.is_farewell_member(farewell_id)
 );
-
-CREATE POLICY "Manage assignments" ON public.duty_assignments FOR ALL USING (
-  public.is_farewell_admin((SELECT farewell_id FROM public.duties WHERE id = duty_id))
+CREATE POLICY "Create announcements" ON public.announcements FOR INSERT WITH CHECK (
+  created_by = auth.uid() AND
+  public.is_farewell_admin(farewell_id)
 );
-
--- DUTY RECEIPTS
-ALTER TABLE public.duty_receipts ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "View receipts" ON public.duty_receipts FOR SELECT USING (
-  uploader_id = auth.uid() OR
-  public.is_farewell_admin((SELECT farewell_id FROM public.duties d JOIN public.duty_assignments da ON d.id = da.duty_id WHERE da.id = duty_assignment_id))
+CREATE POLICY "Update announcements" ON public.announcements FOR UPDATE USING (
+  public.is_farewell_admin(farewell_id)
 );
-
-CREATE POLICY "Upload receipts" ON public.duty_receipts FOR INSERT WITH CHECK (
-  uploader_id = auth.uid() AND
-  EXISTS (SELECT 1 FROM public.duty_assignments WHERE id = duty_assignment_id AND user_id = auth.uid())
-);
-
-CREATE POLICY "Manage receipts" ON public.duty_receipts FOR ALL USING (
-  public.is_farewell_admin((SELECT farewell_id FROM public.duties d JOIN public.duty_assignments da ON d.id = da.duty_id WHERE da.id = duty_assignment_id))
-);
-
--- LEDGER ENTRIES
-ALTER TABLE public.ledger_entries ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "View ledger" ON public.ledger_entries FOR SELECT USING (
-  user_id = auth.uid() OR
+CREATE POLICY "Delete announcements" ON public.announcements FOR DELETE USING (
   public.is_farewell_admin(farewell_id)
 );
 
-CREATE POLICY "Manage ledger" ON public.ledger_entries FOR ALL USING (
+-- ANNOUNCEMENT REACTIONS
+CREATE POLICY "View announcement reactions" ON public.announcement_reactions FOR SELECT USING (
+  public.is_farewell_member((SELECT farewell_id FROM public.announcements WHERE id = announcement_id))
+);
+CREATE POLICY "Manage own announcement reactions" ON public.announcement_reactions FOR ALL USING (
+  user_id = auth.uid()
+);
+
+-- CONTACT MESSAGES
+CREATE POLICY "Allow public insert" ON public.contact_messages FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow authenticated view" ON public.contact_messages FOR SELECT USING (auth.role() = 'authenticated');
+
+-- TIMELINE EVENTS
+CREATE POLICY "View timeline" ON public.timeline_events FOR SELECT USING (
+  public.is_farewell_member(farewell_id)
+);
+CREATE POLICY "Manage timeline" ON public.timeline_events FOR ALL USING (
   public.is_farewell_admin(farewell_id)
 );
 
--- ==========================================
--- RPC FUNCTIONS
--- ==========================================
-
--- Assign Duty
-CREATE OR REPLACE FUNCTION public.assign_duty(
-  _duty_id UUID,
-  _user_ids UUID[]
-)
-RETURNS JSONB AS $$
-DECLARE
-  _farewell_id UUID;
-  _success_count INT := 0;
-  _fail_count INT := 0;
-  _uid UUID;
-BEGIN
-  -- Check admin permissions
-  SELECT farewell_id INTO _farewell_id FROM public.duties WHERE id = _duty_id;
-  IF NOT public.is_farewell_admin(_farewell_id) THEN
-    RAISE EXCEPTION 'Unauthorized';
-  END IF;
-
-  FOREACH _uid IN ARRAY _user_ids
-  LOOP
-    BEGIN
-      INSERT INTO public.duty_assignments (duty_id, user_id)
-      VALUES (_duty_id, _uid)
-      ON CONFLICT (duty_id, user_id) DO NOTHING;
-      _success_count := _success_count + 1;
-    EXCEPTION WHEN OTHERS THEN
-      _fail_count := _fail_count + 1;
-    END;
-  END LOOP;
-
-  RETURN jsonb_build_object('success', _success_count, 'failed', _fail_count);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Approve Duty Receipt
-CREATE OR REPLACE FUNCTION public.approve_duty_receipt(_receipt_id UUID)
-RETURNS JSONB AS $$
-DECLARE
-  _receipt RECORD;
-  _duty RECORD;
-  _assignment RECORD;
-  _farewell_id UUID;
-BEGIN
-  -- Fetch receipt and related info
-  SELECT * INTO _receipt FROM public.duty_receipts WHERE id = _receipt_id;
-  IF NOT FOUND THEN RAISE EXCEPTION 'Receipt not found'; END IF;
-
-  SELECT * INTO _assignment FROM public.duty_assignments WHERE id = _receipt.duty_assignment_id;
-  SELECT * INTO _duty FROM public.duties WHERE id = _assignment.duty_id;
-  _farewell_id := _duty.farewell_id;
-
-  -- Check admin permissions
-  IF NOT public.is_farewell_admin(_farewell_id) THEN
-    RAISE EXCEPTION 'Unauthorized';
-  END IF;
-
-  -- Check status
-  IF _receipt.status = 'verified' THEN
-    RETURN jsonb_build_object('status', 'already_approved');
-  END IF;
-
-  -- Update receipt status
-  UPDATE public.duty_receipts
-  SET status = 'verified',
-      approved_at = NOW(),
-      approved_by = auth.uid()
-  WHERE id = _receipt_id;
-
-  -- Create ledger entry
-  INSERT INTO public.ledger_entries (
-    farewell_id,
-    user_id,
-    amount,
-    type,
-    meta
-  ) VALUES (
-    _farewell_id,
-    _receipt.uploader_id,
-    _receipt.amount,
-    'reimbursement',
-    jsonb_build_object('receipt_id', _receipt_id, 'duty_id', _duty.id, 'title', _duty.title)
-  );
-
-  -- Update duty status (simple logic: if any receipt approved, in_progress. if all done... complex. keeping it simple for now)
-  UPDATE public.duties SET status = 'in_progress' WHERE id = _duty.id AND status = 'pending';
-
-  RETURN jsonb_build_object('success', true);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Reject Duty Receipt
-CREATE OR REPLACE FUNCTION public.reject_duty_receipt(
-  _receipt_id UUID,
-  _reason TEXT
-)
-RETURNS JSONB AS $$
-DECLARE
-  _receipt RECORD;
-  _duty RECORD;
-  _assignment RECORD;
-  _farewell_id UUID;
-BEGIN
-  -- Fetch receipt and related info
-  SELECT * INTO _receipt FROM public.duty_receipts WHERE id = _receipt_id;
-  IF NOT FOUND THEN RAISE EXCEPTION 'Receipt not found'; END IF;
-
-  SELECT * INTO _assignment FROM public.duty_assignments WHERE id = _receipt.duty_assignment_id;
-  SELECT * INTO _duty FROM public.duties WHERE id = _assignment.duty_id;
-  _farewell_id := _duty.farewell_id;
-
-  -- Check admin permissions
-  IF NOT public.is_farewell_admin(_farewell_id) THEN
-    RAISE EXCEPTION 'Unauthorized';
-  END IF;
-
-  -- Update receipt status
-  UPDATE public.duty_receipts
-  SET status = 'rejected',
-      rejection_reason = _reason,
-      rejected_at = NOW(),
-      rejected_by = auth.uid()
-  WHERE id = _receipt_id;
-
-  RETURN jsonb_build_object('success', true);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- HIGHLIGHTS
+CREATE POLICY "View highlights" ON public.highlights FOR SELECT USING (
+  public.is_farewell_member(farewell_id)
+);
+CREATE POLICY "Manage highlights" ON public.highlights FOR ALL USING (
+  public.is_farewell_admin(farewell_id)
+);
 
 -- ==========================================
 -- 7. TRIGGERS & FUNCTIONS
@@ -884,6 +989,15 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON public.chat_messages(
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_farewell_members_user_id ON public.farewell_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_farewell_members_farewell_id ON public.farewell_members(farewell_id);
+CREATE INDEX IF NOT EXISTS idx_announcements_farewell_id ON public.announcements(farewell_id);
+CREATE INDEX IF NOT EXISTS idx_announcements_is_pinned ON public.announcements(is_pinned);
+CREATE INDEX IF NOT EXISTS idx_announcements_created_at ON public.announcements(created_at);
+CREATE INDEX IF NOT EXISTS idx_announcement_reactions_announcement_id ON public.announcement_reactions(announcement_id);
+CREATE INDEX IF NOT EXISTS idx_announcement_reactions_user_id ON public.announcement_reactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON public.notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON public.push_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_token ON public.push_subscriptions(token);
 
 -- ==========================================
 -- 9. ENABLE REALTIME
@@ -901,6 +1015,15 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.albums;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.media;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.artworks;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.yearbook_entries;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.announcements;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.announcement_reactions;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.contact_messages;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.duties;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.duty_assignments;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.duty_receipts;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.contributions;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.timeline_events;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.highlights;
 
 -- ==========================================
 -- 10. GRANTS

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ActionState } from "@/types/custom";
@@ -62,7 +63,8 @@ export async function createArtworkAction(
     .toString(36)
     .substring(7)}.${fileExt}`;
 
-  const { error: uploadError } = await supabase.storage
+  const adminClient = createAdminClient();
+  const { error: uploadError } = await adminClient.storage
     .from("memories") // Reusing memories bucket for now
     .upload(fileName, file);
 

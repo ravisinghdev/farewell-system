@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { ActionState } from "@/types/custom";
+import { checkIsAdmin } from "@/lib/auth/roles";
 
 export interface Feedback {
   id: string;
@@ -34,7 +35,7 @@ export async function getFeedbackAction(farewellId: string) {
     .eq("user_id", user.id)
     .single();
 
-  const isAdmin = member?.role === "admin" || member?.role === "main_admin";
+  const isAdmin = checkIsAdmin(member?.role);
 
   let query = supabase
     .from("feedback")
