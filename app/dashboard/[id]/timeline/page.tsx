@@ -3,9 +3,6 @@ import { CreateEventDialog } from "@/components/dashboard/create-event-dialog";
 import { RealtimeTimeline } from "@/components/dashboard/realtime-timeline";
 import { createClient } from "@/utils/supabase/server";
 import { CalendarClock } from "lucide-react";
-import { redirect } from "next/navigation";
-import { getFarewellRole } from "@/lib/auth/claims";
-import { checkIsAdmin } from "@/lib/auth/roles";
 
 interface TimelinePageProps {
   params: Promise<{
@@ -16,15 +13,8 @@ interface TimelinePageProps {
 export default async function TimelinePage({ params }: TimelinePageProps) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth");
 
   const events = await getTimelineEventsAction(id);
-  const role = getFarewellRole(user, id);
-  const isAdmin = checkIsAdmin(role);
 
   return (
     <div className="flex flex-col h-full bg-muted/10">
@@ -38,7 +28,7 @@ export default async function TimelinePage({ params }: TimelinePageProps) {
             The schedule of events leading up to the big day.
           </p>
         </div>
-        {isAdmin && <CreateEventDialog farewellId={id} />}
+        <CreateEventDialog farewellId={id} />
       </div>
 
       <div className="flex-1 overflow-auto p-6">

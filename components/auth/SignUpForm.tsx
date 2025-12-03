@@ -15,6 +15,8 @@ export default function SignUpForm() {
     password: "",
     username: "",
     fullName: "",
+    grade: undefined as number | undefined,
+    section: "",
   });
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +91,30 @@ export default function SignUpForm() {
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           required
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Grade (Class)</Label>
+          <Input
+            type="number"
+            min="1"
+            max="12"
+            placeholder="e.g. 12"
+            value={form.grade || ""}
+            onChange={(e) =>
+              setForm({ ...form, grade: parseInt(e.target.value) || undefined })
+            }
+          />
+        </div>
+        <div>
+          <Label>Section</Label>
+          <Input
+            placeholder="e.g. A"
+            value={form.section || ""}
+            onChange={(e) => setForm({ ...form, section: e.target.value })}
+          />
+        </div>
       </div>
 
       <Button type="submit" disabled={isPending}>

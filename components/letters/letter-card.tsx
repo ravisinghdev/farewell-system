@@ -7,12 +7,15 @@ import { getInitials } from "@/lib/utils";
 import { format } from "date-fns";
 import { Quote } from "lucide-react";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 interface LetterCardProps {
   letter: Letter;
-  currentUserId: string;
 }
 
-export function LetterCard({ letter, currentUserId }: LetterCardProps) {
+export function LetterCard({ letter }: LetterCardProps) {
+  const { user } = useFarewell();
+  const currentUserId = user?.id;
   const isOwn = letter.sender_id === currentUserId;
 
   return (

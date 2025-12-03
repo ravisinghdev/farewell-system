@@ -4,6 +4,8 @@ import Provider from "./Provider";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { GeminiAssistant } from "@/components/ai/GeminiAssistant";
+import NextTopLoader from "nextjs-toploader";
+import { Analytics } from "@vercel/analytics/react";
 
 // Metadata configuration for SEO and social sharing
 export const metadata: Metadata = {
@@ -76,8 +78,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen">
         <Provider>
+          <NextTopLoader color="#7c3aed" showSpinner={false} />
           {children}
           <Toaster />
+          <Analytics />
           <GeminiAssistant />
         </Provider>
       </body>

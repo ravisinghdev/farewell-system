@@ -28,9 +28,14 @@ import Cropper from "react-easy-crop";
 import getCroppedImg from "@/utils/cropImage";
 import { Slider } from "@/components/ui/slider";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+import { checkIsAdmin } from "@/lib/auth/roles";
+
 export function CreateHighlightDialog({
   farewellId,
 }: CreateHighlightDialogProps) {
+  const { farewell } = useFarewell();
+  const isAdmin = checkIsAdmin(farewell.role);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -39,6 +44,8 @@ export function CreateHighlightDialog({
   const [link, setLink] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
+
+  if (!isAdmin) return null;
 
   // Crop state
   const [crop, setCrop] = useState({ x: 0, y: 0 });

@@ -14,17 +14,17 @@ export async function requestJoinFarewellAction(
   const supabase = await createClient();
 
   // 1. current user
-  const { data: userResp, error: userError } = await supabase.auth.getUser();
-  if (userError || !userResp?.user) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) {
     return { error: "Not authenticated" };
   }
-  const user = userResp.user;
+  const userId = claimsData.claims.sub;
 
   // safety: ensure user not already in a farewell
   const { data: existingMember } = await supabase
     .from("farewell_members")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (existingMember) {
@@ -50,7 +50,7 @@ export async function requestJoinFarewellAction(
       .from("farewell_members")
       .insert({
         farewell_id: farewell.id,
-        user_id: user.id,
+        user_id: userId,
         role: "student",
         status: "approved", // Changed from active: true to status: 'approved'
       });
@@ -81,7 +81,7 @@ export async function requestJoinFarewellAction(
   const { data: existingRequest } = await supabase
     .from("farewell_join_requests")
     .select("id, status")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("farewell_id", farewell.id)
     .maybeSingle();
 
@@ -96,7 +96,7 @@ export async function requestJoinFarewellAction(
   const { error: reqError } = await supabase
     .from("farewell_join_requests")
     .insert({
-      user_id: user.id,
+      user_id: userId,
       farewell_id: farewell.id,
       status: "pending",
     });

@@ -34,20 +34,19 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Refresh session if expired
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
 
   const path = request.nextUrl.pathname;
+  const user = data?.claims;
 
   // PROTECTED ROUTES LOGIC
   // If user is NOT logged in and tries to access a protected page
-  if (!user && !path.startsWith("/auth")) {
+  if (!data?.claims && !path.startsWith("/auth")) {
     return NextResponse.redirect(new URL("/auth", request.url));
   }
 
   // If user IS logged in
-  if (user) {
+  if (data?.claims) {
     // If trying to access auth pages, redirect to dashboard
     if (path.startsWith("/auth")) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -56,9 +55,8 @@ export async function updateSession(request: NextRequest) {
     // Check if user has joined a farewell using CUSTOM CLAIMS (Zero Latency)
     // Skip this check for /welcome and /api routes
     if (!path.startsWith("/welcome") && !path.startsWith("/api")) {
-      // Use the helper from lib/auth/claims.ts
       // This reads from user.app_metadata which is in the JWT
-      const hasFarewell = hasAnyFarewell(user);
+      const hasFarewell = hasAnyFarewell(data?.claims);
 
       if (!hasFarewell) {
         // FALLBACK: Check DB directly
@@ -81,7 +79,7 @@ export async function updateSession(request: NextRequest) {
           const { data } = await adminSupabase
             .from("farewell_members")
             .select("farewell_id")
-            .eq("user_id", user.id)
+            .eq("user_id", user?.sub)
             .eq("status", "approved")
             .maybeSingle();
           member = data;
@@ -90,7 +88,7 @@ export async function updateSession(request: NextRequest) {
           const { data } = await supabase
             .from("farewell_members")
             .select("farewell_id")
-            .eq("user_id", user.id)
+            .eq("user_id", user?.sub)
             .eq("status", "approved")
             .maybeSingle();
           member = data;

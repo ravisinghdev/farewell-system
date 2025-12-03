@@ -1,26 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
-import { getClaims } from "@/lib/auth/claims";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import {
-  Wallet,
-  MessageCircle,
-  Image as ImageIcon,
-  Calendar,
-  ArrowRight,
-  Bell,
-  Star,
-  Users,
-} from "lucide-react";
-import { Countdown } from "@/components/dashboard/countdown";
 import {
   getAnnouncementsAction,
   getDashboardStatsAction,
@@ -37,31 +17,6 @@ interface DashboardPageProps {
 export default async function DashboardPage({ params }: DashboardPageProps) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth");
-  }
-
-  // Verify membership
-  const claims = getClaims(user);
-  const userFarewells = claims.farewells || {};
-
-  if (!userFarewells[id]) {
-    const { data: member } = await supabase
-      .from("farewell_members")
-      .select("status")
-      .eq("farewell_id", id)
-      .eq("user_id", user.id)
-      .eq("status", "approved")
-      .maybeSingle();
-
-    if (!member) {
-      redirect("/welcome");
-    }
-  }
 
   // Fetch data in parallel
   const [farewellRes, announcements, stats, transactions] = await Promise.all([

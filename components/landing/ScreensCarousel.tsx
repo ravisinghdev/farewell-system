@@ -50,8 +50,8 @@ export default function ScreensCarousel() {
 
   return (
     <div className="w-full h-full bg-background flex flex-col overflow-hidden text-foreground">
-      {/* Browser Chrome */}
-      <div className="h-10 bg-muted/50 border-b border-border flex items-center px-4 gap-4 flex-shrink-0">
+      {/* Browser Chrome - Hidden on mobile */}
+      <div className="hidden md:flex h-10 bg-muted/50 border-b border-border items-center px-4 gap-4 flex-shrink-0">
         <div className="flex gap-2">
           <div className="w-3 h-3 rounded-full bg-red-500/50" />
           <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
@@ -89,18 +89,18 @@ export default function ScreensCarousel() {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col bg-background/50 relative overflow-hidden">
           {/* Header */}
-          <div className="h-16 border-b border-border flex items-center justify-between px-8 bg-background/80 backdrop-blur-sm flex-shrink-0">
-            <div className="font-semibold text-lg">Dashboard</div>
-            <div className="flex items-center gap-4">
-              <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center">
-                <Bell className="w-4 h-4 text-muted-foreground" />
+          <div className="h-14 md:h-16 border-b border-border flex items-center justify-between px-4 md:px-8 bg-background/80 backdrop-blur-sm flex-shrink-0">
+            <div className="font-semibold text-base md:text-lg">Dashboard</div>
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-accent flex items-center justify-center">
+                <Bell className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground" />
               </div>
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-purple-600" />
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-primary to-purple-600" />
             </div>
           </div>
 
           {/* Scrollable Content - Matching RealtimeDashboard layout */}
-          <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 scrollbar-hide">
             {/* Hero Section */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/90 to-primary p-8 md:p-12 text-primary-foreground shadow-xl">
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">

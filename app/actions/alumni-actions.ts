@@ -44,18 +44,16 @@ export async function createAlumniMessageAction(
   content: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   // Optional: Verify user is an alumni?
   // For now, we allow anyone to post, but UI can label them.
 
   const { error } = await supabase.from("alumni_messages").insert({
     farewell_id: farewellId,
-    sender_id: user.id,
+    sender_id: userId,
     content,
   });
 
@@ -73,17 +71,15 @@ export async function deleteAlumniMessageAction(
   farewellId: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const { error } = await supabase
     .from("alumni_messages")
     .delete()
     .eq("id", messageId)
-    .eq("sender_id", user.id);
+    .eq("sender_id", userId);
 
   if (error) {
     console.error("Error deleting alumni message:", error);

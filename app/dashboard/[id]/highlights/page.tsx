@@ -3,9 +3,6 @@ import { CreateHighlightDialog } from "@/components/dashboard/create-highlight-d
 import { RealtimeHighlights } from "@/components/dashboard/realtime-highlights";
 import { createClient } from "@/utils/supabase/server";
 import { Star } from "lucide-react";
-import { redirect } from "next/navigation";
-import { getFarewellRole } from "@/lib/auth/claims";
-import { checkIsAdmin } from "@/lib/auth/roles";
 
 interface HighlightsPageProps {
   params: Promise<{
@@ -16,15 +13,8 @@ interface HighlightsPageProps {
 export default async function HighlightsPage({ params }: HighlightsPageProps) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth");
 
   const highlights = await getHighlightsAction(id);
-  const role = getFarewellRole(user, id);
-  const isAdmin = checkIsAdmin(role);
 
   return (
     <div className="flex flex-col h-full bg-muted/10">
@@ -38,7 +28,7 @@ export default async function HighlightsPage({ params }: HighlightsPageProps) {
             Featured memories and important updates.
           </p>
         </div>
-        {isAdmin && <CreateHighlightDialog farewellId={id} />}
+        <CreateHighlightDialog farewellId={id} />
       </div>
 
       <div className="flex-1 overflow-auto p-6">

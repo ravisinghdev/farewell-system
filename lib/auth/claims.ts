@@ -13,7 +13,7 @@
  * @module lib/auth/claims
  */
 
-import { Session, User } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 
 /**
  * Role within a specific farewell context.
@@ -66,6 +66,49 @@ export interface UserClaims {
 }
 
 /**
+ * Full Authentication Claims object structure.
+ * Matches the structure returned by supabase.auth.getClaims().
+ */
+export interface AuthClaims {
+  iss: string;
+  sub: string;
+  aud: string;
+  exp: number;
+  iat: number;
+  email: string;
+  phone: string;
+  app_metadata: {
+    farewells?: FarewellClaims;
+    provider?: string;
+    providers?: string[];
+    [key: string]: any;
+  };
+  user_metadata: {
+    avatar_url?: string;
+    email?: string;
+    email_verified?: boolean;
+    full_name?: string;
+    phone_verified?: boolean;
+    role?: string;
+    sub?: string;
+    username?: string;
+    [key: string]: any;
+  };
+  role: string;
+  aal: string;
+  amr: { method: string; timestamp: number }[];
+  session_id: string;
+  is_anonymous: boolean;
+  factors?: {
+    id: string;
+    factor_type: string;
+    status: "verified" | "unverified";
+    created_at: string;
+    updated_at: string;
+  }[];
+}
+
+/**
  * Extracts custom claims from the user's app_metadata.
  *
  * This function is the primary entry point for accessing user claims,
@@ -79,15 +122,10 @@ export interface UserClaims {
  * @param {User | null} user - Supabase user object (from session or auth.getUser())
  * @returns {UserClaims} User's custom claims, or empty object if not available
  *
- * @example
- * // In middleware
- * const { data: { user } } = await supabase.auth.getUser();
- * const claims = getClaims(user);
- * if (claims.farewells?.['farewell-123'] === 'main_admin') {
- *   // User is admin of this farewell
- * }
  */
-export function getClaims(user: User | null): UserClaims {
+export function getClaims(
+  user: User | { app_metadata?: any } | null
+): UserClaims {
   if (!user || !user.app_metadata) return {};
   return user.app_metadata as UserClaims;
 }
@@ -118,11 +156,10 @@ export function getClaims(user: User | null): UserClaims {
  * }
  */
 export function getFarewellRole(
-  user: User | null,
+  user: User | { app_metadata?: any } | null,
   farewellId: string
 ): FarewellRole | null {
   const claims = getClaims(user);
-  console.log("claims", claims);
   if (!claims.farewells) return null;
   return claims.farewells[farewellId] || null;
 }
@@ -144,7 +181,9 @@ export function getFarewellRole(
  *   redirect('/welcome');
  * }
  */
-export function hasAnyFarewell(user: User | null): boolean {
+export function hasAnyFarewell(
+  user: User | { app_metadata?: any } | null
+): boolean {
   const claims = getClaims(user);
   return !!claims.farewells && Object.keys(claims.farewells).length > 0;
 }
@@ -166,7 +205,9 @@ export function hasAnyFarewell(user: User | null): boolean {
  *   redirect(`/dashboard/${farewellId}`);
  * }
  */
-export function getFirstFarewellId(user: User | null): string | null {
+export function getFirstFarewellId(
+  user: User | { app_metadata?: any } | null
+): string | null {
   const claims = getClaims(user);
   if (!claims.farewells) return null;
   const ids = Object.keys(claims.farewells);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -13,15 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { AssignmentDialog } from "./assignment-dialog";
-import { ReceiptUploadDialog } from "./receipt-upload-dialog";
-import { ReceiptApprovalDialog } from "./receipt-approval-dialog";
 import {
   Plus,
-  Upload,
-  FileText,
-  CheckCircle,
   Clock,
   AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 import { useFarewell } from "@/components/providers/farewell-provider";
@@ -29,13 +28,10 @@ import { useFarewell } from "@/components/providers/farewell-provider";
 interface DutyCardProps {
   duty: any;
   onUpdate: () => void;
-  // Props are now optional/unused as we use context
-  currentUserId?: string;
-  isFarewellAdmin?: boolean;
-  farewellId?: string;
 }
 
 export function DutyCard({ duty, onUpdate }: DutyCardProps) {
+  const router = useRouter();
   const { user, farewell } = useFarewell();
   const farewellId = farewell.id;
   const currentUserId = user.id;
@@ -43,17 +39,16 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
     farewell.role || ""
   );
   const [assignOpen, setAssignOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [approvalOpen, setApprovalOpen] = useState(false);
-  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
 
   const myAssignment = duty.duty_assignments?.find(
     (a: any) => a.user_id === currentUserId
   );
-  const pendingReceipts =
-    duty.duty_receipts?.filter((r: any) => r.status === "pending") || [];
+
+  const isPendingAcceptance =
+    myAssignment?.status === "pending" && duty.status === "awaiting_acceptance";
+
   const approvedReceipts =
-    duty.duty_receipts?.filter((r: any) => r.status === "verified") || [];
+    duty.duty_receipts?.filter((r: any) => r.status === "approved") || [];
 
   const totalSpent = approvedReceipts.reduce(
     (sum: number, r: any) => sum + Number(r.amount),
@@ -63,14 +58,14 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
     ? (totalSpent / duty.expense_limit) * 100
     : 0;
 
-  const handleReviewReceipt = (receipt: any) => {
-    setSelectedReceipt(receipt);
-    setApprovalOpen(true);
-  };
-
   return (
     <>
-      <Card className="flex flex-col h-full">
+      <Card
+        className="flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer"
+        onClick={() =>
+          router.push(`/dashboard/${farewellId}/duties/${duty.id}`)
+        }
+      >
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start gap-2">
             <CardTitle className="text-lg font-semibold line-clamp-2">
@@ -85,7 +80,7 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
                   : "outline"
               }
             >
-              {duty.status.replace("_", " ")}
+              {duty.status.replace(/_/g, " ")}
             </Badge>
           </div>
           {duty.deadline && (
@@ -100,7 +95,7 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
             {duty.description}
           </p>
 
-          {duty.expense_limit && (
+          {duty.expense_limit > 0 && (
             <div className="space-y-1">
               <div className="flex justify-between text-xs">
                 <span>Spent: ₹{totalSpent}</span>
@@ -128,7 +123,13 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
                 duty.duty_assignments.map((assignment: any) => (
                   <div
                     key={assignment.id}
-                    className="flex items-center gap-1 bg-secondary/50 rounded-full px-2 py-1"
+                    className={`flex items-center gap-1 rounded-full px-2 py-1 border ${
+                      assignment.status === "accepted"
+                        ? "bg-secondary/50 border-transparent"
+                        : assignment.status === "rejected"
+                        ? "bg-destructive/10 border-destructive/20"
+                        : "bg-muted border-dashed"
+                    }`}
                   >
                     <Avatar className="h-4 w-4">
                       <AvatarImage src={assignment.users?.avatar_url} />
@@ -139,6 +140,15 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
                     <span className="text-xs max-w-[80px] truncate">
                       {assignment.users?.full_name}
                     </span>
+                    {assignment.status === "accepted" && (
+                      <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    )}
+                    {assignment.status === "rejected" && (
+                      <XCircle className="h-3 w-3 text-red-500" />
+                    )}
+                    {assignment.status === "pending" && (
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                    )}
                   </div>
                 ))
               ) : (
@@ -149,50 +159,33 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
             </div>
           </div>
 
-          {isFarewellAdmin && pendingReceipts.length > 0 && (
-            <div className="bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-md p-2 text-xs flex items-center gap-2">
+          {isPendingAcceptance && (
+            <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-md p-2 text-xs flex items-center gap-2">
               <AlertCircle className="h-4 w-4" />
-              {pendingReceipts.length} receipt
-              {pendingReceipts.length !== 1 ? "s" : ""} pending review
+              Action Required: Accept Duty
             </div>
           )}
         </CardContent>
         <CardFooter className="pt-2 border-t flex gap-2">
           {isFarewellAdmin ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => setAssignOpen(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Assign
-              </Button>
-              {pendingReceipts.length > 0 && (
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handleReviewReceipt(pendingReceipts[0])}
-                >
-                  Review
-                </Button>
-              )}
-            </>
-          ) : myAssignment ? (
             <Button
+              variant="outline"
               size="sm"
-              className="w-full"
-              onClick={() => setUploadOpen(true)}
+              className="flex-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                setAssignOpen(true);
+              }}
             >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Receipt
+              <Plus className="mr-2 h-4 w-4" />
+              Assign
             </Button>
           ) : (
-            <div className="text-xs text-muted-foreground w-full text-center py-2">
-              Not assigned to you
-            </div>
+            <div className="flex-1"></div>
           )}
+          <Button size="sm" variant="ghost" className="gap-2">
+            Details <ArrowRight className="h-4 w-4" />
+          </Button>
         </CardFooter>
       </Card>
 
@@ -203,24 +196,6 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
         onOpenChange={setAssignOpen}
         onSuccess={onUpdate}
       />
-
-      {myAssignment && (
-        <ReceiptUploadDialog
-          dutyId={duty.id}
-          open={uploadOpen}
-          onOpenChange={setUploadOpen}
-          onSuccess={onUpdate}
-        />
-      )}
-
-      {selectedReceipt && (
-        <ReceiptApprovalDialog
-          receipt={selectedReceipt}
-          open={approvalOpen}
-          onOpenChange={setApprovalOpen}
-          onSuccess={onUpdate}
-        />
-      )}
     </>
   );
 }

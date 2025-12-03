@@ -2,6 +2,7 @@
 
 import { supabaseClient } from "@/utils/supabase/client";
 import { useEffect, useState, use } from "react";
+import { useFarewell } from "@/components/providers/farewell-provider";
 
 export default function DebugPage({
   params,
@@ -9,6 +10,7 @@ export default function DebugPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { user } = useFarewell();
   const [logs, setLogs] = useState<string[]>([]);
   const [policies, setPolicies] = useState<any[]>([]);
 
@@ -17,9 +19,6 @@ export default function DebugPage({
   useEffect(() => {
     const runChecks = async () => {
       const supabase = supabaseClient;
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
       log(`User: ${user?.id || "Not logged in"}`);
 

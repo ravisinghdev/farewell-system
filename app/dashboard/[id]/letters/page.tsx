@@ -3,7 +3,6 @@ import { CreateLetterDialog } from "@/components/letters/create-letter-dialog";
 import { LetterCard } from "@/components/letters/letter-card";
 import { createClient } from "@/utils/supabase/server";
 import { Mail } from "lucide-react";
-import { redirect } from "next/navigation";
 
 interface LettersPageProps {
   params: Promise<{
@@ -14,11 +13,6 @@ interface LettersPageProps {
 export default async function LettersPage({ params }: LettersPageProps) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth");
 
   const letters = await getLettersAction(id);
 
@@ -55,11 +49,7 @@ export default async function LettersPage({ params }: LettersPageProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {letters.map((letter) => (
-              <LetterCard
-                key={letter.id}
-                letter={letter}
-                currentUserId={user.id}
-              />
+              <LetterCard key={letter.id} letter={letter} />
             ))}
           </div>
         )}

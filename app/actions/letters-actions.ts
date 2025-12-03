@@ -51,15 +51,13 @@ export async function createLetterAction(
   isPublic: boolean = true
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const { error } = await supabase.from("letters").insert({
     farewell_id: farewellId,
-    sender_id: user.id,
+    sender_id: userId,
     recipient_id: recipientId === "all" ? null : recipientId,
     content,
     is_public: isPublic,
@@ -79,17 +77,15 @@ export async function deleteLetterAction(
   farewellId: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const { error } = await supabase
     .from("letters")
     .delete()
     .eq("id", letterId)
-    .eq("sender_id", user.id);
+    .eq("sender_id", userId);
 
   if (error) {
     console.error("Error deleting letter:", error);

@@ -37,7 +37,12 @@ interface CreateEventDialogProps {
   farewellId: string;
 }
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+import { checkIsAdmin } from "@/lib/auth/roles";
+
 export function CreateEventDialog({ farewellId }: CreateEventDialogProps) {
+  const { farewell } = useFarewell();
+  const isAdmin = checkIsAdmin(farewell.role);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -45,6 +50,8 @@ export function CreateEventDialog({ farewellId }: CreateEventDialogProps) {
   const [time, setTime] = useState("12:00");
   const [icon, setIcon] = useState("calendar");
   const [isPending, startTransition] = useTransition();
+
+  if (!isAdmin) return null;
 
   const handleSubmit = () => {
     if (!title.trim() || !date) return;

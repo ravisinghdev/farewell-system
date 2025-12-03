@@ -13,9 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createDutyAction } from "@/app/actions/duty-actions";
+import { createDutyAction, assignDutyAction } from "@/actions/duties";
+import { getFarewellMembers } from "@/actions/people";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -30,7 +38,6 @@ import { useFarewell } from "@/components/providers/farewell-provider";
 
 interface CreateDutyDialogProps {
   onSuccess: () => void;
-  // Props are now optional/unused as we use context
   farewellId?: string;
 }
 
@@ -42,7 +49,23 @@ export function CreateDutyDialog({ onSuccess }: CreateDutyDialogProps) {
   const [description, setDescription] = useState("");
   const [expenseLimit, setExpenseLimit] = useState("");
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
+  const [primaryAssignee, setPrimaryAssignee] = useState<string>("");
+  const [secondaryAssignee, setSecondaryAssignee] = useState<string>("none");
+  const [members, setMembers] = useState<any[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const fetchMembers = async () => {
+    setLoadingMembers(true);
+    try {
+      const data = await getFarewellMembers(farewellId);
+      setMembers(data || []);
+    } catch (error) {
+      console.error("Failed to fetch members", error);
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,18 +73,32 @@ export function CreateDutyDialog({ onSuccess }: CreateDutyDialogProps) {
 
     setSubmitting(true);
     try {
-      await createDutyAction(farewellId, {
+      const newDuty = await createDutyAction(
+        farewellId,
         title,
         description,
-        expenseLimit: expenseLimit ? parseFloat(expenseLimit) : 0,
-        deadline: deadline?.toISOString(),
-      });
-      toast.success("Duty created successfully");
+        expenseLimit ? parseFloat(expenseLimit) : 0,
+        deadline?.toISOString()
+      );
+
+      const assignees = [primaryAssignee];
+      if (secondaryAssignee && secondaryAssignee !== "none") {
+        assignees.push(secondaryAssignee);
+      }
+
+      if (assignees.length > 0) {
+        await assignDutyAction(newDuty.id, assignees);
+      }
+
+      toast.success("Duty created and assigned successfully");
       setOpen(false);
       setTitle("");
       setDescription("");
       setExpenseLimit("");
+      setExpenseLimit("");
       setDeadline(undefined);
+      setPrimaryAssignee("");
+      setSecondaryAssignee("none");
       onSuccess();
     } catch (error) {
       toast.error("Failed to create duty");
@@ -71,7 +108,13 @@ export function CreateDutyDialog({ onSuccess }: CreateDutyDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        setOpen(val);
+        if (val && members.length === 0) fetchMembers();
+      }}
+    >
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
@@ -143,6 +186,57 @@ export function CreateDutyDialog({ onSuccess }: CreateDutyDialogProps) {
               </Popover>
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Primary Assignee (Required)</Label>
+              <Select
+                value={primaryAssignee}
+                onValueChange={setPrimaryAssignee}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingMembers ? (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      Loading...
+                    </div>
+                  ) : (
+                    members.map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        {m.user.full_name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Secondary Assignee (Optional)</Label>
+              <Select
+                value={secondaryAssignee}
+                onValueChange={setSecondaryAssignee}
+                disabled={!primaryAssignee}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select member" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {members
+                    .filter((m) => m.user_id !== primaryAssignee)
+                    .map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        {m.user.full_name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <DialogFooter>
             <Button
               type="button"
@@ -151,7 +245,10 @@ export function CreateDutyDialog({ onSuccess }: CreateDutyDialogProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting || !title}>
+            <Button
+              type="submit"
+              disabled={submitting || !title || !primaryAssignee}
+            >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create
             </Button>

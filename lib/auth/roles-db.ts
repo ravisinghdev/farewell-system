@@ -39,7 +39,9 @@ export type UserRoleName =
   | "teacher"
   | "parallel_admin"
   | "main_admin"
-  | "admin";
+  | "admin"
+  | "guest"
+  | "junior";
 
 /**
  * Fetches a user's role from the database based on their user ID and farewell ID.

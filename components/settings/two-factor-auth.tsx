@@ -16,31 +16,27 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 import { Loader2 } from "lucide-react";
+import { useAuthClaims } from "@/components/providers/farewell-provider";
 
 export function TwoFactorAuth() {
+  const authClaims = useAuthClaims();
   const [isEnabled, setIsEnabled] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingFactorId, setPendingFactorId] = useState<string | null>(null);
 
   const supabase = createClient();
 
   useEffect(() => {
-    checkStatus();
-  }, []);
-
-  const checkStatus = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user?.factors && user.factors.length > 0) {
-      const totpFactor = user.factors.find(
+    if (authClaims?.factors) {
+      const totpFactor = authClaims.factors.find(
         (f) => f.factor_type === "totp" && f.status === "verified"
       );
       setIsEnabled(!!totpFactor);
     }
-  };
+  }, [authClaims]);
 
   const handleEnable = async () => {
     setLoading(true);
@@ -51,11 +47,10 @@ export function TwoFactorAuth() {
 
       if (error) throw error;
 
+      setPendingFactorId(data.id);
       setSecret(data.totp.secret);
       const url = await QRCode.toDataURL(data.totp.uri);
       setQrCodeUrl(url);
-      // Store the factor ID temporarily if needed, but usually we just verify next
-      // We need to verify to complete the process
     } catch (error: any) {
       toast.error("Error enabling 2FA: " + error.message);
     } finally {
@@ -66,24 +61,12 @@ export function TwoFactorAuth() {
   const handleVerify = async () => {
     setLoading(true);
     try {
-      // We need the factorId from the enrollment step.
-      // Since we didn't store it in state, we might need to fetch factors again or store it.
-      // Let's refactor handleEnable to store the factorId.
-
-      // Actually, let's re-fetch factors to find the 'unverified' one we just created.
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const factor = user?.factors?.find(
-        (f) => f.factor_type === "totp" && f.status === "unverified"
-      );
-
-      if (!factor) {
+      if (!pendingFactorId) {
         throw new Error("No pending 2FA enrollment found.");
       }
 
       const { data, error } = await supabase.auth.mfa.challengeAndVerify({
-        factorId: factor.id,
+        factorId: pendingFactorId,
         code: verifyCode,
       });
 
@@ -93,6 +76,7 @@ export function TwoFactorAuth() {
       setQrCodeUrl(null);
       setSecret(null);
       setVerifyCode("");
+      setPendingFactorId(null);
       toast.success("Two-factor authentication enabled!");
     } catch (error: any) {
       toast.error("Error verifying code: " + error.message);
@@ -104,15 +88,17 @@ export function TwoFactorAuth() {
   const handleDisable = async () => {
     setLoading(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const factor = user?.factors?.find(
+      // Find factor ID from claims
+      const factor = authClaims?.factors?.find(
         (f) => f.factor_type === "totp" && f.status === "verified"
       );
 
       if (!factor) {
-        throw new Error("No active 2FA found.");
+        // If not in claims, maybe it was just enabled in this session?
+        // But we don't store the verified ID in state after verification currently.
+        // If we just verified, we should probably reload the page or fetch user to get the ID if we want to disable immediately.
+        // But for now, let's assume it's in claims or throw.
+        throw new Error("Please reload the page to disable 2FA.");
       }
 
       const { error } = await supabase.auth.mfa.unenroll({

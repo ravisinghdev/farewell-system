@@ -106,21 +106,22 @@ export async function loginAction(form: LoginInput) {
     const supabase = await createClient();
 
     // Step 1: password login
-    const { error } = await supabase.auth.signInWithPassword({
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) return { error: error.message };
 
-    // TODO: MFA required method implantation
-
-    const { data: userResp, error: userError } = await supabase.auth.getUser();
-    if (userError || !userResp.user) {
+    if (!user) {
       return { error: "Login failed (no user after signin)" };
     }
 
-    const user = userResp.user;
+    // TODO: MFA required method implantation
+
     const destination = await getPostLoginDestination(user.id);
 
     switch (destination.kind) {

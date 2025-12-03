@@ -8,6 +8,7 @@ import { DutyCard } from "@/components/duties/duty-card";
 import { CreateDutyDialog } from "@/components/duties/create-duty-dialog";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRealtimeDuties } from "@/hooks/use-realtime-duties";
 
 import { useFarewell } from "@/components/providers/farewell-provider";
 
@@ -22,12 +23,6 @@ export default function DutiesPage() {
   const [duties, setDuties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (farewellId) {
-      fetchDuties();
-    }
-  }, [farewellId]);
-
   const fetchDuties = async () => {
     try {
       const data = await getDutiesAction(farewellId);
@@ -38,6 +33,14 @@ export default function DutiesPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (farewellId) {
+      fetchDuties();
+    }
+  }, [farewellId]);
+
+  useRealtimeDuties(farewellId, fetchDuties);
 
   if (loading) {
     return (

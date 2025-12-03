@@ -10,6 +10,8 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { getUserRoleFromDb, type UserRoleName } from "./roles-db";
+import { getClaims } from "./claims";
+import { redirect } from "next/navigation";
 import fs from "fs";
 import path from "path";
 
@@ -53,29 +55,6 @@ export interface AuthUserWithRole {
  * 2. Fetches the user's role from the database
  * 3. Combines both into a single AuthUserWithRole object
  *
- * **Usage in Server Components:**
- * ```tsx
- * export default async function ProtectedPage() {
- *   const user = await getCurrentUserWithRole();
- *   if (!user) redirect('/auth');
- *
- *   if (user.role === 'main_admin') {
- *     return <AdminDashboard />;
- *   }
- *   return <UserDashboard />;
- * }
- * ```
- *
- * **Usage in Server Actions:**
- * ```ts
- * export async function updateSettingsAction(data: FormData) {
- *   const user = await getCurrentUserWithRole();
- *   if (!user) return { error: 'Unauthorized' };
- *
- *   // Proceed with action...
- * }
- * ```
- *
  * @async
  * @returns {Promise<AuthUserWithRole | null>} User with role info, or null if not authenticated
  *
@@ -94,27 +73,34 @@ export interface AuthUserWithRole {
  *   // User has admin privileges
  * }
  */
+
 export async function getCurrentUserWithRole(
   farewellId?: string
 ): Promise<AuthUserWithRole | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
 
-  if (error || !data?.user) return null;
+  if (!data || !data.claims) return null;
 
-  const user = data.user;
+  const claims = data.claims;
+  const userId = claims.sub;
+
+  // Extract user metadata from claims if available, or fall back to empty
+  const userMetadata =
+    (claims.user_metadata as { full_name?: string; avatar_url?: string }) || {};
+  const email = (claims.email as string) || "";
+
+  // console.log("User claims: ", claims);
   let role: UserRoleName = "student";
 
-  logToFile(`Fetching user ${user.id} for farewell ${farewellId}`);
-
   // Try to get role from Custom Claims (app_metadata)
-  if (farewellId && user.app_metadata?.farewells) {
-    const farewellRoles = user.app_metadata.farewells as Record<
-      string,
-      UserRoleName
-    >;
-    if (farewellRoles[farewellId]) {
-      role = farewellRoles[farewellId];
+  // Note: claims.app_metadata is where custom claims usually live in the JWT
+  const appMetadata =
+    (claims.app_metadata as { farewells?: Record<string, UserRoleName> }) || {};
+
+  if (farewellId && appMetadata.farewells) {
+    if (appMetadata.farewells[farewellId]) {
+      role = appMetadata.farewells[farewellId];
       logToFile(`Found role in claims: ${role}`);
     }
   }
@@ -122,7 +108,7 @@ export async function getCurrentUserWithRole(
   // Fallback: Fetch from DB if claims are missing or to ensure latest data
   if (farewellId && role === "student") {
     logToFile(`Role is student or missing, checking DB...`);
-    const dbRole = await getUserRoleFromDb(user.id, farewellId);
+    const dbRole = await getUserRoleFromDb(userId, farewellId);
     if (dbRole) {
       role = dbRole;
       logToFile(`Found role in DB: ${role}`);
@@ -130,10 +116,25 @@ export async function getCurrentUserWithRole(
   }
 
   return {
-    id: user.id,
-    name: user.user_metadata.full_name,
-    email: user.email ?? "",
+    id: userId,
+    name: userMetadata.full_name || "",
+    email: email,
     role,
-    raw: user,
+    raw: {
+      id: userId,
+      app_metadata: appMetadata,
+      user_metadata: userMetadata,
+      email: email,
+    },
   };
+}
+
+export async function getCurrentUser() {
+  const client = await createClient();
+  const { data } = await client.auth.getClaims();
+  if (!data || !data.claims) {
+    redirect("/auth");
+  }
+
+  return data;
 }

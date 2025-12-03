@@ -15,13 +15,12 @@ export async function approveJoinRequestAction(
   const supabase = await createClient();
 
   // 1. Identify the current user
-  const { data: currentUserResp, error: userError } =
-    await supabase.auth.getUser();
-  if (userError || !currentUserResp.user) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) {
     return { error: "Not authenticated" };
   }
 
-  const currentUserId = currentUserResp.user.id;
+  const currentUserId = claimsData.claims.sub;
 
   // 2. Load the join request
   const { data: request, error: reqError } = await supabaseAdmin
@@ -95,13 +94,12 @@ export async function rejectJoinRequestAction(
 ): Promise<ActionState> {
   const supabase = await createClient();
 
-  const { data: currentUserResp, error: userError } =
-    await supabase.auth.getUser();
-  if (userError || !currentUserResp.user) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) {
     return { error: "Not authenticated" };
   }
 
-  const currentUserId = currentUserResp.user.id;
+  const currentUserId = claimsData.claims.sub;
 
   const { data: request, error: reqError } = await supabaseAdmin
     .from("farewell_join_requests")
@@ -156,10 +154,10 @@ export async function createFarewellAction(formData: FormData): Promise<void> {
 
   const supabase = await createClient();
 
-  const { data: userResp } = await supabase.auth.getUser();
-  if (!userResp?.user) return;
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return;
 
-  const userId = userResp.user.id;
+  const userId = claimsData.claims.sub;
 
   // 1. Create Farewell
   const { data: farewell, error: createError } = await supabase

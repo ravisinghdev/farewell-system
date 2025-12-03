@@ -88,13 +88,11 @@ export async function createDutyAction(
   }
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
-  if (!user) return { error: "Not authenticated" };
-
-  const isAdmin = await isFarewellAdmin(farewellId, user.id);
+  const isAdmin = await isFarewellAdmin(farewellId, userId);
   if (!isAdmin) return { error: "Unauthorized" };
 
   const { data: duty, error } = await supabase
@@ -105,7 +103,7 @@ export async function createDutyAction(
       description: data.description,
       expense_limit: data.expenseLimit,
       deadline: data.deadline,
-      created_by: user.id,
+      created_by: userId,
     })
     .select()
     .single();
@@ -130,13 +128,11 @@ export async function assignDutiesAction(
   userIds: string[]
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
-  if (!user) return { error: "Not authenticated" };
-
-  const isAdmin = await isFarewellAdmin(farewellId, user.id);
+  const isAdmin = await isFarewellAdmin(farewellId, userId);
   if (!isAdmin) return { error: "Unauthorized" };
 
   const assignments = userIds.map((uid) => ({
@@ -194,11 +190,9 @@ export async function uploadDutyReceiptAction(
   formData: FormData
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const dutyId = formData.get("dutyId") as string;
   const amount = Number(formData.get("amount"));
@@ -223,7 +217,7 @@ export async function uploadDutyReceiptAction(
     .from("duty_receipts")
     .insert({
       duty_id: dutyId,
-      uploader_id: user.id,
+      uploader_id: userId,
       amount,
       notes,
       image_url: publicUrl,
@@ -251,20 +245,18 @@ export async function approveDutyReceiptAction(
   adminNotes?: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
-  if (!user) return { error: "Not authenticated" };
-
-  const isAdmin = await isFarewellAdmin(farewellId, user.id);
+  const isAdmin = await isFarewellAdmin(farewellId, userId);
   if (!isAdmin) return { error: "Unauthorized" };
 
   const { error } = await supabase
     .from("duty_receipts")
     .update({
       status: "approved",
-      reviewed_by: user.id,
+      reviewed_by: userId,
       reviewed_at: new Date().toISOString(),
       admin_notes: adminNotes,
     })
@@ -289,20 +281,18 @@ export async function rejectDutyReceiptAction(
   adminNotes?: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
-  if (!user) return { error: "Not authenticated" };
-
-  const isAdmin = await isFarewellAdmin(farewellId, user.id);
+  const isAdmin = await isFarewellAdmin(farewellId, userId);
   if (!isAdmin) return { error: "Unauthorized" };
 
   const { error } = await supabase
     .from("duty_receipts")
     .update({
       status: "rejected",
-      reviewed_by: user.id,
+      reviewed_by: userId,
       reviewed_at: new Date().toISOString(),
       admin_notes: adminNotes,
     })

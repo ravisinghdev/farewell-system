@@ -15,22 +15,31 @@ const contributionSchema = z.object({
 });
 
 import { checkIsAdmin } from "@/lib/auth/roles";
+import { getFarewellRole } from "@/lib/auth/claims";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 async function isFarewellAdmin(
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string,
   farewellId: string
 ) {
   // Check global role first (optimization)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
 
-  if (user?.user_metadata?.role && checkIsAdmin(user.user_metadata.role)) {
-    return true;
+  if (claims) {
+    // Manually extract role from claims since getFarewellRole expects a User object
+    const appMetadata = claims.app_metadata as {
+      farewells?: Record<string, any>;
+    };
+    const role = appMetadata?.farewells?.[farewellId];
+
+    if (role && checkIsAdmin(role)) {
+      return true;
+    }
   }
 
-  // Check farewell specific role
+  // Check farewell specific role from DB if claims fail (fallback)
   const { data: member } = await supabase
     .from("farewell_members")
     .select("role")
@@ -47,12 +56,11 @@ export async function createContributionAction(
   const supabase = await createClient();
 
   // 1. Auth check
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+  const { data } = await supabase.auth.getClaims();
+  if (!data || !data.claims) {
     return { error: "Not authenticated" };
   }
+  const userId = data.claims.sub;
 
   // 2. Parse data
   const rawData = {
@@ -86,7 +94,7 @@ export async function createContributionAction(
     }
 
     const fileExt = file.name.split(".").pop();
-    const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
     const filePath = `${farewellId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
@@ -108,7 +116,7 @@ export async function createContributionAction(
 
   // 4. Insert into DB
   const { error: insertError } = await supabase.from("contributions").insert({
-    user_id: user.id,
+    user_id: userId,
     farewell_id: farewellId,
     amount,
     method: method as "upi" | "cash" | "bank_transfer",
@@ -128,17 +136,15 @@ export async function createContributionAction(
 
 export async function getContributionsAction(farewellId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return [];
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return [];
+  const userId = claimsData.claims.sub;
 
   const { data, error } = await supabase
     .from("contributions")
     .select("*, users:user_id(full_name, avatar_url)")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -151,13 +157,11 @@ export async function getContributionsAction(farewellId: string) {
 
 export async function getAllContributionsAction(farewellId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return [];
+  const userId = claimsData.claims.sub;
 
-  if (!user) return [];
-
-  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  const authorized = await isFarewellAdmin(supabase, userId, farewellId);
   if (!authorized) return [];
 
   // Use admin client to bypass RLS for farewell admins
@@ -177,11 +181,9 @@ export async function getAllContributionsAction(farewellId: string) {
 
 export async function verifyContributionAction(contributionId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const { data: contribution } = await supabaseAdmin
     .from("contributions")
@@ -193,7 +195,7 @@ export async function verifyContributionAction(contributionId: string) {
 
   const authorized = await isFarewellAdmin(
     supabase,
-    user.id,
+    userId,
     contribution.farewell_id
   );
   if (!authorized) return { error: "Unauthorized" };
@@ -215,11 +217,9 @@ export async function verifyContributionAction(contributionId: string) {
 
 export async function approveContributionAction(contributionId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const { data: contribution } = await supabaseAdmin
     .from("contributions")
@@ -231,7 +231,7 @@ export async function approveContributionAction(contributionId: string) {
 
   const authorized = await isFarewellAdmin(
     supabase,
-    user.id,
+    userId,
     contribution.farewell_id
   );
   if (!authorized) return { error: "Unauthorized" };
@@ -239,7 +239,7 @@ export async function approveContributionAction(contributionId: string) {
   // Call the atomic RPC function
   const { data, error } = await supabaseAdmin.rpc("approve_contribution", {
     _contribution_id: contributionId,
-    _admin_id: user.id,
+    _admin_id: userId,
   });
 
   if (error) {
@@ -259,11 +259,9 @@ export async function approveContributionAction(contributionId: string) {
 
 export async function rejectContributionAction(contributionId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const { data: contribution } = await supabaseAdmin
     .from("contributions")
@@ -275,7 +273,7 @@ export async function rejectContributionAction(contributionId: string) {
 
   const authorized = await isFarewellAdmin(
     supabase,
-    user.id,
+    userId,
     contribution.farewell_id
   );
   if (!authorized) return { error: "Unauthorized" };
@@ -297,13 +295,12 @@ export async function rejectContributionAction(contributionId: string) {
 
 export async function getFinancialStatsAction(farewellId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims)
+    return { total_collected: 0, balance: 0, contribution_count: 0 };
+  const userId = claimsData.claims.sub;
 
-  if (!user) return { total_collected: 0, balance: 0, contribution_count: 0 };
-
-  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  const authorized = await isFarewellAdmin(supabase, userId, farewellId);
   if (!authorized)
     return { total_collected: 0, balance: 0, contribution_count: 0 };
 
@@ -323,11 +320,9 @@ export async function getFinancialStatsAction(farewellId: string) {
 
 export async function getLeaderboardAction(farewellId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return [];
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return [];
+  // userId not needed for leaderboard viewing, but auth is required
 
   // Fetch all verified contributions with user details
   // We use admin client to get everyone's data for the leaderboard
@@ -372,11 +367,9 @@ export async function getLeaderboardAction(farewellId: string) {
 
 export async function getReceiptDetailsAction(receiptId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   // First try to fetch as normal user (RLS will handle own records)
   let { data, error } = await supabase
@@ -402,7 +395,7 @@ export async function getReceiptDetailsAction(receiptId: string) {
 
     const authorized = await isFarewellAdmin(
       supabase,
-      user.id,
+      userId,
       adminData.farewell_id
     );
 
@@ -421,14 +414,12 @@ export async function getReceiptDetailsAction(receiptId: string) {
 
 export async function searchMembersAction(farewellId: string, query: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   // Check admin
-  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  const authorized = await isFarewellAdmin(supabase, userId, farewellId);
   if (!authorized) return { error: "Unauthorized" };
 
   const { data, error } = await supabase
@@ -462,13 +453,11 @@ export async function createManualContributionAction(
   notes: string | null
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const currentUserId = claimsData.claims.sub;
 
-  if (!user) return { error: "Not authenticated" };
-
-  const authorized = await isFarewellAdmin(supabase, user.id, farewellId);
+  const authorized = await isFarewellAdmin(supabase, currentUserId, farewellId);
   if (!authorized) return { error: "Unauthorized" };
 
   const { error } = await supabaseAdmin.from("contributions").insert({
@@ -478,7 +467,7 @@ export async function createManualContributionAction(
     method: method as any,
     transaction_id: transactionId,
     status: "verified", // Auto-verify manual entries
-    metadata: { notes, added_by: user.id },
+    metadata: { notes, added_by: currentUserId },
   });
 
   if (error) {

@@ -2,15 +2,7 @@
 
 import { forwardRef } from "react";
 import { format } from "date-fns";
-import {
-  CheckCircle2,
-  FileText,
-  Building2,
-  Mail,
-  Phone,
-  MapPin,
-  Globe,
-} from "lucide-react";
+import { MapPin, Mail, Globe, Phone } from "lucide-react";
 
 interface ReceiptViewProps {
   contribution: {
@@ -104,256 +96,222 @@ function numberToWords(amount: number): string {
 export const ReceiptView = forwardRef<HTMLDivElement, ReceiptViewProps>(
   ({ contribution, farewellName = "Farewell Event" }, ref) => {
     const metadata = contribution.metadata || {};
-    const isRazorpay = contribution.method === "razorpay";
-    const isCash = contribution.method === "cash";
     const receiptNo = contribution.id.slice(0, 8).toUpperCase();
     const date = new Date(contribution.created_at);
 
     return (
       <div
         ref={ref}
-        className="w-full max-w-[210mm] mx-auto bg-white text-black p-12 min-h-[297mm] flex flex-col font-sans relative shadow-2xl"
         id="printable-receipt"
+        className="w-[210mm] h-[297mm] bg-white text-black relative flex flex-col mx-auto overflow-hidden"
+        style={{
+          padding: "10mm", // Reduced padding to fit content better
+          fontFamily: "Arial, Helvetica, sans-serif",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          textRendering: "geometricPrecision",
+          fontVariantLigatures: "none",
+        }}
       >
-        {/* Decorative Border */}
-        <div className="absolute inset-4 border-2 border-black/5 pointer-events-none" />
-        <div className="absolute inset-5 border border-black/5 pointer-events-none" />
-
-        {/* Watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] overflow-hidden">
-          <div className="transform -rotate-45 text-[150px] font-bold whitespace-nowrap text-black select-none">
-            {contribution.status === "approved" ? "APPROVED" : "PAID"}
+        {/* Background Pattern/Watermark */}
+        <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden">
+          <div className="transform -rotate-45 text-[150px] font-bold text-[#e5e7eb] opacity-20 select-none border-4 border-[#e5e7eb] px-10 rounded-xl">
+            PAID
           </div>
         </div>
 
-        {/* Header Section */}
-        <div className="relative z-10 mb-12">
-          <div className="flex justify-between items-start border-b-2 border-black pb-6">
-            <div className="flex gap-6">
-              <div className="w-20 h-20 bg-black text-white flex items-center justify-center rounded-none shadow-sm">
-                <Building2 className="w-10 h-10" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight text-black uppercase">
-                  {farewellName}
-                </h1>
-                <p className="text-sm text-gray-500 font-medium mt-1">
-                  Official Farewell Committee
-                </p>
-                <div className="flex flex-col gap-1 mt-3 text-xs text-gray-500">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-3 h-3" />
-                    <span>Campus Auditorioum, Main Block</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-3 h-3" />
-                    <span>committee@farewell.com</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-3 h-3" />
-                    <span>www.farewell-system.com</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <h2 className="text-5xl font-bold text-default tracking-tighter">
-                RECEIPT
-              </h2>
-              <p className="text-xs text-gray-400 uppercase tracking-widest mt-1 font-semibold">
-                Original for Recipient
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Top Border Accent */}
+        <div className="absolute top-0 left-0 right-0 h-2 bg-[#111827]" />
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-12 mb-12 relative z-10">
-          <div className="space-y-6">
+        {/* Header */}
+        <header className="relative z-10 flex justify-between items-start border-b-2 border-[#f3f4f6] pb-6 mb-6">
+          <div className="flex gap-6 items-center">
+            <div
+              className="w-20 h-20 border border-[#e5e7eb] rounded-lg p-2 flex items-center justify-center bg-white"
+              style={{ boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)" }}
+            >
+              <img
+                src="/favicon.ico"
+                alt="Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Billed To
+              <h1 className="text-2xl font-bold text-[#111827] uppercase">
+                {farewellName}
+              </h1>
+              <p className="text-sm font-medium text-[#6b7280] mt-1">
+                Official Farewell Committee
+              </p>
+              <div className="flex gap-4 mt-3 text-[10px] text-[#6b7280] font-medium uppercase">
+                <span className="flex items-center gap-1">
+                  <Globe className="w-3 h-3" /> www.farewell-system.com
+                </span>
+                <span className="flex items-center gap-1">
+                  <Mail className="w-3 h-3" /> support@farewell.com
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="inline-block bg-[#111827] text-white px-4 py-1 text-sm font-bold uppercase mb-2">
+              Receipt
+            </div>
+            <div className="text-3xl font-mono font-bold text-[#111827]">
+              #{receiptNo}
+            </div>
+            <div className="text-xs text-[#6b7280] mt-1 font-medium">
+              {format(date, "MMMM d, yyyy")}
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="relative z-10 flex-grow">
+          {/* Bill To & Details Grid */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            {/* Left Column: Bill To */}
+            <div>
+              <h3 className="text-xs font-bold text-[#9ca3af] uppercase mb-4 border-b border-[#f3f4f6] pb-2">
+                Received From
               </h3>
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                <p className="font-bold text-lg text-black">
+              <div className="space-y-1">
+                <p className="text-xl font-bold text-[#111827]">
                   {contribution.user?.full_name || "Valued Member"}
                 </p>
-                <p className="text-gray-600 text-sm mt-1">
+                <p className="text-sm text-[#4b5563]">
                   {contribution.user?.email}
                 </p>
                 {metadata.contact && (
-                  <p className="text-gray-600 text-sm mt-1">
-                    {metadata.contact}
+                  <p className="text-sm text-[#4b5563] flex items-center gap-2 mt-1">
+                    <Phone className="w-3 h-3" /> {metadata.contact}
                   </p>
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="space-y-6">
+            {/* Right Column: Payment Details */}
             <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                Receipt Details
+              <h3 className="text-xs font-bold text-[#9ca3af] uppercase mb-4 border-b border-[#f3f4f6] pb-2">
+                Payment Details
               </h3>
-              <div className="grid grid-cols-2 gap-y-3 text-sm">
-                <div className="text-gray-500">Receipt No:</div>
-                <div className="font-mono font-bold text-right">
-                  #{receiptNo}
-                </div>
-
-                <div className="text-gray-500">Date Issued:</div>
-                <div className="font-medium text-right">
-                  {format(date, "MMMM d, yyyy")}
-                </div>
-
-                <div className="text-gray-500">Time:</div>
-                <div className="font-medium text-right">
-                  {format(date, "h:mm a")}
-                </div>
-
-                <div className="text-gray-500">Payment Mode:</div>
-                <div className="font-medium text-right capitalize">
+              <div className="grid grid-cols-2 gap-y-2 text-sm">
+                <span className="text-[#6b7280]">Payment Mode:</span>
+                <span className="font-medium text-right capitalize text-[#111827]">
                   {contribution.method.replace("_", " ")}
-                </div>
+                </span>
 
-                {contribution.transaction_id && (
-                  <>
-                    <div className="text-gray-500">Transaction Ref:</div>
-                    <div className="font-mono text-xs text-right break-all">
-                      {contribution.transaction_id}
-                    </div>
-                  </>
-                )}
+                <span className="text-[#6b7280]">Transaction ID:</span>
+                <span className="font-mono text-xs text-right text-[#111827] break-all">
+                  {contribution.transaction_id || "N/A"}
+                </span>
+
+                <span className="text-[#6b7280]">Status:</span>
+                <span className="font-bold text-right text-[#059669] uppercase text-xs border border-[#a7f3d0] bg-[#ecfdf5] px-2 py-0.5 rounded-full inline-block w-fit ml-auto">
+                  {contribution.status}
+                </span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Line Items Table */}
-        <div className="mb-8 relative z-10 flex-grow">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-black text-white">
-                <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider w-16 text-center">
-                  #
-                </th>
-                <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="py-3 px-4 text-xs font-bold uppercase tracking-wider text-right w-32">
-                  Amount
-                </th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              <tr className="border-b border-gray-100">
-                <td className="py-4 px-4 text-center text-gray-500">01</td>
-                <td className="py-4 px-4">
-                  <p className="font-bold text-black">
-                    Farewell Event Contribution
-                  </p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    Voluntary contribution towards the farewell event expenses.
-                    {isRazorpay && " (Online Payment)"}
-                    {isCash && " (Cash Payment)"}
-                  </p>
-                </td>
-                <td className="py-4 px-4 text-right font-medium">
+          {/* Table */}
+          <div className="mb-8">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-[#111827]">
+                  <th className="py-3 text-xs font-bold text-[#111827] uppercase w-16">
+                    No.
+                  </th>
+                  <th className="py-3 text-xs font-bold text-[#111827] uppercase">
+                    Description
+                  </th>
+                  <th className="py-3 text-xs font-bold text-[#111827] uppercase text-right w-40">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-[#f3f4f6]">
+                  <td className="py-4 text-sm text-[#6b7280] align-top">01</td>
+                  <td className="py-4 align-top">
+                    <p className="text-sm font-bold text-[#111827]">
+                      Farewell Contribution
+                    </p>
+                    <p className="text-xs text-[#6b7280] mt-1 leading-relaxed">
+                      Voluntary financial contribution towards the farewell
+                      event organization, logistics, and arrangements.
+                    </p>
+                  </td>
+                  <td className="py-4 text-sm font-bold text-[#111827] text-right align-top">
+                    ₹{contribution.amount.toLocaleString()}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Total & Words */}
+          <div className="flex flex-col items-end mb-8">
+            <div className="w-full max-w-xs space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-[#f3f4f6]">
+                <span className="text-sm text-[#6b7280]">Subtotal</span>
+                <span className="text-sm font-medium text-[#111827]">
                   ₹{contribution.amount.toLocaleString()}
-                </td>
-              </tr>
-              {/* Empty rows to fill space if needed */}
-              <tr className="border-b border-gray-100 h-24">
-                <td colSpan={3}></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Totals Section */}
-        <div className="flex justify-end mb-12 relative z-10">
-          <div className="w-1/2 space-y-3">
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Subtotal</span>
-              <span>₹{contribution.amount.toLocaleString()}</span>
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b-2 border-[#111827]">
+                <span className="text-base font-bold text-[#111827]">
+                  Total Paid
+                </span>
+                <span className="text-2xl font-bold text-[#111827]">
+                  ₹{contribution.amount.toLocaleString()}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>Tax (0%)</span>
-              <span>₹0.00</span>
-            </div>
-            <div className="border-t-2 border-black pt-3 flex justify-between items-end">
-              <span className="font-bold text-lg">Total</span>
-              <span className="font-bold text-3xl">
-                ₹{contribution.amount.toLocaleString()}
-              </span>
+            <div className="mt-4 text-right">
+              <p className="text-xs text-[#9ca3af] uppercase mb-1">
+                Amount in words
+              </p>
+              <p className="text-sm font-medium text-[#111827] italic">
+                {numberToWords(contribution.amount)} Rupees Only
+              </p>
             </div>
           </div>
-        </div>
+        </main>
 
-        {/* Amount in Words */}
-        <div className="mb-12 relative z-10 bg-gray-50 p-4 rounded-lg border border-gray-100">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-            Amount in Words
-          </p>
-          <p className="text-lg font-medium italic text-black">
-            {numberToWords(contribution.amount)} Rupees
-          </p>
-        </div>
-
-        {/* Footer / Signatures */}
-        <div className="mt-auto relative z-10">
-          <div className="grid grid-cols-2 gap-12 items-end mb-12">
+        {/* Footer */}
+        <footer className="relative z-10 mt-auto pt-2 border-t border-[#f3f4f6]">
+          <div className="grid grid-cols-2 gap-8 items-end">
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-black mb-3">
+              <h4 className="text-[10px] font-bold uppercase text-[#111827] mb-2">
                 Terms & Conditions
               </h4>
-              <ul className="text-[10px] text-gray-500 list-disc pl-3 space-y-1.5">
-                <li>
-                  This receipt is valid proof of payment for the farewell event.
-                </li>
-                <li>Contributions are non-refundable and non-transferable.</li>
-                <li>
-                  Please retain this receipt for future reference and entry
-                  verification.
-                </li>
-                <li>
-                  This document is computer generated and does not require a
-                  physical signature.
-                </li>
-              </ul>
+              <p className="text-[10px] text-[#6b7280] leading-relaxed">
+                This receipt is an official proof of payment. Contributions are
+                non-refundable. Please present this receipt if requested by the
+                organizing committee. Generated electronically, signature not
+                required.
+              </p>
             </div>
-            <div className="text-center">
-              <div className="h-20 mb-2 flex items-end justify-center relative">
-                {/* Stamp Effect */}
-                <div className="absolute top-0 right-10 transform rotate-12 border-2 border-emerald-500 text-emerald-500 px-3 py-1 rounded text-xs font-bold opacity-80">
-                  VERIFIED
-                </div>
-                <div className="font-script text-3xl text-black">
-                  Farewell Committee
-                </div>
+            <div className="text-center pl-12">
+              <div className="h-16 flex items-end justify-center pb-2">
+                <span className="font-script text-2xl text-[#9ca3af] opacity-80 rotate-[-5deg]">
+                  Authorized Signature
+                </span>
               </div>
-              <div className="border-t border-black w-full pt-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-black">
-                  Authorized Signatory
+              <div className="border-t border-[#d1d5db] pt-2">
+                <p className="text-[10px] font-bold uppercase text-[#111827]">
+                  Farewell Committee
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-6 flex justify-between items-center text-[10px] text-gray-400">
-            <div>
-              <p>
-                Farewell Management System • Generated on{" "}
-                {format(new Date(), "PPpp")}
-              </p>
-              <p className="font-mono mt-0.5">ID: {contribution.id}</p>
-            </div>
-            <div className="flex gap-4">
-              <span>support@farewell.com</span>
-              <span>+91 95062 22179</span>
-            </div>
+          {/* Bottom Bar */}
+          <div className="mt-6 flex justify-between items-center text-[10px] text-[#9ca3af] font-mono uppercase">
+            <span>ID: {contribution.id}</span>
+            <span>Generated: {format(new Date(), "dd MMM yyyy HH:mm")}</span>
           </div>
-        </div>
+        </footer>
       </div>
     );
   }

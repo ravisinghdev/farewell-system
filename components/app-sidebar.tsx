@@ -155,11 +155,15 @@ export function AppSidebar({
           label: "Top Contributors",
           icon: Trophy,
         },
-        {
-          href: "/dashboard/budget",
-          label: "Budget & Expenses",
-          icon: Wallet,
-        },
+        ...(checkIsAdmin(role)
+          ? [
+              {
+                href: "/dashboard/budget",
+                label: "Budget & Expenses",
+                icon: Wallet,
+              },
+            ]
+          : []),
         ...(checkIsAdmin(role)
           ? [
               {
@@ -212,6 +216,11 @@ export function AppSidebar({
           href: "/dashboard/juniors",
           label: "Junior Contributors",
           icon: User,
+        },
+        {
+          href: "/dashboard/organizers",
+          label: "Farewell Giving Class",
+          icon: Users,
         },
       ],
     },
@@ -285,21 +294,25 @@ export function AppSidebar({
           label: "Duties & Assignments",
           icon: ClipboardList,
         },
-        {
-          href: "/dashboard/permissions",
-          label: "Access & Roles",
-          icon: Shield,
-        },
-        {
-          href: "/dashboard/settings",
-          label: "Admin Settings",
-          icon: Settings,
-        },
-        {
-          href: "/dashboard/activity",
-          label: "System Activity",
-          icon: Activity,
-        },
+        ...(checkIsAdmin(role)
+          ? [
+              {
+                href: "/dashboard/permissions",
+                label: "Access & Roles",
+                icon: Shield,
+              },
+              {
+                href: "/dashboard/settings",
+                label: "Admin Settings",
+                icon: Settings,
+              },
+              {
+                href: "/dashboard/activity",
+                label: "System Activity",
+                icon: Activity,
+              },
+            ]
+          : []),
       ],
     },
 

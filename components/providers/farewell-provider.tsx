@@ -7,6 +7,8 @@ import {
   getPermissionsForRole,
   hasPermission,
 } from "@/lib/auth/roles";
+import { useRealtimeNotifications } from "@/hooks/use-realtime-notifications";
+import { UserClaims, AuthClaims } from "@/lib/auth/claims";
 
 interface FarewellContextType {
   user: {
@@ -22,6 +24,8 @@ interface FarewellContextType {
     year: string | number;
     role: UserRole;
   };
+  claims: UserClaims;
+  authClaims: AuthClaims | null;
   permissions: Permission[];
   isAdmin: boolean;
 }
@@ -34,12 +38,16 @@ interface FarewellProviderProps {
   children: ReactNode;
   user: FarewellContextType["user"];
   farewell: Omit<FarewellContextType["farewell"], "role"> & { role: UserRole };
+  claims: UserClaims;
+  authClaims: AuthClaims | null;
 }
 
 export function FarewellProvider({
   children,
   user,
   farewell,
+  claims,
+  authClaims,
 }: FarewellProviderProps) {
   const contextValue = useMemo(() => {
     const permissions = getPermissionsForRole(farewell.role);
@@ -50,10 +58,14 @@ export function FarewellProvider({
     return {
       user,
       farewell,
+      claims,
+      authClaims,
       permissions,
       isAdmin,
     };
-  }, [user, farewell]);
+  }, [user, farewell, claims, authClaims]);
+
+  useRealtimeNotifications(user.id);
 
   return (
     <FarewellContext.Provider value={contextValue}>
@@ -88,4 +100,14 @@ export function useIsAdmin() {
 export function useHasPermission(permission: Permission) {
   const { farewell } = useFarewell();
   return hasPermission(farewell.role, permission);
+}
+
+export function useUserClaims() {
+  const { claims } = useFarewell();
+  return claims;
+}
+
+export function useAuthClaims() {
+  const { authClaims } = useFarewell();
+  return authClaims;
 }

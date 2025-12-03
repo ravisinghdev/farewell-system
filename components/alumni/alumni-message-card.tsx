@@ -7,15 +7,15 @@ import { getInitials } from "@/lib/utils";
 import { format } from "date-fns";
 import { GraduationCap } from "lucide-react";
 
+import { useFarewell } from "@/components/providers/farewell-provider";
+
 interface AlumniMessageCardProps {
   message: AlumniMessage;
-  currentUserId: string;
 }
 
-export function AlumniMessageCard({
-  message,
-  currentUserId,
-}: AlumniMessageCardProps) {
+export function AlumniMessageCard({ message }: AlumniMessageCardProps) {
+  const { user } = useFarewell();
+  const currentUserId = user?.id;
   return (
     <Card className="overflow-hidden border-none shadow-md bg-gradient-to-br from-card to-muted/20 hover:shadow-lg transition-all duration-300 group">
       <CardHeader className="flex flex-row items-start gap-4 pb-2 space-y-0">

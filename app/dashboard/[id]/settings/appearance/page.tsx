@@ -19,6 +19,7 @@ import * as z from "zod";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useSettings } from "@/components/settings/settings-provider";
+import { useProfile } from "@/components/profile-provider";
 import { updateSettings } from "@/app/actions/settings-actions";
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
@@ -33,14 +34,8 @@ type AppearanceFormValues = z.infer<typeof appearanceFormSchema>;
 function AppearanceForm() {
   const { setTheme, theme: currentTheme } = useTheme();
   const { settings, updateSettings: updateContextSettings } = useSettings();
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
-    });
-  }, []);
+  const { user } = useProfile();
+  const userId = user?.id;
 
   const form = useForm<AppearanceFormValues>({
     resolver: zodResolver(appearanceFormSchema),

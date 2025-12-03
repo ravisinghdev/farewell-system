@@ -3,7 +3,6 @@ import { CreateAlumniMessageDialog } from "@/components/alumni/create-alumni-mes
 import { AlumniMessageCard } from "@/components/alumni/alumni-message-card";
 import { createClient } from "@/utils/supabase/server";
 import { UserCircle } from "lucide-react";
-import { redirect } from "next/navigation";
 
 interface AlumniPageProps {
   params: Promise<{
@@ -14,11 +13,6 @@ interface AlumniPageProps {
 export default async function AlumniPage({ params }: AlumniPageProps) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth");
 
   const messages = await getAlumniMessagesAction(id);
 
@@ -55,11 +49,7 @@ export default async function AlumniPage({ params }: AlumniPageProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {messages.map((message) => (
-              <AlumniMessageCard
-                key={message.id}
-                message={message}
-                currentUserId={user.id}
-              />
+              <AlumniMessageCard key={message.id} message={message} />
             ))}
           </div>
         )}

@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 import { useSettings } from "@/components/settings/settings-provider";
+import { useProfile } from "@/components/profile-provider";
 import { updateSettings } from "@/app/actions/settings-actions";
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
@@ -33,14 +34,8 @@ type NotificationsFormValues = z.infer<typeof notificationsFormSchema>;
 
 function NotificationsForm() {
   const { settings } = useSettings();
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUserId(data.user.id);
-    });
-  }, []);
+  const { user } = useProfile();
+  const userId = user?.id;
 
   const form = useForm<NotificationsFormValues>({
     resolver: zodResolver(notificationsFormSchema),

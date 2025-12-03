@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getFarewellMembers } from "@/actions/people";
-import { assignDutiesAction } from "@/app/actions/duty-actions";
+import { assignDutyAction } from "@/actions/duties";
 import { toast } from "sonner";
 import { Loader2, Search } from "lucide-react";
 
@@ -50,10 +50,10 @@ export function AssignmentDialog({
   const fetchMembers = async () => {
     setLoading(true);
     try {
-      const data = await getFarewellMembers(farewellId, "student");
+      const data = await getFarewellMembers(farewellId, "student"); // Or fetch all roles?
       setMembers(data || []);
     } catch (error) {
-      toast.error("Failed to load students");
+      toast.error("Failed to load members");
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export function AssignmentDialog({
     if (selectedIds.length === 0) return;
     setSubmitting(true);
     try {
-      await assignDutiesAction(farewellId, dutyId, selectedIds);
+      await assignDutyAction(dutyId, selectedIds);
       toast.success("Duty assigned successfully");
       onSuccess();
       onOpenChange(false);
@@ -96,7 +96,7 @@ export function AssignmentDialog({
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search students..."
+              placeholder="Search members..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8"
@@ -109,7 +109,7 @@ export function AssignmentDialog({
               </div>
             ) : filteredMembers.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground">
-                No students found
+                No members found
               </div>
             ) : (
               <div className="space-y-4">

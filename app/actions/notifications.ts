@@ -10,7 +10,18 @@ export interface Notification {
   farewell_id?: string;
   title: string;
   message: string;
-  type: "info" | "success" | "warning" | "error" | "announcement" | "chat";
+  type:
+    | "message"
+    | "mention"
+    | "system"
+    | "request"
+    | "finance"
+    | "duty"
+    | "success"
+    | "error"
+    | "warning"
+    | "chat"
+    | "announcement";
   link?: string;
   is_read: boolean;
   metadata: Record<string, any>;
@@ -19,19 +30,15 @@ export interface Notification {
 
 export async function getNotificationsAction(limit = 20, offset = 0) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return [];
-  }
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return [];
+  const userId = claimsData.claims.sub;
 
   const adminClient = createAdminClient();
   const { data, error } = await adminClient
     .from("notifications")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
@@ -45,19 +52,15 @@ export async function getNotificationsAction(limit = 20, offset = 0) {
 
 export async function getUnreadCountAction() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return 0;
-  }
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return 0;
+  const userId = claimsData.claims.sub;
 
   const adminClient = createAdminClient();
   const { count, error } = await adminClient
     .from("notifications")
     .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("is_read", false);
 
   if (error) {
@@ -70,20 +73,16 @@ export async function getUnreadCountAction() {
 
 export async function markAsReadAction(notificationId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Unauthorized" };
-  }
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Unauthorized" };
+  const userId = claimsData.claims.sub;
 
   const adminClient = createAdminClient();
   const { error } = await adminClient
     .from("notifications")
     .update({ is_read: true })
     .eq("id", notificationId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Error marking notification as read:", error);
@@ -96,19 +95,15 @@ export async function markAsReadAction(notificationId: string) {
 
 export async function markAllAsReadAction() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Unauthorized" };
-  }
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Unauthorized" };
+  const userId = claimsData.claims.sub;
 
   const adminClient = createAdminClient();
   const { error } = await adminClient
     .from("notifications")
     .update({ is_read: true })
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("is_read", false);
 
   if (error) {
@@ -125,19 +120,15 @@ export async function registerPushTokenAction(
   platform: "web" | "android" | "ios"
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Unauthorized" };
-  }
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Unauthorized" };
+  const userId = claimsData.claims.sub;
 
   const adminClient = createAdminClient();
   // Upsert the token
   const { error } = await adminClient.from("push_subscriptions").upsert(
     {
-      user_id: user.id,
+      user_id: userId,
       token,
       platform,
       last_used_at: new Date().toISOString(),

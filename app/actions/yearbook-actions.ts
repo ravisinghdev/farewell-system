@@ -34,11 +34,9 @@ export async function createYearbookEntryAction(
   formData: FormData
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const rawData = {
     studentName: formData.get("studentName"),
@@ -89,7 +87,7 @@ export async function createYearbookEntryAction(
     quote,
     section,
     photo_url: photoUrl,
-    created_by: user.id,
+    created_by: userId,
   });
 
   if (dbError) {
@@ -106,11 +104,9 @@ export async function deleteYearbookEntryAction(
   farewellId: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  // userId not strictly needed for delete if RLS handles it, but good for auditing if added later
 
   const { error } = await supabase
     .from("yearbook_entries")

@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 import { ImageCropper } from "@/components/ui/image-cropper";
+import { useProfile } from "@/components/profile-provider";
 
 const profileFormSchema = z.object({
   username: z
@@ -245,37 +246,9 @@ function ProfileForm({ user }: { user: any }) {
 }
 
 export default function SettingsProfilePage() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const { user } = useProfile();
 
-  useEffect(() => {
-    async function fetchUser() {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-      if (authUser) {
-        const { data: dbUser } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
-        setUser({ ...dbUser, email: authUser.email });
-        // If avatar_url is missing in dbUser but present in authUser metadata, use that
-        if (!dbUser.avatar_url && authUser.user_metadata.avatar_url) {
-          setUser((prev: any) => ({
-            ...prev,
-            avatar_url: authUser.user_metadata.avatar_url,
-          }));
-        }
-      }
-      setLoading(false);
-    }
-    fetchUser();
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <div>Please log in.</div>;
+  if (!user) return <div>Loading...</div>;
 
   return (
     <div className="space-y-6">

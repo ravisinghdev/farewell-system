@@ -82,13 +82,10 @@ function standardError(message: string, error?: unknown): ActionState {
 
 async function getSupabaseContext() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub || null;
 
-  if (error) {
-    console.error("Error fetching auth user:", error);
-  }
-
-  return { supabase, user: data?.user ?? null };
+  return { supabase, userId };
 }
 
 // --- CHANNELS / MEMBERSHIPS ---
@@ -98,15 +95,15 @@ export async function getChannelsAction(
   farewellId: string,
   type: "primary" | "requests" = "primary"
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return [];
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return [];
 
   const statusFilter = type === "primary" ? "active" : "pending";
 
   const { data: memberships, error: memError } = await supabase
     .from("chat_members")
     .select("channel_id, is_pinned, status")
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("status", statusFilter);
 
   if (memError) {
@@ -185,7 +182,7 @@ export async function getChannelsAction(
 
     if (c.type === "dm") {
       const otherMember = c.members?.find(
-        (m: ChatMember) => m.user_id !== user.id
+        (m: ChatMember) => m.user_id !== userId
       );
       return {
         ...base,
@@ -213,15 +210,15 @@ export async function getChannelsAction(
 }
 
 export async function getChannelDetailsAction(channelId: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return null;
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return null;
 
   const [membershipResult, channelResult] = await Promise.all([
     supabase
       .from("chat_members")
       .select("is_pinned, is_muted, status")
       .eq("channel_id", channelId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single(),
     supabase
       .from("chat_channels")
@@ -256,7 +253,7 @@ export async function getChannelDetailsAction(channelId: string) {
   // 3. Format
   if (channel.type === "dm") {
     const otherMember = channel.members.find(
-      (m: ChatMember) => m.user_id !== user.id
+      (m: ChatMember) => m.user_id !== userId
     );
     return {
       ...channel,
@@ -284,8 +281,8 @@ export async function createDMAction(
   farewellId: string,
   initialMessage?: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const parseResult = createDMSchema.safeParse({
     targetUserId,
@@ -301,7 +298,7 @@ export async function createDMAction(
   const { data: myDMs } = await supabase
     .from("chat_members")
     .select("channel_id")
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (myDMs && myDMs.length > 0) {
     const myDMIds = myDMs.map((m) => m.channel_id);
@@ -346,7 +343,7 @@ export async function createDMAction(
     .insert([
       {
         channel_id: newChannel.id,
-        user_id: user.id,
+        user_id: userId,
         status: "active",
       },
       {
@@ -365,7 +362,7 @@ export async function createDMAction(
       .from("chat_messages")
       .insert({
         channel_id: newChannel.id,
-        user_id: user?.id,
+        user_id: userId,
         content: initialMessage,
       });
 
@@ -382,14 +379,14 @@ export async function acceptRequestAction(
   channelId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_members")
     .update({ status: "active" })
     .eq("channel_id", channelId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to accept request", error);
 
@@ -401,14 +398,14 @@ export async function deleteRequestAction(
   channelId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_members")
     .delete()
     .eq("channel_id", channelId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to delete request", error);
 
@@ -423,14 +420,14 @@ export async function togglePinAction(
   isPinned: boolean,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_members")
     .update({ is_pinned: isPinned })
     .eq("channel_id", channelId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to update pin", error);
 
@@ -442,14 +439,14 @@ export async function restrictUserAction(
   channelId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_members")
     .update({ status: "muted" })
     .eq("channel_id", channelId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to restrict user", error);
 
@@ -461,8 +458,8 @@ export async function deleteChannelAction(
   channelId: string,
   farewellId: string
 ): Promise<ActionState> {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_channels")
@@ -481,8 +478,8 @@ export async function createChannelAction(
   farewellId: string,
   type: "group" | "farewell" = "group"
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const parseResult = createChannelSchema.safeParse({ name, farewellId, type });
   if (!parseResult.success) {
@@ -511,7 +508,7 @@ export async function createChannelAction(
     .from("chat_members")
     .insert({
       channel_id: newChannel.id,
-      user_id: user.id,
+      user_id: userId,
       status: "active",
       is_pinned: false,
       is_muted: false,
@@ -533,8 +530,8 @@ export async function getMessagesAction(
   limit: number = 50,
   before?: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return [];
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return [];
 
   let query = supabase
     .from("chat_messages")
@@ -569,8 +566,8 @@ const sendMessageSchema = z.object({
 });
 
 export async function sendMessageAction(formData: FormData) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const content = formData.get("content") as string;
   const channelId = formData.get("channelId") as string;
@@ -627,7 +624,7 @@ export async function sendMessageAction(formData: FormData) {
   try {
     const { data: canSend, error: rateError } = await supabase.rpc(
       "can_send_message",
-      { p_user_id: user.id }
+      { p_user_id: userId }
     );
 
     if (rateError) {
@@ -643,7 +640,7 @@ export async function sendMessageAction(formData: FormData) {
 
   const { error } = await supabase.from("chat_messages").insert({
     channel_id: channelId,
-    user_id: user.id,
+    user_id: userId,
     content: content || null,
     type: messageType,
     file_url: fileUrl,
@@ -660,8 +657,8 @@ export async function editMessageAction(
   newContent: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const parseResult = editMessageSchema.safeParse({
     messageId,
@@ -681,7 +678,7 @@ export async function editMessageAction(
       edited_at: new Date().toISOString(),
     })
     .eq("id", messageId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to edit message", error);
   return { success: true };
@@ -691,8 +688,8 @@ export async function deleteMessageAction(
   messageId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_messages")
@@ -701,7 +698,7 @@ export async function deleteMessageAction(
       content: null,
     })
     .eq("id", messageId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to delete message", error);
   return { success: true };
@@ -713,14 +710,14 @@ export async function markMessageSeenAction(
   channelId: string,
   messageId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_members")
     .update({ last_read_at: new Date().toISOString() })
     .eq("channel_id", channelId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to mark message as seen", error);
   return { success: true };
@@ -729,8 +726,8 @@ export async function markMessageSeenAction(
 // --- REACTIONS (Optional, Non-breaking) ---
 
 export async function addReactionAction(messageId: string, reaction: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const parseResult = addReactionSchema.safeParse({ messageId, reaction });
   if (!parseResult.success) {
@@ -743,11 +740,11 @@ export async function addReactionAction(messageId: string, reaction: string) {
     .from("chat_reactions")
     .delete()
     .eq("message_id", messageId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   const { error } = await supabase.from("chat_reactions").insert({
     message_id: messageId,
-    user_id: user.id,
+    user_id: userId,
     reaction: reaction.trim(),
   });
 
@@ -756,14 +753,14 @@ export async function addReactionAction(messageId: string, reaction: string) {
 }
 
 export async function removeReactionAction(messageId: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_reactions")
     .delete()
     .eq("message_id", messageId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to remove reaction", error);
   return { success: true };
@@ -772,11 +769,11 @@ export async function removeReactionAction(messageId: string) {
 // --- BLOCKS ---
 
 export async function blockUserAction(targetUserId: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase.from("user_blocks").insert({
-    blocker_id: user.id,
+    blocker_id: userId,
     blocked_id: targetUserId,
   });
 
@@ -785,13 +782,13 @@ export async function blockUserAction(targetUserId: string) {
 }
 
 export async function unblockUserAction(targetUserId: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("user_blocks")
     .delete()
-    .eq("blocker_id", user.id)
+    .eq("blocker_id", userId)
     .eq("blocked_id", targetUserId);
 
   if (error) return standardError("Failed to unblock user", error);
@@ -817,13 +814,13 @@ export async function searchUsersAction(query: string, farewellId: string) {
 }
 
 export async function updatePublicKeyAction(publicKey: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("users")
     .update({ public_key: publicKey })
-    .eq("id", user.id);
+    .eq("id", userId);
 
   if (error) return standardError("Failed to update public key", error);
   return { success: true };
@@ -846,14 +843,14 @@ export async function addMemberToChannelAction(
   targetUserId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { data: member } = await supabase
     .from("farewell_members")
     .select("role")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   let isAdmin = checkIsAdmin(member?.role);
@@ -870,7 +867,7 @@ export async function addMemberToChannelAction(
         .from("chat_members")
         .select("status")
         .eq("channel_id", channelId)
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single();
 
       if (isMember?.status === "active") {
@@ -905,14 +902,14 @@ export async function removeMemberFromChannelAction(
   targetUserId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { data: farewellMember } = await supabase
     .from("farewell_members")
     .select("role")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   let isAdmin =
@@ -923,7 +920,7 @@ export async function removeMemberFromChannelAction(
       .from("chat_members")
       .select("role")
       .eq("channel_id", channelId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
     if (chatMember?.role === "admin" || chatMember?.role === "owner") {
       isAdmin = true;
@@ -950,14 +947,14 @@ export async function leaveChannelAction(
   channelId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { error } = await supabase
     .from("chat_members")
     .delete()
     .eq("channel_id", channelId)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (error) return standardError("Failed to leave group", error);
 
@@ -970,14 +967,14 @@ export async function promoteMemberAction(
   targetUserId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { data: requester } = await supabase
     .from("chat_members")
     .select("role")
     .eq("channel_id", channelId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (requester?.role !== "admin" && requester?.role !== "owner") {
@@ -1001,14 +998,14 @@ export async function demoteMemberAction(
   targetUserId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { data: requester } = await supabase
     .from("chat_members")
     .select("role")
     .eq("channel_id", channelId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (requester?.role !== "admin" && requester?.role !== "owner") {
@@ -1028,14 +1025,14 @@ export async function demoteMemberAction(
 }
 
 export async function getPendingChannelsAction(farewellId: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return [];
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return [];
 
   const { data: member } = await supabase
     .from("farewell_members")
     .select("role")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   const isFarewellAdmin =
@@ -1065,14 +1062,14 @@ export async function approveChannelAction(
   channelId: string,
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { data: member } = await supabase
     .from("farewell_members")
     .select("role")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   const isFarewellAdmin =
@@ -1102,14 +1099,14 @@ export async function raiseComplaintAction(
   reason: string = "Not added to default group",
   type: "default_group" | "custom" = "default_group"
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { data: existing } = await supabase
     .from("chat_complaints")
     .select("id")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("status", "pending")
     .single();
 
@@ -1119,7 +1116,7 @@ export async function raiseComplaintAction(
 
   const { error } = await supabase.from("chat_complaints").insert({
     farewell_id: farewellId,
-    user_id: user.id,
+    user_id: userId,
     status: "pending",
     type: type,
     reason: reason,
@@ -1134,14 +1131,14 @@ export async function resolveComplaintAction(
   action: "resolve" | "reject",
   farewellId: string
 ) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return standardError("Not authenticated");
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return standardError("Not authenticated");
 
   const { data: adminMember } = await supabase
     .from("farewell_members")
     .select("role")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (
@@ -1195,14 +1192,14 @@ export async function resolveComplaintAction(
 }
 
 export async function getAdminChatRequestsAction(farewellId: string) {
-  const { supabase, user } = await getSupabaseContext();
-  if (!user) return { complaints: [], groupRequests: [] };
+  const { supabase, userId } = await getSupabaseContext();
+  if (!userId) return { complaints: [], groupRequests: [] };
 
   const { data: adminMember } = await supabase
     .from("farewell_members")
     .select("role")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   if (

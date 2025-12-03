@@ -3,7 +3,6 @@ import { FeedbackForm } from "@/components/feedback/feedback-form";
 import { FeedbackList } from "@/components/feedback/feedback-list";
 import { createClient } from "@/utils/supabase/server";
 import { MessageSquareHeart } from "lucide-react";
-import { redirect } from "next/navigation";
 
 interface FeedbackPageProps {
   params: Promise<{
@@ -14,11 +13,6 @@ interface FeedbackPageProps {
 export default async function FeedbackPage({ params }: FeedbackPageProps) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/auth");
 
   const feedback = await getFeedbackAction(id);
 

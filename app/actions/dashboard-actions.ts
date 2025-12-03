@@ -43,17 +43,16 @@ export async function createAnnouncementAction(
   isPinned: boolean
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const { data } = await supabase.auth.getClaims();
+  if (!data || !data.claims) return { error: "Not authenticated" };
+  const userId = data.claims.sub;
 
   const { error } = await supabase.from("announcements").insert({
     farewell_id: farewellId,
     title,
     content,
     is_pinned: isPinned,
-    created_by: user.id,
+    created_by: userId,
   });
 
   if (error) return { error: error.message };
@@ -82,10 +81,9 @@ export async function updateAnnouncementAction(
   isPinned: boolean
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const { data } = await supabase.auth.getClaims();
+  if (!data || !data.claims) return { error: "Not authenticated" };
+  // No need for userId here unless checking permissions, but auth is required
 
   const { error } = await supabase
     .from("announcements")
@@ -124,17 +122,16 @@ export async function toggleAnnouncementReactionAction(
   reactionType: "like" | "bookmark"
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const { data } = await supabase.auth.getClaims();
+  if (!data || !data.claims) return { error: "Not authenticated" };
+  const userId = data.claims.sub;
 
   // Check if reaction exists
   const { data: existing } = await supabase
     .from("announcement_reactions")
     .select("id")
     .eq("announcement_id", announcementId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .eq("reaction_type", reactionType)
     .maybeSingle();
 
@@ -149,7 +146,7 @@ export async function toggleAnnouncementReactionAction(
     // Add reaction
     const { error } = await supabase.from("announcement_reactions").insert({
       announcement_id: announcementId,
-      user_id: user.id,
+      user_id: userId,
       reaction_type: reactionType,
     });
     if (error) return { error: error.message };
@@ -169,9 +166,8 @@ export async function getAnnouncementReactionsAction(
   announcementId: string
 ): Promise<AnnouncementReactionCounts> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
 
   const { data: reactions } = await supabase
     .from("announcement_reactions")
@@ -182,14 +178,12 @@ export async function getAnnouncementReactionsAction(
     reactions?.filter((r) => r.reaction_type === "like").length || 0;
   const bookmarks =
     reactions?.filter((r) => r.reaction_type === "bookmark").length || 0;
-  const userLiked = user
-    ? reactions?.some(
-        (r) => r.user_id === user.id && r.reaction_type === "like"
-      )
+  const userLiked = userId
+    ? reactions?.some((r) => r.user_id === userId && r.reaction_type === "like")
     : false;
-  const userBookmarked = user
+  const userBookmarked = userId
     ? reactions?.some(
-        (r) => r.user_id === user.id && r.reaction_type === "bookmark"
+        (r) => r.user_id === userId && r.reaction_type === "bookmark"
       )
     : false;
 
@@ -231,10 +225,9 @@ export async function createTimelineEventAction(
   icon: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const { data } = await supabase.auth.getClaims();
+  if (!data || !data.claims) return { error: "Not authenticated" };
+  const userId = data.claims.sub;
 
   const { error } = await supabase.from("timeline_events").insert({
     farewell_id: farewellId,
@@ -242,7 +235,7 @@ export async function createTimelineEventAction(
     description,
     event_date: date.toISOString(),
     icon,
-    created_by: user.id,
+    created_by: userId,
   });
 
   if (error) return { error: error.message };
@@ -294,10 +287,9 @@ export async function createHighlightAction(
   link: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const { data } = await supabase.auth.getClaims();
+  if (!data || !data.claims) return { error: "Not authenticated" };
+  const userId = data.claims.sub;
 
   const { error } = await supabase.from("highlights").insert({
     farewell_id: farewellId,
@@ -305,7 +297,7 @@ export async function createHighlightAction(
     description,
     image_url: imageUrl,
     link,
-    created_by: user.id,
+    created_by: userId,
   });
 
   if (error) return { error: error.message };

@@ -4,7 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { User, Settings, Bell, Palette, Shield } from "lucide-react";
+import {
+  User,
+  Settings,
+  Bell,
+  Palette,
+  Shield,
+  CreditCard,
+} from "lucide-react";
 
 interface SettingsSidebarProps extends React.HTMLAttributes<HTMLElement> {
   farewellId: string;
@@ -37,6 +44,11 @@ export function SettingsSidebar({
       title: "Notifications",
       href: `/dashboard/${farewellId}/settings/notifications`,
       icon: Bell,
+    },
+    {
+      title: "Payments",
+      href: `/dashboard/${farewellId}/settings/payments`,
+      icon: CreditCard,
     },
   ];
 

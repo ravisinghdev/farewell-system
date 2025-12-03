@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -78,8 +77,10 @@ function WelcomeContent() {
   useEffect(() => {
     const checkAuth = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      const user = session?.user;
+
       if (user) {
         // Check claims first
         const claims = user.app_metadata?.farewells;

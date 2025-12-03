@@ -48,9 +48,9 @@ export default function AnnouncementsClient({
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-b">
         <div className="flex flex-col gap-4 p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Bell className="h-5 w-5 text-primary" />
                 </div>
@@ -60,7 +60,11 @@ export default function AnnouncementsClient({
                 Stay updated with the latest news and important information
               </p>
             </div>
-            {isAdmin && <CreateAnnouncementDialog farewellId={farewellId} />}
+            {isAdmin && (
+              <div className="w-full md:w-auto">
+                <CreateAnnouncementDialog farewellId={farewellId} />
+              </div>
+            )}
           </div>
 
           {/* Filters */}

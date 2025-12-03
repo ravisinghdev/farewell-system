@@ -1,19 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { getClaims } from "@/lib/auth/claims";
 import { supabaseAdmin } from "@/utils/supabase/admin";
 
 export default async function DashboardRootPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
 
-  if (!user) {
+  if (!claimsData || !claimsData.claims) {
     redirect("/auth");
   }
 
-  const claims = getClaims(user);
+  const claims = claimsData.claims;
   const farewellIds = claims.farewells ? Object.keys(claims.farewells) : [];
 
   if (farewellIds.length > 0) {
@@ -24,7 +21,7 @@ export default async function DashboardRootPage() {
   const { data: members } = await supabaseAdmin
     .from("farewell_members")
     .select("farewell_id")
-    .eq("user_id", user.id)
+    .eq("user_id", claims.sub)
     .limit(1);
 
   if (members && members.length > 0) {

@@ -140,11 +140,11 @@ export async function verifySupabaseAccessToken(accessToken?: string | null) {
 
   const client = await createServerClient();
 
-  const { data, error } = await client.auth.getUser();
+  const { data, error } = await client.auth.getClaims();
 
   if (error) throw new ApiError("invalid_supabase_token", 401, error.message);
 
-  return data.user;
+  return data?.claims;
 }
 
 /* -------------------------------------------------------

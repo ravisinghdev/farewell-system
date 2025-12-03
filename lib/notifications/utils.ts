@@ -1,12 +1,12 @@
 import { createClient } from "@/utils/supabase/server";
 
 export type NotificationType =
-  | "info"
-  | "success"
-  | "warning"
-  | "error"
-  | "announcement"
-  | "chat";
+  | "message"
+  | "mention"
+  | "system"
+  | "request"
+  | "finance"
+  | "duty";
 
 interface SendNotificationParams {
   userId: string;

@@ -16,11 +16,9 @@ export async function createAlbumAction(
   formData: FormData
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const rawData = {
     name: formData.get("name"),
@@ -37,7 +35,7 @@ export async function createAlbumAction(
   const { error } = await supabase.from("albums").insert({
     farewell_id: farewellId,
     name,
-    created_by: user.id,
+    created_by: userId,
   });
 
   if (error) {
@@ -87,11 +85,9 @@ export async function uploadMediaAction(
   formData: FormData
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const albumId = formData.get("albumId") as string;
   const farewellId = formData.get("farewellId") as string;
@@ -128,7 +124,7 @@ export async function uploadMediaAction(
     album_id: albumId,
     url: publicUrlData.publicUrl,
     type,
-    uploaded_by: user.id,
+    uploaded_by: userId,
   });
 
   if (dbError) {

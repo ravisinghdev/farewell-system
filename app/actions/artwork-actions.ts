@@ -34,11 +34,9 @@ export async function createArtworkAction(
   formData: FormData
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const rawData = {
     title: formData.get("title"),
@@ -83,9 +81,9 @@ export async function createArtworkAction(
     farewell_id: farewellId,
     title,
     description,
-    artist_name: artistName || user.user_metadata.full_name,
+    artist_name: artistName || claimsData.claims.user_metadata?.full_name,
     image_url: publicUrlData.publicUrl,
-    created_by: user.id,
+    created_by: userId,
   });
 
   if (dbError) {
@@ -102,11 +100,9 @@ export async function deleteArtworkAction(
   farewellId: string
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
 
-  if (!user) return { error: "Not authenticated" };
+  if (!data?.claims) return { error: "Not authenticated" };
 
   const { error } = await supabase.from("artworks").delete().eq("id", id);
 

@@ -49,9 +49,25 @@ export default function ReceiptDetailsPage() {
       });
 
       const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pageHeight = 297; // A4 height in mm
+      let imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      // If image is taller than page, scale it down to fit
+      if (imgHeight > pageHeight) {
+        const scaleFactor = pageHeight / imgHeight;
+        imgHeight = pageHeight;
+        // We don't need to adjust width because we want to maintain aspect ratio
+        // But we should probably center it or just let it be smaller width
+        // Actually, if we constrain height, width will shrink too if we want to keep aspect ratio.
+        // But jsPDF addImage takes width and height.
+        // Let's recalculate width based on new height
+        const newWidth = (canvas.width * imgHeight) / canvas.height;
+        // Center horizontally
+        const x = (imgWidth - newWidth) / 2;
+        pdf.addImage(imgData, "PNG", x, 0, newWidth, imgHeight);
+      } else {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      }
       pdf.save(`Receipt-${receiptId}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -151,8 +167,8 @@ export default function ReceiptDetailsPage() {
         </div>
       </div>
 
-      <div className="bg-zinc-900/50 p-8 rounded-xl border border-white/10 overflow-x-auto">
-        <div className="scale-[0.8] origin-top md:scale-100">
+      <div className="bg-zinc-900/50 p-4 md:p-8 rounded-xl border border-white/10 flex justify-center overflow-hidden">
+        <div className="origin-top transform scale-[0.4] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.85] xl:scale-100 transition-transform duration-300 ease-in-out h-[120mm] sm:h-[150mm] md:h-[210mm] lg:h-[260mm] xl:h-[297mm]">
           <ReceiptView
             ref={componentRef}
             contribution={contribution}

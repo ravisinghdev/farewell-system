@@ -22,14 +22,13 @@ export async function POST(request: Request) {
       }
     );
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getClaims();
 
-    if (!user) {
+    if (!data?.claims) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const user = data.claims;
     const { farewellId } = await request.json();
 
     if (!farewellId) {
@@ -59,7 +58,7 @@ export async function POST(request: Request) {
       .from("farewell_members")
       .select("user_id")
       .eq("farewell_id", farewellId)
-      .eq("user_id", user.id)
+      .eq("user_id", user.sub)
       .single();
 
     if (existingMember) {

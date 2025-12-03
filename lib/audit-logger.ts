@@ -15,18 +15,18 @@ export interface AuditLogEntry {
 export async function logAudit(entry: AuditLogEntry) {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data } = await supabase.auth.getClaims();
 
-    if (!user) {
+    if (!data || !data.claims) {
       console.warn("Audit log attempted without authenticated user", entry);
       return;
     }
 
+    const userId = data.claims.sub;
+
     const { error } = await supabase.from("audit_logs").insert({
       farewell_id: entry.farewellId,
-      user_id: user.id,
+      user_id: userId,
       action: entry.action,
       target_id: entry.targetId,
       target_type: entry.targetType,

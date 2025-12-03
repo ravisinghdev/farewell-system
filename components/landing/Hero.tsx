@@ -77,8 +77,8 @@ export default function Hero() {
         </div>
 
         {/* Hero Image / Carousel */}
-        <div className="relative mx-auto max-w-6xl animate-fadeInUp [animation-delay:1000ms]">
-          <div className="relative rounded-2xl border border-border bg-card/50 backdrop-blur-sm shadow-2xl overflow-hidden aspect-[16/9] group">
+        <div className="relative mx-auto w-full lg:max-w-6xl animate-fadeInUp [animation-delay:1000ms]">
+          <div className="relative rounded-2xl border border-border bg-card/50 backdrop-blur-sm shadow-2xl overflow-hidden aspect-[9/16] sm:aspect-[16/9] group">
             <div className="absolute inset-0 bg-gradient-to-t from-background/10 to-transparent z-10 pointer-events-none" />
             <ScreensCarousel />
 

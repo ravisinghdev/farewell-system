@@ -17,21 +17,19 @@ const razorpay = new Razorpay({
 
 export async function createOrderAction(farewellId: string, amount: number) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) {
     return { error: "Not authenticated" };
   }
+  const userId = claimsData.claims.sub;
 
   try {
     const options = {
       amount: amount * 100, // amount in the smallest currency unit
       currency: "INR",
-      receipt: `receipt_${Date.now()}_${user.id.slice(0, 5)}`,
+      receipt: `receipt_${Date.now()}_${userId.slice(0, 5)}`,
       notes: {
-        userId: user.id,
+        userId: userId,
         farewellId: farewellId,
       },
     };
@@ -57,11 +55,9 @@ export async function verifyPaymentAction(
   amount: number
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   try {
     const body = razorpayOrderId + "|" + razorpayPaymentId;
@@ -95,7 +91,7 @@ export async function verifyPaymentAction(
       const { data, error } = await supabase
         .from("contributions")
         .insert({
-          user_id: user.id,
+          user_id: userId,
           farewell_id: farewellId,
           amount: amount, // Amount in rupees
           method: "razorpay",

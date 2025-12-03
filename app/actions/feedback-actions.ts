@@ -21,18 +21,16 @@ export interface Feedback {
 
 export async function getFeedbackAction(farewellId: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return [];
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return [];
+  const userId = claimsData.claims.sub;
 
   // Check if admin
   const { data: member } = await supabase
     .from("farewell_members")
     .select("role")
     .eq("farewell_id", farewellId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .single();
 
   const isAdmin = checkIsAdmin(member?.role);
@@ -51,7 +49,7 @@ export async function getFeedbackAction(farewellId: string) {
   // If not admin, only show own feedback? Or maybe all feedback but anonymous?
   // Let's say only admins see all feedback for now.
   if (!isAdmin) {
-    query = query.eq("user_id", user.id);
+    query = query.eq("user_id", userId);
   }
 
   const { data: feedback, error } = await query;
@@ -71,15 +69,13 @@ export async function submitFeedbackAction(
   isAnonymous: boolean = false
 ): Promise<ActionState> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Not authenticated" };
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
   const { error } = await supabase.from("feedback").insert({
     farewell_id: farewellId,
-    user_id: user.id,
+    user_id: userId,
     content,
     type,
     is_anonymous: isAnonymous,
