@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, ChevronRight, Search, User } from "lucide-react";
-import ThemeToggle from "./ThemeToggle";
 import SearchDropdown from "./SearchDropdown";
 import { useSearch } from "./SearchProvider";
 import { createClient } from "@/utils/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import { ThemeToggle } from "../theme-toggler";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);

@@ -31,6 +31,7 @@ import {
 import Link from "next/link";
 
 import { useFarewell } from "@/components/providers/farewell-provider";
+import { Button } from "./ui/button";
 
 export function NavUser({
   user: initialUser,
@@ -53,7 +54,8 @@ export function NavUser({
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
+            <Button
+              variant={"ghost"}
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground w-auto p-0 rounded-full hover:bg-transparent hover:ring-2 hover:ring-gray-200 dark:hover:ring-gray-700 transition-all"
             >
@@ -66,7 +68,7 @@ export function NavUser({
                   {displayUser?.name?.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-            </SidebarMenuButton>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-56 rounded-xl shadow-lg border-border/50"

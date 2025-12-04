@@ -16,21 +16,17 @@ export const metadata = {
 
 export default function Page(): JSX.Element {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
-        <div className="min-h-screen">
-          <Navbar />
-          <main>
-            <Hero />
-            <Stats />
-            <Features />
-            <HowItWorks />
-            <DownloadSection />
-            <FAQ />
-          </main>
-          <Footer />
-        </div>
-      </body>
-    </html>
+    <div className="min-h-screen">
+      <Navbar />
+      <main>
+        <Hero />
+        <Stats />
+        <Features />
+        <HowItWorks />
+        <DownloadSection />
+        <FAQ />
+      </main>
+      <Footer />
+    </div>
   );
 }

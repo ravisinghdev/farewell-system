@@ -10,7 +10,7 @@ const Provider: FC<IProviderProps> = ({ children }) => {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="dark"
       enableSystem
       disableTransitionOnChange
     >

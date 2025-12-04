@@ -11,6 +11,7 @@ import {
   Star,
   Clock,
 } from "lucide-react";
+import { Button } from "../ui/button";
 
 // Mock Data matching RealtimeDashboard structure
 const MOCK_STATS = {
@@ -112,12 +113,12 @@ export default function ScreensCarousel() {
                     Farewell 2025 • Celebrating our journey together
                   </p>
                   <div className="flex flex-wrap justify-center md:justify-start gap-4 pt-2">
-                    <div className="h-10 px-6 rounded-full bg-white text-primary font-medium flex items-center gap-2 shadow-lg cursor-default">
+                    <Button className="rounded-full" variant={"ghost"}>
                       View Timeline <ArrowRight className="w-4 h-4" />
-                    </div>
-                    <div className="h-10 px-6 rounded-full border border-white/30 text-white font-medium flex items-center hover:bg-white/10 cursor-default">
+                    </Button>
+                    <Button className="rounded-full" variant={"default"}>
                       Contribute Now
-                    </div>
+                    </Button>
                   </div>
                 </div>
 

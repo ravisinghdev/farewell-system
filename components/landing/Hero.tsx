@@ -83,7 +83,7 @@ export default function Hero() {
             <ScreensCarousel />
 
             {/* Floating Elements */}
-            <div className="absolute -right-12 top-1/4 p-4 rounded-2xl bg-card border border-border shadow-xl animate-float hidden lg:block">
+            <div className="absolute -right-12 top-1/4 p-4 z-50 rounded-2xl bg-card border border-border shadow-xl animate-float hidden lg:block">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
                   <span className="text-green-500 font-bold">₹</span>

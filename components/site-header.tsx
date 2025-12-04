@@ -4,7 +4,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
 import { NavUser } from "@/components/nav-user";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/theme-toggler";
 import {
   Bell,
   Grip,
