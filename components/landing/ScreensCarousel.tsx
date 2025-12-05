@@ -123,23 +123,19 @@ export default function ScreensCarousel() {
                 </div>
 
                 {/* Countdown Card Preview */}
-                <div className="w-full max-w-xs bg-black/10 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-2xl">
-                  <p className="text-xs font-medium uppercase tracking-widest text-white/70 text-center mb-4">
+                <div className="w-full max-w-xs bg-background text-foreground rounded-2xl p-6 border border-white/10 shadow-2xl">
+                  <p className="text-xs font-medium uppercase tracking-widest text-center mb-4 text-default">
                     Countdown
                   </p>
-                  <div className="flex justify-between text-center">
+                  <div className="flex justify-between text-foreground text-center">
                     {[
                       { val: "15", label: "Days" },
                       { val: "08", label: "Hrs" },
                       { val: "45", label: "Mins" },
                     ].map((t) => (
                       <div key={t.label}>
-                        <div className="text-2xl font-bold text-white">
-                          {t.val}
-                        </div>
-                        <div className="text-[10px] text-white/60">
-                          {t.label}
-                        </div>
+                        <div className="text-2xl font-bold">{t.val}</div>
+                        <div className="text-[10px]">{t.label}</div>
                       </div>
                     ))}
                   </div>

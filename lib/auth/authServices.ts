@@ -1,4 +1,3 @@
-import { supabaseClient } from "@/utils/supabase/client";
 import { supabaseAdmin } from "@/utils/supabase/admin";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { ApiError } from "@/utils/errors";
@@ -32,7 +31,8 @@ export async function createUserWithPassword(
 
 // Sign in with email + password
 export async function signInWithPassword(email: string, password: string) {
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
+  const client = await createServerClient();
+  const { data, error } = await client.auth.signInWithPassword({
     email,
     password,
   });
@@ -49,7 +49,8 @@ export async function sendMagicLink(email: string) {
   const redirectTo = process.env.MAGICLINK_REDIRECT_URL;
   if (!redirectTo) throw new ApiError("magiclink_redirect_missing", 500);
 
-  const { data, error } = await supabaseClient.auth.signInWithOtp({
+  const client = await createServerClient();
+  const { data, error } = await client.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: redirectTo },
   });
