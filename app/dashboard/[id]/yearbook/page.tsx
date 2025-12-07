@@ -1,7 +1,7 @@
 import { getYearbookEntriesAction } from "@/app/actions/yearbook-actions";
 import { YearbookGrid } from "@/components/yearbook/yearbook-grid";
 import { CreateYearbookEntryDialog } from "@/components/yearbook/create-yearbook-entry-dialog";
-import { Separator } from "@/components/ui/separator";
+import { ConnectionsHeader } from "@/components/connections/connections-header";
 
 interface YearbookPageProps {
   params: Promise<{
@@ -14,19 +14,20 @@ export default async function YearbookPage({ params }: YearbookPageProps) {
   const entries = await getYearbookEntriesAction(id);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight">
-            Digital Yearbook
-          </h2>
-          <p className="text-muted-foreground">
-            A collection of profiles, quotes, and memories.
-          </p>
+    <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="flex-1">
+          <ConnectionsHeader
+            title="Digital Yearbook"
+            description="Signatures, quotes, and final words."
+            farewellId={id}
+          />
         </div>
-        <CreateYearbookEntryDialog farewellId={id} />
+        <div className="mt-2 md:mt-20">
+          <CreateYearbookEntryDialog farewellId={id} />
+        </div>
       </div>
-      <Separator />
+
       <YearbookGrid entries={entries} farewellId={id} />
     </div>
   );

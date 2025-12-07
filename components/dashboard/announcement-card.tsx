@@ -43,18 +43,18 @@ import {
 } from "@/app/actions/dashboard-actions";
 import { toast } from "sonner";
 import { EditAnnouncementDialog } from "./edit-announcement-dialog";
-
 import { useFarewell } from "@/components/providers/farewell-provider";
+import { cn } from "@/lib/utils";
 
 interface AnnouncementCardProps {
   announcement: Announcement;
-  // Props are now optional/unused as we use context
-  farewellId?: string;
-  isAdmin?: boolean;
-  userId?: string;
+  isFeatured?: boolean; // Added prop for featured styling
 }
 
-export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
+export function AnnouncementCard({
+  announcement,
+  isFeatured,
+}: AnnouncementCardProps) {
   const { user, farewell } = useFarewell();
   const farewellId = farewell.id;
   const userId = user.id;
@@ -143,44 +143,46 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
     <>
       <Card
         id={announcement.id}
-        className="relative overflow-hidden transition-all hover:shadow-lg border-l-4 border-l-primary/50 group"
-      >
-        {/* Pin Icon - positioned to avoid overlap with admin menu */}
-        {announcement.is_pinned && (
-          <div
-            className={`absolute top-2 ${
-              isAdmin ? "right-12" : "right-2"
-            } z-10`}
-          >
-            <div className="backdrop-blur-sm rounded-full p-1.5">
-              <Pin className="h-3.5 w-3.5 rotate-45" fill="currentColor" />
-            </div>
-          </div>
+        className={cn(
+          "relative overflow-hidden transition-all duration-300 group border-0",
+          isFeatured
+            ? "bg-gradient-to-br from-primary/10 via-background to-background border border-primary/20 shadow-xl"
+            : "bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 shadow-lg backdrop-blur-md"
         )}
+      >
+        {/* Glow Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 flex-1">
-              <Avatar className="h-10 w-10">
+              <Avatar
+                className={cn(
+                  "h-10 w-10 border-2",
+                  isFeatured ? "border-primary/30" : "border-white/10"
+                )}
+              >
                 <AvatarImage src={announcement.creator?.avatar_url || ""} />
-                <AvatarFallback className="font-semibold">
+                <AvatarFallback className="font-semibold bg-background/50">
                   {getInitials(announcement.creator?.full_name || "Admin")}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col flex-1">
-                <h3 className="font-semibold leading-none tracking-tight text-lg">
+                <h3
+                  className={cn(
+                    "font-bold leading-tight tracking-tight",
+                    isFeatured ? "text-xl" : "text-lg"
+                  )}
+                >
                   {announcement.title}
                 </h3>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-sm">
+                <div className="flex items-center gap-2 mt-1.5 text-muted-foreground">
+                  <span className="text-xs font-medium">
                     {announcement.creator?.full_name || "Admin"}
                   </span>
-                  <span className="text-xs">•</span>
+                  <span className="text-[10px]">•</span>
                   <span className="text-xs">
-                    {format(
-                      new Date(announcement.created_at),
-                      "MMM d, yyyy • h:mm a"
-                    )}
+                    {format(new Date(announcement.created_at), "MMM d, h:mm a")}
                   </span>
                 </div>
               </div>
@@ -193,12 +195,15 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-white/10"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent
+                  align="end"
+                  className="bg-background/80 backdrop-blur-xl border-white/10"
+                >
                   <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Edit
@@ -216,10 +221,10 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
                       </>
                     )}
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem
                     onClick={() => setShowDeleteDialog(true)}
-                    className="focus:text-destructive"
+                    className="focus:text-destructive focus:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
@@ -227,26 +232,39 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
+
+            {/* Pin Badge for Featured */}
+            {announcement.is_pinned && !isAdmin && (
+              <div className="text-primary/50">
+                <Pin className="h-4 w-4 rotate-45" fill="currentColor" />
+              </div>
+            )}
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">
+        <CardContent className="space-y-4 relative z-10">
+          <p className="text-sm sm:text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
             {announcement.content}
           </p>
 
           {/* User Actions */}
-          <div className="flex items-center gap-2 pt-2 border-t">
+          <div className="flex items-center gap-2 pt-4 border-t border-white/5">
             <Button
               variant="ghost"
               size="sm"
-              className={`gap-2 ${reactions.userLiked ? "" : ""}`}
+              className={cn(
+                "gap-2 rounded-full h-8 px-3 transition-colors hover:bg-white/10",
+                reactions.userLiked &&
+                  "text-red-500 bg-red-500/10 hover:bg-red-500/20"
+              )}
               onClick={() => handleToggleReaction("like")}
               disabled={isPending}
             >
               <Heart
-                className="h-4 w-4"
-                fill={reactions.userLiked ? "currentColor" : "none"}
+                className={cn(
+                  "h-4 w-4 transition-transform active:scale-90",
+                  reactions.userLiked && "fill-current"
+                )}
               />
               {reactions.likes > 0 && (
                 <span className="text-xs font-medium">{reactions.likes}</span>
@@ -256,24 +274,30 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
             <Button
               variant="ghost"
               size="sm"
-              className={`gap-2 ${reactions.userBookmarked ? "" : ""}`}
+              className={cn(
+                "gap-2 rounded-full h-8 px-3 transition-colors hover:bg-white/10",
+                reactions.userBookmarked &&
+                  "text-primary bg-primary/10 hover:bg-primary/20"
+              )}
               onClick={() => handleToggleReaction("bookmark")}
               disabled={isPending}
             >
               <Bookmark
-                className="h-4 w-4"
-                fill={reactions.userBookmarked ? "currentColor" : "none"}
+                className={cn(
+                  "h-4 w-4",
+                  reactions.userBookmarked && "fill-current"
+                )}
               />
             </Button>
 
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2"
+              className="gap-2 rounded-full h-8 px-3 ml-auto hover:bg-white/10"
               onClick={handleShare}
             >
               <Share2 className="h-4 w-4" />
-              Share
+              <span className="sr-only sm:not-sr-only text-xs">Share</span>
             </Button>
           </div>
         </CardContent>
@@ -291,7 +315,7 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-background/80 backdrop-blur-xl border-white/10">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Announcement?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -300,11 +324,11 @@ export function AnnouncementCard({ announcement }: AnnouncementCardProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isPending}
-              className=""
+              className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>

@@ -1,7 +1,7 @@
 import { getArtworksAction } from "@/app/actions/artwork-actions";
 import { ArtworkGrid } from "@/components/artworks/artwork-grid";
 import { CreateArtworkDialog } from "@/components/artworks/create-artwork-dialog";
-import { Separator } from "@/components/ui/separator";
+import { ConnectionsHeader } from "@/components/connections/connections-header";
 
 interface ArtworksPageProps {
   params: Promise<{
@@ -14,19 +14,20 @@ export default async function ArtworksPage({ params }: ArtworksPageProps) {
   const artworks = await getArtworksAction(id);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight">
-            Art & Creative Works
-          </h2>
-          <p className="text-muted-foreground">
-            Showcase of drawings, paintings, and digital art.
-          </p>
+    <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="flex-1">
+          <ConnectionsHeader
+            title="Art & Creative Works"
+            description="A canvas of creativity and expression."
+            farewellId={id}
+          />
         </div>
-        <CreateArtworkDialog farewellId={id} />
+        <div className="mt-2 md:mt-20">
+          <CreateArtworkDialog farewellId={id} />
+        </div>
       </div>
-      <Separator />
+
       <ArtworkGrid artworks={artworks} farewellId={id} />
     </div>
   );

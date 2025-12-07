@@ -2,6 +2,7 @@ import { getLeaderboardAction } from "@/app/actions/contribution-actions";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
 import { LeaderboardList } from "@/components/contributions/leaderboard-list";
+import { ContributionHeader } from "@/components/contributions/contribution-header";
 
 export default async function LeaderboardPage({
   params,
@@ -16,15 +17,12 @@ export default async function LeaderboardPage({
   const leaderboardData = await getLeaderboardAction(id);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">
-          Top Contributors
-        </h1>
-        <p className="text-white/60">
-          Celebrating those who made this possible.
-        </p>
-      </div>
+    <div className="space-y-8 animate-in fade-in duration-700 max-w-7xl mx-auto p-4 md:p-8">
+      <ContributionHeader
+        title="Top Contributors"
+        description="Celebrating those who made this possible."
+        farewellId={id}
+      />
 
       <LeaderboardList initialData={leaderboardData} farewellId={id} />
     </div>

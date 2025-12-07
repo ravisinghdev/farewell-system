@@ -135,3 +135,55 @@ export async function uploadMediaAction(
   revalidatePath(`/dashboard/${farewellId}/memories/${albumId}`);
   return { success: true };
 }
+
+export async function deleteMediaAction(
+  mediaId: string,
+  farewellId: string,
+  albumId: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  // 1. Get the media to find the file path (optional clean up from storage, not strictly required for MVP but good practice)
+  // For now, we'll just delete the DB record.
+  // Ideally, use a trigger or separate cleanup job for storage to avoid complex cascading permission issues in client code.
+
+  const { error } = await supabase
+    .from("gallery_media")
+    .delete()
+    .eq("id", mediaId);
+
+  if (error) {
+    console.error("Delete media error:", error);
+    return { error: "Failed to delete media" };
+  }
+
+  revalidatePath(`/dashboard/${farewellId}/memories/${albumId}`);
+  return { success: true };
+}
+
+export async function saveMediaRecordAction(
+  albumId: string,
+  farewellId: string,
+  url: string,
+  type: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
+
+  const { error } = await supabase.from("gallery_media").insert({
+    album_id: albumId,
+    url,
+    type,
+    uploaded_by: userId,
+  });
+
+  if (error) {
+    console.error("Save media error:", error);
+    return { error: "Failed to save media record" };
+  }
+
+  revalidatePath(`/dashboard/${farewellId}/memories/${albumId}`);
+  return { success: true };
+}

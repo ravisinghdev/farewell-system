@@ -44,70 +44,50 @@ export default function AnnouncementsClient({
   ];
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 border-b">
-        <div className="flex flex-col gap-4 p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Bell className="h-5 w-5 text-primary" />
-                </div>
-                Announcements
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Stay updated with the latest news and important information
-              </p>
-            </div>
-            {isAdmin && (
-              <div className="w-full md:w-auto">
-                <CreateAnnouncementDialog farewellId={farewellId} />
-              </div>
-            )}
-          </div>
-
-          {/* Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Filter className="h-4 w-4" />
-              <span className="font-medium">Filter:</span>
-            </div>
-            {filters.map((f) => (
-              <Button
-                key={f.value}
-                variant={filter === f.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter(f.value)}
-                className="gap-2"
+    <div className="flex flex-col h-full space-y-6">
+      {/* Filter Toolbar */}
+      <div className="flex items-center gap-4 bg-background/40 backdrop-blur-md p-1.5 rounded-2xl border border-white/5 w-fit">
+        <div className="flex items-center gap-2 px-3 text-sm text-muted-foreground border-r border-white/10 pr-4">
+          <Filter className="h-4 w-4" />
+          <span className="font-medium hidden sm:inline">Filter</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {filters.map((f) => (
+            <Button
+              key={f.value}
+              variant={filter === f.value ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setFilter(f.value)}
+              className={`gap-2 rounded-xl text-xs h-8 ${
+                filter === f.value
+                  ? "bg-white/10 text-primary font-medium shadow-sm"
+                  : "text-muted-foreground hover:bg-white/5"
+              }`}
+            >
+              {f.label}
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  filter === f.value
+                    ? "bg-primary/20 text-primary"
+                    : "bg-white/5 text-muted-foreground"
+                }`}
               >
-                {f.label}
-                <span
-                  className={`px-1.5 py-0.5 rounded-full text-xs font-semibold ${
-                    filter === f.value
-                      ? "bg-primary-foreground/20 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {f.count}
-                </span>
-              </Button>
-            ))}
-          </div>
+                {f.count}
+              </span>
+            </Button>
+          ))}
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6 bg-muted/20">
-        <div className="max-w-4xl mx-auto">
-          <RealtimeAnnouncements
-            initialAnnouncements={announcements}
-            farewellId={farewellId}
-            filter={filter}
-            isAdmin={isAdmin}
-            userId={userId}
-          />
-        </div>
+      <div className="flex-1">
+        <RealtimeAnnouncements
+          initialAnnouncements={announcements}
+          farewellId={farewellId}
+          filter={filter}
+          isAdmin={isAdmin}
+          userId={userId}
+        />
       </div>
     </div>
   );

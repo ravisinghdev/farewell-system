@@ -14,6 +14,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  AreaChart,
+  Area,
 } from "recharts";
 
 interface BudgetChartsProps {
@@ -55,25 +57,32 @@ export function BudgetCharts({
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const budgetVsActualData = [
     {
-      name: "Budget Goal",
+      name: "Goal",
       amount: budgetGoal,
+      fill: "url(#colorGoal)",
     },
     {
       name: "Collected",
       amount: totalCollected,
+      fill: "url(#colorCollected)",
     },
     {
       name: "Spent",
       amount: totalExpenses,
+      fill: "url(#colorSpent)",
     },
   ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <GlassCard className="p-6">
-        <h3 className="text-lg font-semibold text-white mb-6">
-          Expenses by Category
+      <GlassCard className="p-6 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500" />
+
+        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+          <span className="w-1 h-6 bg-purple-500 rounded-full" />
+          Expense Distribution
         </h3>
+
         <div className="h-[300px] w-full">
           {categoryData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
@@ -82,69 +91,115 @@ export function BudgetCharts({
                   data={categoryData}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
+                  innerRadius={60}
                   outerRadius={100}
-                  fill="#8884d8"
+                  paddingAngle={5}
                   dataKey="value"
+                  stroke="none"
                 >
                   {categoryData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
+                      className="filter drop-shadow-[0_0_10px_rgba(255,255,255,0.1)] hover:opacity-80 transition-opacity"
                     />
                   ))}
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#18181b",
-                    borderColor: "#27272a",
+                    backgroundColor: "rgba(9, 9, 11, 0.9)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "12px",
                     color: "#fff",
+                    boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+                    backdropFilter: "blur(10px)",
                   }}
+                  itemStyle={{ color: "#fff" }}
+                  formatter={(value: any) => [
+                    `₹${value.toLocaleString()}`,
+                    "Amount",
+                  ]}
                 />
-                <Legend />
+                <Legend iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-white/40">
-              No expenses recorded yet
+            <div className="h-full flex flex-col items-center justify-center text-white/40 space-y-2">
+              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-white/20" />
+              </div>
+              <p>No expenses recorded yet</p>
             </div>
           )}
         </div>
       </GlassCard>
 
-      <GlassCard className="p-6">
-        <h3 className="text-lg font-semibold text-white mb-6">
-          Financial Overview
+      <GlassCard className="p-6 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500" />
+
+        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+          <span className="w-1 h-6 bg-blue-500 rounded-full" />
+          Financial Health
         </h3>
+
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={budgetVsActualData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
-              <XAxis dataKey="name" stroke="#ffffff60" />
-              <YAxis stroke="#ffffff60" />
+            <BarChart data={budgetVsActualData} barSize={60}>
+              <defs>
+                <linearGradient id="colorGoal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.3} />
+                </linearGradient>
+                <linearGradient id="colorCollected" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.3} />
+                </linearGradient>
+                <linearGradient id="colorSpent" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={0.3} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#ffffff05"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="name"
+                stroke="#ffffff40"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                stroke="#ffffff40"
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value) => `₹${value / 1000}k`}
+              />
               <Tooltip
                 cursor={{ fill: "#ffffff05" }}
                 contentStyle={{
-                  backgroundColor: "#18181b",
-                  borderColor: "#27272a",
+                  backgroundColor: "rgba(9, 9, 11, 0.9)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: "12px",
                   color: "#fff",
+                  boxShadow: "0 0 20px rgba(0,0,0,0.5)",
+                  backdropFilter: "blur(10px)",
                 }}
+                formatter={(value: any) => [
+                  `₹${value.toLocaleString()}`,
+                  "Amount",
+                ]}
               />
-              <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+              <Bar
+                dataKey="amount"
+                radius={[8, 8, 0, 0]}
+                animationDuration={1500}
+              >
                 {budgetVsActualData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={
-                      index === 0
-                        ? "#3b82f6" // Goal: Blue
-                        : index === 1
-                        ? "#10b981" // Collected: Emerald
-                        : "#ef4444" // Spent: Red
-                    }
-                  />
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Bar>
             </BarChart>

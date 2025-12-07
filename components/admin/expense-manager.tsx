@@ -100,25 +100,12 @@ export function ExpenseManager({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <GlassCard className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
-              <DollarSign className="w-5 h-5" />
-            </div>
-            <h3 className="text-lg font-semibold text-white">Total Expenses</h3>
-          </div>
-          <p className="text-3xl font-bold text-white">
-            ₹{totalExpenses.toLocaleString()}
-          </p>
-        </GlassCard>
-      </div>
-
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h3 className="text-xl font-bold text-white">Expense List</h3>
+        {/* We moved the total to the main dashboard, so we keep this clean */}
+        <div />
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-white text-black hover:bg-white/90 w-full sm:w-auto">
+            <Button className="bg-white text-black hover:bg-white/90 w-full sm:w-auto font-bold rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.2)]">
               <Plus className="w-4 h-4 mr-2" /> Add Expense
             </Button>
           </DialogTrigger>
@@ -186,16 +173,20 @@ export function ExpenseManager({
         </Dialog>
       </div>
 
-      <GlassCard className="overflow-hidden">
+      <GlassCard className="overflow-hidden border-none bg-black/20">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-white/40 uppercase bg-white/5 border-b border-white/10">
+            <thead className="text-xs text-white/40 uppercase bg-white/5 border-b border-white/5">
               <tr>
-                <th className="px-6 py-3">Title</th>
-                <th className="px-6 py-3">Category</th>
-                <th className="px-6 py-3">Paid By</th>
-                <th className="px-6 py-3 text-right">Amount</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+                <th className="px-6 py-4 font-bold tracking-wider">Title</th>
+                <th className="px-6 py-4 font-bold tracking-wider">Category</th>
+                <th className="px-6 py-4 font-bold tracking-wider">Paid By</th>
+                <th className="px-6 py-4 text-right font-bold tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-4 text-right font-bold tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -203,7 +194,7 @@ export function ExpenseManager({
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-6 py-8 text-center text-white/40"
+                    className="px-6 py-12 text-center text-white/30 italic"
                   >
                     No expenses recorded yet.
                   </td>
@@ -212,20 +203,20 @@ export function ExpenseManager({
                 expenses.map((expense) => (
                   <tr
                     key={expense.id}
-                    className="hover:bg-white/5 transition-colors"
+                    className="hover:bg-white/5 transition-colors group"
                   >
-                    <td className="px-6 py-4 font-medium text-white">
+                    <td className="px-6 py-4 font-medium text-white group-hover:text-primary transition-colors">
                       {expense.title}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-1 rounded-full bg-white/10 text-xs text-white/80">
+                      <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/70 group-hover:bg-white/10 transition-colors">
                         {expense.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-white/60">
+                    <td className="px-6 py-4 text-white/50 text-xs">
                       {expense.users?.full_name || "Unknown"}
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-white">
+                    <td className="px-6 py-4 text-right font-bold text-white font-mono">
                       ₹{Number(expense.amount).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -233,7 +224,7 @@ export function ExpenseManager({
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(expense.id)}
-                        className="text-white/40 hover:text-red-400 hover:bg-red-400/10"
+                        className="text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

@@ -6,8 +6,9 @@ import {
   Download,
   Smartphone,
   Globe,
-  Sparkles,
   ArrowRight,
+  Monitor,
+  CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -39,81 +40,110 @@ export default function DownloadSection() {
   }
 
   return (
-    <section id="download" className="py-24 relative overflow-hidden">
+    <section
+      id="download"
+      className="py-24 relative overflow-hidden bg-background"
+    >
       {/* Background Elements */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[500px] bg-primary/10 rounded-full blur-[120px] opacity-70" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02]" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-card border border-border rounded-3xl p-8 md:p-16 text-center shadow-2xl relative overflow-hidden">
-          {/* Decorative gradients */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="relative rounded-[2.5rem] bg-card/50 border border-white/10 overflow-hidden backdrop-blur-3xl shadow-2xl p-8 lg:p-16">
+          {/* Inner Grid */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] opacity-20" />
 
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Ready to Plan the
-            <span className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
-              Ultimate Farewell?
-            </span>
-          </h2>
-
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12">
-            Join thousands of students and teachers who are already using our
-            platform to organize memorable events.
-          </p>
-
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-            {/* Mobile App Card */}
-            <div className="group p-6 rounded-2xl bg-background border border-border hover:border-primary/50 transition-all w-full md:w-80 text-left hover:shadow-lg">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 text-primary">
-                <Smartphone className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Mobile App</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Get the full native experience on your Android device.
+          <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16">
+            {/* Text Side */}
+            <div className="flex-1 text-center lg:text-left">
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6 tracking-tight leading-tight">
+                Your Farewell, <br />
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-pink-500">
+                  Anywhere You Go.
+                </span>
+              </h2>
+              <p className="text-xl text-muted-foreground mb-10 leading-relaxed font-light">
+                Seamlessly switch between our native Android app and the
+                powerful web dashboard. Your data stays perfectly synced.
               </p>
-              <Button
-                onClick={handleDownload}
-                disabled={loading}
-                className="w-full gap-2"
-              >
-                {loading ? (
-                  "Preparing..."
-                ) : (
-                  <>
-                    <Download className="w-4 h-4" />
-                    Download APK
-                  </>
-                )}
-              </Button>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Button
+                  onClick={handleDownload}
+                  disabled={loading}
+                  className="h-14 px-8 rounded-full text-lg shadow-lg hover:shadow-primary/25 bg-primary text-primary-foreground hover:scale-105 transition-all w-full sm:w-auto"
+                >
+                  {loading ? (
+                    "Starting..."
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Download className="w-5 h-5" />
+                      Download Android App
+                    </span>
+                  )}
+                </Button>
+                <Link href="/auth" className="w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    className="h-14 px-8 rounded-full text-lg border-border bg-background/50 hover:bg-accent hover:border-primary/30 w-full sm:w-auto"
+                  >
+                    <span className="flex items-center gap-2">
+                      Open Web Dashboard
+                      <ArrowRight className="w-5 h-5" />
+                    </span>
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="mt-8 flex items-center justify-center lg:justify-start gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>Real-time Sync</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <span>Offline Support</span>
+                </div>
+              </div>
             </div>
 
-            {/* Web App Card */}
-            <div className="group p-6 rounded-2xl bg-background border border-border hover:border-purple-500/50 transition-all w-full md:w-80 text-left hover:shadow-lg">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4 text-purple-500">
-                <Globe className="w-6 h-6" />
+            {/* Visual Side */}
+            <div className="flex-1 w-full max-w-lg lg:max-w-none relative perspective-1000">
+              {/* Floating Elements Animation Container */}
+              <div className="relative w-full aspect-square flex items-center justify-center">
+                {/* Circle Backgrounds */}
+                <div className="absolute w-[400px] h-[400px] border border-primary/20 rounded-full animate-[spin_60s_linear_infinite]" />
+                <div className="absolute w-[550px] h-[550px] border border-dashed border-primary/10 rounded-full animate-[spin_40s_linear_infinite_reverse]" />
+
+                {/* App Card */}
+                <div className="absolute hover:z-20 transform hover:-translate-y-2 hover:scale-105 transition-all duration-300 left-[10%] top-[20%] p-6 rounded-3xl bg-background/80 backdrop-blur-xl border border-border shadow-xl w-64">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center mb-4 text-white shadow-lg">
+                    <Smartphone className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-1">Android App</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Native performance, push notifications.
+                  </p>
+                </div>
+
+                {/* Web Card */}
+                <div className="absolute hover:z-20 transform hover:-translate-y-2 hover:scale-105 transition-all duration-300 right-[10%] bottom-[20%] p-6 rounded-3xl bg-background/80 backdrop-blur-xl border border-border shadow-xl w-64">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mb-4 text-white shadow-lg">
+                    <Monitor className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-1">Web Dashboard</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Admin controls, analytics, large screen view.
+                  </p>
+                </div>
+
+                {/* Center Connector */}
+                <div className="absolute w-40 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent rotate-45 blur-[1px]" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Web Platform</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Access from any browser, anywhere, on any device.
-              </p>
-              <Link href="/auth">
-                <Button
-                  variant="outline"
-                  className="w-full gap-2 group-hover:bg-purple-500/5 group-hover:text-purple-500 group-hover:border-purple-500/20"
-                >
-                  Get Started
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
             </div>
           </div>
-
-          <p className="text-xs text-muted-foreground mt-8">
-            * APK download is secure and hosted on our private servers.
-          </p>
         </div>
       </div>
     </section>

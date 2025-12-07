@@ -21,14 +21,16 @@ export function FarewellHeader({
       <SidebarMenuItem>
         <SidebarMenuButton
           size="lg"
-          className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-default hover:bg-transparent"
+          className="group data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-default hover:bg-transparent"
         >
-          <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+          <div className="bg-gradient-to-br from-primary to-purple-600 text-white flex aspect-square size-8 items-center justify-center rounded-lg shadow-lg shadow-primary/25 transition-transform group-hover:scale-105">
             <GalleryVerticalEnd className="size-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-medium">{name}</span>
-            <span className="truncate text-xs">Class of {year}</span>
+            <span className="truncate font-bold tracking-tight">{name}</span>
+            <span className="truncate text-[10px] text-muted-foreground uppercase tracking-widest font-medium">
+              Class of {year}
+            </span>
           </div>
         </SidebarMenuButton>
       </SidebarMenuItem>

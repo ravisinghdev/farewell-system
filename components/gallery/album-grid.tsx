@@ -40,24 +40,34 @@ export function AlbumGrid({ albums, farewellId }: AlbumGridProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {albums.map((album) => (
         <Link
           key={album.id}
           href={`/dashboard/${farewellId}/memories/${album.id}`}
-          className="block group"
+          className="block group relative"
         >
-          <Card className="h-full transition-colors hover:bg-muted/50">
-            <CardHeader className="pb-2">
-              <Folder className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
-              <CardTitle className="line-clamp-1">{album.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                Created by {album.created_by_user?.full_name || "Unknown"}
-              </p>
-            </CardContent>
-          </Card>
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-blue-500/0 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="h-full bg-white/5 border border-white/10 p-6 rounded-2xl hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] hover:-rotate-1 backdrop-blur-md relative z-10 overflow-hidden">
+            {/* Decorative Folder Tab */}
+            <div className="absolute top-0 left-0 w-24 h-24 bg-white/5 rounded-full -translate-x-12 -translate-y-12 blur-2xl group-hover:bg-purple-500/20 transition-colors" />
+
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400 group-hover:bg-purple-500 group-hover:text-white transition-colors duration-300">
+                <Folder className="w-6 h-6" />
+              </div>
+              {/* Count placeholder if we had it */}
+            </div>
+
+            <h3 className="font-bold text-lg text-white mb-1 group-hover:translate-x-1 transition-transform">
+              {album.name}
+            </h3>
+            <p className="text-xs text-white/40">
+              by {album.created_by_user?.full_name || "Unknown"}
+            </p>
+
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+          </div>
         </Link>
       ))}
     </div>

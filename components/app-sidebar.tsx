@@ -60,11 +60,13 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { usePathname } from "next/navigation"; // Added for active state
 
 import { SidebarChatList } from "@/components/chat/sidebar-chat-list";
 
 import { useFarewell } from "@/components/providers/farewell-provider";
 import { checkIsAdmin } from "@/lib/auth/roles";
+import { cn } from "@/lib/utils"; // Ensure you have this utility or use standard class string
 
 // Define types for the props
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -85,6 +87,7 @@ export function AppSidebar({
   ...props
 }: AppSidebarProps) {
   const { user, farewell } = useFarewell();
+  const pathname = usePathname();
 
   const farewellId = farewell.id;
   const farewellName = farewell.name;
@@ -352,63 +355,61 @@ export function AppSidebar({
     <Sidebar
       collapsible="icon"
       {...props}
-      className="border-r backdrop-blur-md z-50"
+      className="border-r border-white/10 bg-black/40 dark:bg-black/40 backdrop-blur-xl z-50 shadow-2xl"
     >
-      <SidebarHeader>
+      <SidebarHeader className="pb-4 pt-4">
         <FarewellHeader name={farewellName} year={farewellYear} />
       </SidebarHeader>
-      <SidebarContent>
-        {/* Chat List Integration with Message Links */}
-        {/* Chat List Integration with Message Links - DISABLED */}
-        {/* <SidebarChatList farewellId={farewellId} currentUserId={user.id}>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Farewell Messages">
-              <Link href={p("/dashboard/messages")}>
-                <MessageSquare />
-                <span>Farewell Messages</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Letters to Seniors">
-              <Link href={p("/dashboard/letters")}>
-                <Mail />
-                <span>Letters to Seniors</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Alumni Messages">
-              <Link href={p("/dashboard/alumni")}>
-                <UserCircle />
-                <span>Alumni Messages</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Feedback & Suggestions">
-              <Link href={p("/dashboard/feedback")}>
-                <MessageSquareHeart />
-                <span>Feedback & Suggestions</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarChatList> */}
 
+      <SidebarContent className="px-2">
         {navGroups.map((group) => (
-          <SidebarGroup key={group.title}>
-            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+          <SidebarGroup key={group.title} className="py-2">
+            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-1">
+              {group.title}
+            </SidebarGroupLabel>
             <SidebarMenu>
-              {group.items.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton asChild tooltip={item.label}>
-                    <Link href={p(item.href)}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {group.items.map((item) => {
+                const fullPath = p(item.href);
+                const isActive = pathname === fullPath;
+
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.label}
+                      className={cn(
+                        "relative transition-all duration-200 ease-in-out group/item overflow-hidden",
+                        isActive
+                          ? "bg-primary/15 text-primary shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:bg-primary/20 hover:text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5 hover:translate-x-1"
+                      )}
+                    >
+                      <Link
+                        href={fullPath}
+                        className="flex items-center gap-3 py-2"
+                      >
+                        {/* Active Indicator Bar */}
+                        {isActive && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_10px_rgba(var(--primary),0.8)]" />
+                        )}
+
+                        <item.icon
+                          className={cn(
+                            "h-4 w-4 transition-transform group-hover/item:scale-110",
+                            isActive && "text-primary"
+                          )}
+                        />
+                        <span className="font-medium text-sm tracking-tight">
+                          {item.label}
+                        </span>
+
+                        {/* Hover Glow Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 pointer-events-none" />
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroup>
         ))}

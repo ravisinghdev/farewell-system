@@ -19,7 +19,7 @@ export default async function ContributionsLayout({
 
   return (
     <div className="min-h-screen p-2 md:p-6 font-sans">
-      <ContributionsNav farewellId={id} isAdmin={isAdmin} />
+      {/* <ContributionsNav farewellId={id} isAdmin={isAdmin} /> */}
       <main className="max-w-[1600px] mx-auto">{children}</main>
     </div>
   );

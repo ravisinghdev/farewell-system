@@ -6,6 +6,7 @@ import { Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import Link from "next/link";
+import { ContributionHeader } from "@/components/contributions/contribution-header";
 
 export default async function ReceiptPage({
   params,
@@ -23,15 +24,12 @@ export default async function ReceiptPage({
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 max-w-5xl mx-auto p-4 md:p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
-          Receipts & Downloads
-        </h1>
-        <p className="text-muted-foreground">
-          View and download receipts for your verified contributions.
-        </p>
-      </div>
+    <div className="space-y-8 animate-in fade-in duration-700 max-w-7xl mx-auto p-4 md:p-8">
+      <ContributionHeader
+        title="Receipts & Downloads"
+        description="View and download receipts for your verified contributions."
+        farewellId={id}
+      />
 
       <div className="grid gap-4">
         {verifiedContributions.length === 0 ? (

@@ -48,7 +48,7 @@ export default async function AlbumPage({ params }: AlbumPageProps) {
         <UploadMediaDialog farewellId={id} albumId={albumId} />
       </div>
       <Separator />
-      <MediaGrid media={media} albumId={albumId} />
+      <MediaGrid media={media} albumId={albumId} farewellId={id} />
     </div>
   );
 }

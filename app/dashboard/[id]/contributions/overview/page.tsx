@@ -9,6 +9,7 @@ import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
 import { BudgetManager } from "@/components/admin/budget-manager";
 import { checkIsAdmin } from "@/lib/auth/roles";
+import { ContributionHeader } from "@/components/contributions/contribution-header";
 
 export default async function ContributionOverviewPage({
   params,
@@ -45,7 +46,13 @@ export default async function ContributionOverviewPage({
   const assignedAmount = currentUserMember?.assignedAmount || 0;
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">
+      <ContributionHeader
+        title="Financial Overview"
+        description="Track your contributions and the class goal."
+        farewellId={id}
+      />
+
       <ContributionDashboard
         initialContributions={contributions}
         initialStats={stats}
@@ -58,7 +65,7 @@ export default async function ContributionOverviewPage({
       />
 
       {isAdmin && (
-        <div className="max-w-7xl mx-auto px-4 md:px-8 pb-12">
+        <div className="pb-12">
           <BudgetManager
             farewellId={id}
             initialBudget={budgetGoal}

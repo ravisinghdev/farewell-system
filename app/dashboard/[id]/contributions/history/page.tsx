@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { TransactionTable } from "@/components/admin/transaction-table";
 import { GlassCard } from "@/components/ui/glass-card";
 import { checkIsAdmin } from "@/lib/auth/roles";
+import { ContributionHeader } from "@/components/contributions/contribution-header";
 
 export default async function HistoryPage({
   params,
@@ -29,16 +30,15 @@ export default async function HistoryPage({
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 p-4 md:p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-          {isAdmin ? "All Transactions" : "My Payment History"}
-        </h1>
-        <p className="text-white/60">
-          {isAdmin
-            ? "View and manage all transactions from all users."
-            : "View your complete contribution history and download receipts."}
-        </p>
-      </div>
+      <ContributionHeader
+        title={isAdmin ? "All Transactions" : "My Payment History"}
+        description={
+          isAdmin
+            ? "View and manage all transactions."
+            : "View your complete contribution history."
+        }
+        farewellId={id}
+      />
 
       <GlassCard className="p-6">
         <TransactionTable

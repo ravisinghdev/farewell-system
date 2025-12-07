@@ -56,13 +56,15 @@ export function RealtimeHighlights({
 
   if (highlights.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
-        <div className="h-20 w-20 rounded-full flex items-center justify-center">
-          <Star className="h-10 w-10 opacity-50" />
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
+        <div className="h-24 w-24 rounded-full bg-white/5 flex items-center justify-center animate-in zoom-in-50 duration-500">
+          <Star className="h-10 w-10 opacity-30 text-yellow-500" />
         </div>
         <div className="space-y-2">
-          <h3 className="text-xl font-semibold">No highlights yet</h3>
-          <p className="max-w-sm">
+          <h3 className="text-xl font-semibold opacity-70">
+            No highlights yet
+          </h3>
+          <p className="max-w-sm text-muted-foreground">
             Stay tuned for featured content and updates.
           </p>
         </div>
@@ -70,11 +72,31 @@ export function RealtimeHighlights({
     );
   }
 
+  // Feature the first highlight as Hero
+  const heroHighlight = highlights[0];
+  const gridHighlights = highlights.slice(1);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {highlights.map((highlight) => (
-        <HighlightCard key={highlight.id} highlight={highlight} />
-      ))}
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
+      {/* 1. Hero Highlight */}
+      <div className="w-full">
+        <HighlightCard highlight={heroHighlight} isHero={true} />
+      </div>
+
+      {/* 2. Grid Highlights */}
+      {gridHighlights.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {gridHighlights.map((highlight, index) => (
+            <div
+              key={highlight.id}
+              className="animate-in fade-in slide-in-from-bottom-8 fill-mode-backwards"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <HighlightCard highlight={highlight} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

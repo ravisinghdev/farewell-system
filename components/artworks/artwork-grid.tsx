@@ -52,44 +52,49 @@ export function ArtworkGrid({ artworks, farewellId }: ArtworkGridProps) {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
       {artworks.map((artwork) => (
-        <Card key={artwork.id} className="overflow-hidden group">
-          <div className="relative aspect-[4/3]">
-            <Image
+        <div
+          key={artwork.id}
+          className="break-inside-avoid relative group rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/20 transition-all duration-300"
+        >
+          {/* Image Container */}
+          <div className="relative w-full">
+            <img
               src={artwork.image_url}
               alt={artwork.title}
-              fill
-              className="object-cover transition-transform group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+              loading="lazy"
             />
-          </div>
-          <CardContent className="p-4">
-            <h3 className="font-semibold truncate">{artwork.title}</h3>
-            <p className="text-sm text-muted-foreground truncate">
-              by {artwork.artist_name || "Unknown"}
-            </p>
-            {artwork.description && (
-              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                {artwork.description}
+
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+              <h3 className="font-bold text-white truncate translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
+                {artwork.title}
+              </h3>
+              <p className="text-xs text-white/60 truncate translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-100">
+                by {artwork.artist_name || "Unknown"}
               </p>
-            )}
-          </CardContent>
-          <CardFooter className="p-4 pt-0 flex justify-end">
-            {/* In a real app, we'd check permissions here. 
-                 For now, we'll rely on the server action to enforce RLS/permissions 
-                 but ideally we hide the button if not allowed. */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => handleDelete(artwork.id)}
-              disabled={isPending}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </CardFooter>
-        </Card>
+
+              <div className="absolute top-2 right-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 bg-black/40 text-white hover:bg-black/60 rounded-full backdrop-blur-md"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDelete(artwork.id);
+                  }}
+                  disabled={isPending}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Visible Info (if overlay isn't preferred on mobile, but let's keep it clean for now) */}
+        </div>
       ))}
     </div>
   );

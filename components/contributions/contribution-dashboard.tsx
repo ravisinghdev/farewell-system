@@ -292,14 +292,9 @@ export function ContributionDashboard({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            Dashboard
-          </h1>
-          <p className="text-white/60">Welcome back, {userName}</p>
-        </div>
+      {/* Actions Section */}
+      <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-4">
+        {/* Actions were here, title removed */}
         <div className="flex gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -541,7 +536,7 @@ export function ContributionDashboard({
                 <Button
                   variant="outline"
                   disabled
-                  className="w-full justify-start bg-white/5 border-white/10 text-white/40 h-10"
+                  className="w-full justify-start bg-white/5 border-white/10 text-white/40 h-10 overflow-hidden"
                 >
                   <Download className="w-4 h-4 mr-2" /> Download Receipt
                 </Button>

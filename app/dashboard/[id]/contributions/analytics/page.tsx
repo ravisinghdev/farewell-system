@@ -19,6 +19,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { getContributionsAction } from "@/app/actions/contribution-actions";
 import { format, subDays } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { ContributionHeader } from "@/components/contributions/contribution-header";
 
 const COLORS = ["#10b981", "#f59e0b", "#6366f1", "#ec4899"];
 
@@ -105,14 +106,11 @@ export default function AnalyticsPage({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700 max-w-7xl mx-auto p-4 md:p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
-          Analytics & Insights
-        </h1>
-        <p className="text-muted-foreground">
-          Overview of your contribution activity and trends.
-        </p>
-      </div>
+      <ContributionHeader
+        title="Analytics & Insights"
+        description="Overview of your contribution activity and trends."
+        farewellId={farewellId}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <GlassCard className="p-6">

@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { checkIsAdmin } from "@/lib/auth/roles";
 
+import { ContributionHeader } from "@/components/contributions/contribution-header";
+
 export default async function BudgetPage({
   params,
 }: {
@@ -38,29 +40,28 @@ export default async function BudgetPage({
   if (!isAdmin) {
     return (
       <div className="max-w-3xl mx-auto p-8 animate-in fade-in duration-700">
-        <GlassCard className="p-8 text-center space-y-6 border-red-500/20 bg-red-500/5">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto text-red-500">
-            <ShieldAlert className="w-8 h-8" />
+        <GlassCard className="p-12 text-center space-y-6 border-red-500/20 bg-red-500/5">
+          <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto text-red-500 animate-pulse">
+            <ShieldAlert className="w-10 h-10" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white mb-2">
-              Access Denied
+            <h1 className="text-3xl font-bold text-foreground mb-4">
+              Restricted Access
             </h1>
-            <p className="text-white/60 max-w-md mx-auto">
-              You do not have permission to view the budget management page.
+            <p className="text-muted-foreground max-w-md mx-auto text-lg">
               This area is restricted to administrators only.
             </p>
           </div>
           <div className="flex justify-center gap-4">
-            <Button asChild variant="outline" className="border-white/10">
-              <Link href={`/dashboard/${id}`}>Return to Dashboard</Link>
+            <Button
+              asChild
+              variant="outline"
+              className="border-white/10 h-12 px-8 rounded-xl"
+            >
+              <Link href={`/dashboard/${id}/contributions`}>
+                Return to Overview
+              </Link>
             </Button>
-          </div>
-          <div className="pt-4 border-t border-white/5">
-            <p className="text-xs text-white/40 font-mono">
-              User ID: {user.id} <br />
-              Current Role: {user.role}
-            </p>
           </div>
         </GlassCard>
       </div>
@@ -88,164 +89,119 @@ export default async function BudgetPage({
   const balance = totalCollected - totalExpenses;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 p-4 md:p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-          Budget Management
-        </h1>
-        <p className="text-white/60">
-          Manage farewell budget, expenses, and track financial health.
-        </p>
-      </div>
+    <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in duration-700 p-4 md:p-8">
+      {/* Header with quick stats ticker potentially, but we stick to clean header */}
+      <ContributionHeader
+        title="Finance Command Center"
+        description="Real-time budget tracking and expense management."
+        farewellId={id}
+      />
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white/5 border border-white/10 mb-6 h-auto">
-          <TabsTrigger
-            value="overview"
-            className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
-          >
-            <Wallet className="w-4 h-4 mr-2" /> Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="assignment"
-            className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
-          >
-            <Users className="w-4 h-4 mr-2" /> Assignment
-          </TabsTrigger>
-          <TabsTrigger
-            value="expenses"
-            className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
-          >
-            <Receipt className="w-4 h-4 mr-2" /> Expenses
-          </TabsTrigger>
-          <TabsTrigger
-            value="analytics"
-            className="data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/60"
-          >
-            <PieChart className="w-4 h-4 mr-2" /> Analytics
-          </TabsTrigger>
-        </TabsList>
+      {/* HERO BENTO GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Main Balance Card (Large) */}
+        <GlassCard className="col-span-1 md:col-span-6 lg:col-span-4 p-8 relative overflow-hidden flex flex-col justify-between min-h-[200px] group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-1000" />
 
-        <TabsContent
-          value="overview"
-          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <GlassCard className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                  <Wallet className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">
-                  Budget Goal
-                </h3>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-2 opacity-80">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                <Wallet className="w-4 h-4" />
               </div>
-              <p className="text-3xl font-bold text-white">
-                ₹{budgetGoal.toLocaleString()}
-              </p>
-              <p className="text-sm text-white/60 mt-2">Total target amount</p>
-            </GlassCard>
-
-            <GlassCard className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Collected</h3>
-              </div>
-              <p className="text-3xl font-bold text-emerald-400">
-                ₹{totalCollected.toLocaleString()}
-              </p>
-              <p className="text-sm text-white/60 mt-2">
-                {progressPercentage.toFixed(1)}% of goal
-              </p>
-            </GlassCard>
-
-            <GlassCard className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
-                  <Receipt className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Expenses</h3>
-              </div>
-              <p className="text-3xl font-bold text-red-400">
-                ₹{totalExpenses.toLocaleString()}
-              </p>
-              <p className="text-sm text-white/60 mt-2">Total spent</p>
-            </GlassCard>
-
-            <GlassCard className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
-                  <Wallet className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-semibold text-white">Balance</h3>
-              </div>
-              <p
-                className={`text-3xl font-bold ${
-                  balance >= 0 ? "text-white" : "text-red-400"
-                }`}
-              >
-                ₹{balance.toLocaleString()}
-              </p>
-              <p className="text-sm text-white/60 mt-2">Available funds</p>
-            </GlassCard>
+              <span className="text-sm font-medium uppercase tracking-wider text-emerald-400">
+                Available Balance
+              </span>
+            </div>
+            <h2 className="text-5xl font-bold text-white tracking-tight mt-4">
+              ₹{balance.toLocaleString()}
+            </h2>
+            <div className="mt-4 flex items-center gap-2 text-sm text-white/60">
+              <span>Target: ₹{budgetGoal.toLocaleString()}</span>
+              <span className="w-1 h-1 rounded-full bg-white/20" />
+              <span>{progressPercentage.toFixed(1)}% Funded</span>
+            </div>
           </div>
 
-          <GlassCard className="p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Progress</h3>
-            <div className="space-y-4">
-              <div className="w-full bg-white/10 h-4 rounded-full overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full transition-all duration-1000"
-                  style={{ width: `${Math.min(100, progressPercentage)}%` }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-white/60">Total Assigned</p>
-                  <p className="text-white font-bold">
-                    ₹{totalAssigned.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-white/60">Members</p>
-                  <p className="text-white font-bold">{members.length}</p>
-                </div>
-              </div>
-            </div>
-          </GlassCard>
-        </TabsContent>
+          {/* Progress Bar inside card */}
+          <div className="w-full h-1 bg-white/10 rounded-full mt-6 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000 ease-out"
+              style={{ width: `${Math.min(100, progressPercentage)}%` }}
+            />
+          </div>
+        </GlassCard>
 
-        <TabsContent
-          value="assignment"
-          className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-        >
+        {/* Quick Stats Grid */}
+        <div className="col-span-1 md:col-span-6 lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <GlassCard className="p-6 flex flex-col justify-center gap-2 group hover:bg-white/5 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 mb-2 group-hover:scale-110 transition-transform">
+              <Users className="w-5 h-5" />
+            </div>
+            <span className="text-sm text-muted-foreground">Collected</span>
+            <span className="text-2xl font-bold text-blue-400">
+              ₹{totalCollected.toLocaleString()}
+            </span>
+          </GlassCard>
+
+          <GlassCard className="p-6 flex flex-col justify-center gap-2 group hover:bg-white/5 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-400 mb-2 group-hover:scale-110 transition-transform">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <span className="text-sm text-muted-foreground">
+              Total Expenses
+            </span>
+            <span className="text-2xl font-bold text-red-400">
+              ₹{totalExpenses.toLocaleString()}
+            </span>
+          </GlassCard>
+
+          <GlassCard className="p-6 flex flex-col justify-center gap-2 group hover:bg-white/5 transition-colors">
+            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 mb-2 group-hover:scale-110 transition-transform">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <span className="text-sm text-muted-foreground">
+              Remaining Goal
+            </span>
+            <span className="text-2xl font-bold text-amber-400">
+              ₹{remaining > 0 ? remaining.toLocaleString() : 0}
+            </span>
+          </GlassCard>
+        </div>
+      </div>
+
+      {/* CHARTS SECTION */}
+      <div className="animate-in slide-in-from-bottom-8 duration-700 delay-100">
+        <BudgetCharts
+          budgetGoal={budgetGoal}
+          totalCollected={totalCollected}
+          expenses={expenses}
+        />
+      </div>
+
+      {/* MANAGEMENT SECTION - SPLIT VIEW */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 animate-in slide-in-from-bottom-8 duration-700 delay-200">
+        {/* Budget/Income Manager */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-1 h-6 bg-blue-500 rounded-full" />
+            <h3 className="text-xl font-bold text-white">Income Management</h3>
+          </div>
           <BudgetManager
             farewellId={id}
             initialBudget={budgetGoal}
             initialMembers={members}
           />
-        </TabsContent>
+        </div>
 
-        <TabsContent
-          value="expenses"
-          className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-        >
+        {/* Expense Manager */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-1 h-6 bg-red-500 rounded-full" />
+            <h3 className="text-xl font-bold text-white">Expense Tracking</h3>
+          </div>
           <ExpenseManager farewellId={id} initialExpenses={expenses} />
-        </TabsContent>
-
-        <TabsContent
-          value="analytics"
-          className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
-        >
-          <BudgetCharts
-            budgetGoal={budgetGoal}
-            totalCollected={totalCollected}
-            expenses={expenses}
-          />
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

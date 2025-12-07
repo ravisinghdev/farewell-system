@@ -1,29 +1,28 @@
-import {
-  getChannelsAction,
-  getMessagesAction,
-  ChatChannel,
-} from "@/app/actions/chat-actions";
-import { ChatClientWrapper } from "./chat-client-wrapper";
-import { createClient } from "@/utils/supabase/server";
-import { redirect } from "next/navigation";
+import { Construction, MessageSquareMore } from "lucide-react";
 
-interface MessagesPageProps {
-  params: Promise<{
-    id: string;
-  }>;
-  searchParams: Promise<{
-    channel?: string;
-  }>;
-}
-
-export default async function MessagesPage() {
+export default function MessagesPage() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center p-8">
-      <div className="bg-muted/30 p-8 rounded-2xl border border-border/50 backdrop-blur-sm max-w-md">
-        <h1 className="text-2xl font-bold mb-2">Chat System Disabled</h1>
-        <p className="text-muted-foreground">
-          The chat functionality is currently unavailable. Please check back
-          later or contact an administrator.
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 space-y-6">
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+        <div className="relative bg-black/40 p-6 rounded-full border border-white/10 backdrop-blur-xl shadow-2xl">
+          <MessageSquareMore className="w-12 h-12 text-white" />
+          <div className="absolute -bottom-2 -right-2 bg-yellow-500/20 p-2 rounded-full border border-yellow-500/30 backdrop-blur-md">
+            <Construction className="w-5 h-5 text-yellow-500" />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-md space-y-2">
+        <h1 className="text-3xl font-bold bg-gradient-to-br from-white to-white/60 bg-clip-text text-transparent">
+          Chat System Under Construction
+        </h1>
+        <p className="text-muted-foreground text-lg leading-relaxed">
+          We are currently building a brand new, premium chatting experience for
+          everyone.
+        </p>
+        <p className="text-sm text-white/40 pt-4">
+          Check back soon for updates!
         </p>
       </div>
     </div>
