@@ -118,7 +118,7 @@ export async function getChannelsAction(
     memberships.map((m) => [m.channel_id, m] as const)
   );
 
-  // 2. Fetch Channel Details
+  // 2. Fetch Channel Details with Preview Text
   const { data: channels, error: chanError } = await supabase
     .from("chat_channels")
     .select(
@@ -129,37 +129,11 @@ export async function getChannelsAction(
     )
     .in("id", channelIds)
     .eq("is_deleted", false)
-    .order("created_at", { ascending: false });
+    .order("last_message_at", { ascending: false }); // Sort by last activity directly
 
   if (chanError) {
     console.error("Error fetching channels:", chanError);
     return [];
-  }
-
-  // 2b. Optional last message lookup
-  const { data: lastMessages, error: lastMsgError } = await supabase
-    .from("chat_messages")
-    .select("id, channel_id, content, created_at, user_id, is_deleted")
-    .in("channel_id", channelIds)
-    .order("created_at", { ascending: false });
-
-  if (lastMsgError) {
-    console.error("Error fetching last messages:", lastMsgError);
-  }
-
-  const lastMessageMap = new Map<string, any>();
-  if (lastMessages) {
-    for (const m of lastMessages) {
-      if (m.is_deleted) continue;
-      if (!lastMessageMap.has(m.channel_id)) {
-        lastMessageMap.set(m.channel_id, {
-          id: m.id,
-          content: m.content,
-          created_at: m.created_at,
-          user_id: m.user_id,
-        });
-      }
-    }
   }
 
   // Filter: Keep DMs (global) AND Groups belonging to THIS farewell
@@ -177,7 +151,15 @@ export async function getChannelsAction(
       is_pinned: myMemberData?.is_pinned ?? false,
       is_muted: myMemberData?.status === "muted",
       status: myMemberData?.status,
-      last_message: lastMessageMap.get(c.id) ?? null,
+      // Use the preview_text field which is maintained by triggers
+      last_message: c.last_message_at
+        ? {
+            id: "latest", // We don't have ID, but we don't need it for list view usually
+            content: c.preview_text || "No messages yet",
+            created_at: c.last_message_at,
+            user_id: "", // Not available in preview, but acceptable for scalable list
+          }
+        : null,
     };
 
     if (c.type === "dm") {
@@ -199,13 +181,17 @@ export async function getChannelsAction(
     };
   });
 
-  // Sort: Pinned first, then General, then others (then recent)
+  // Sort: Pinned first, then by last_message_at (which is natural now)
   return formattedChannels.sort((a, b) => {
     if (a.is_pinned && !b.is_pinned) return -1;
     if (!a.is_pinned && b.is_pinned) return 1;
     if (a.name === "General") return -1;
     if (b.name === "General") return 1;
-    return 0;
+
+    // Fallback to sort by date if not pinned (though DB sort handled most)
+    const dateA = new Date(a.created_at).getTime(); // or last_message_at if available
+    const dateB = new Date(b.created_at).getTime();
+    return dateB - dateA;
   });
 }
 

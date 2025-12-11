@@ -4,7 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu, X, ChevronRight, Search, User } from "lucide-react";
 import SearchDropdown from "./SearchDropdown";
+import Image from "next/image";
 import { useSearch } from "./SearchProvider";
+import { Logo } from "@/components/ui/logo";
 import { createClient } from "@/utils/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { ThemeToggle } from "../theme-toggler";
@@ -59,13 +61,10 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg group-hover:shadow-primary/50 transition-all duration-300 group-hover:scale-105">
-                <img
-                  src="/images/logo.jpg"
-                  alt="Farewell Logo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <Logo
+                size="md"
+                className="shadow-lg group-hover:shadow-primary/50 transition-all duration-300 group-hover:scale-105"
+              />
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
                 Farewell
               </span>
@@ -98,7 +97,7 @@ export default function Navbar() {
 
               {user ? (
                 <Link href="/dashboard">
-                  <button className="group relative px-6 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:shadow-primary/25 hover:bg-primary/90 transition-all overflow-hidden">
+                  <button className="group cursor-pointer relative px-6 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:shadow-primary/25 hover:bg-primary/90 transition-all overflow-hidden">
                     <span className="relative z-10 flex items-center gap-2">
                       Dashboard
                       <User className="w-4 h-4" />
@@ -108,12 +107,12 @@ export default function Navbar() {
               ) : (
                 <>
                   <Link href="/auth">
-                    <button className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                    <button className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                       Sign In
                     </button>
                   </Link>
                   <Link href="/auth">
-                    <button className="group relative px-6 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:shadow-primary/25 hover:bg-primary/90 transition-all overflow-hidden">
+                    <button className="cursor-pointer group relative px-6 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg hover:shadow-primary/25 hover:bg-primary/90 transition-all overflow-hidden">
                       <span className="relative z-10 flex items-center gap-2">
                         Get Started
                         <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

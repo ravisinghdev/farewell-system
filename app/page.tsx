@@ -14,9 +14,12 @@ export const metadata = {
     "A complete platform to plan farewells, manage contributions, assign duties and save memories. Built with Next.js and Supabase.",
 };
 
+import IntroAnimation from "@/components/ui/intro-animation";
+
 export default function Page(): JSX.Element {
   return (
     <div className="min-h-screen">
+      <IntroAnimation />
       <Navbar />
       <main>
         <Hero />

@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS public.chat_channels (
   created_by UUID REFERENCES public.users(id),
   last_message_at TIMESTAMPTZ DEFAULT NOW(),
   is_deleted BOOLEAN DEFAULT FALSE,
+  preview_text TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -176,6 +177,20 @@ CREATE TABLE IF NOT EXISTS public.farewell_financials (
   balance NUMERIC DEFAULT 0,
   contribution_count INTEGER DEFAULT 0,
   last_updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- FAREWELL STATS (Counters)
+CREATE TABLE IF NOT EXISTS public.farewell_stats (
+  farewell_id UUID PRIMARY KEY REFERENCES public.farewells(id) ON DELETE CASCADE,
+  member_count INTEGER DEFAULT 0,
+  message_count INTEGER DEFAULT 0,
+  media_count INTEGER DEFAULT 0,
+  last_updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.farewell_stats ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "View stats" ON public.farewell_stats FOR SELECT USING (
+  public.is_farewell_member(farewell_id)
 );
 
 -- EXPENSES
@@ -334,7 +349,11 @@ BEGIN
     jsonb_build_object('contribution_id', _contribution_id, 'method', _contribution.method)
   ) RETURNING id INTO _ledger_id;
 
-  -- 4. Update Financials
+  -- 4. Update Financials (Optimized: Minimal locking window)
+  -- Note: We still use ON CONFLICT DO UPDATE which locks the row, but by doing it last
+  -- and ensuring all previous steps are fast, we minimize contention.
+  -- For "millions" of users, we might offload this to a background worker, 
+  -- but strictly consistent financials are usually preferred over eventual consistency.
   INSERT INTO public.farewell_financials (farewell_id, total_collected, balance, contribution_count)
   VALUES (_farewell_id, _amount, _amount, 1)
   ON CONFLICT (farewell_id) DO UPDATE SET
@@ -558,6 +577,7 @@ ALTER TABLE public.announcement_reactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.timeline_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.highlights ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.farewell_financials ENABLE ROW LEVEL SECURITY;
 
 -- ==========================================
 -- 5. HELPER FUNCTIONS
@@ -719,6 +739,14 @@ CREATE POLICY "View contributions" ON public.contributions FOR SELECT USING (
 );
 CREATE POLICY "Manage contributions" ON public.contributions FOR ALL USING (
   user_id = auth.uid() OR
+  public.is_farewell_admin(farewell_id)
+);
+
+-- FAREWELL FINANCIALS
+CREATE POLICY "View financials" ON public.farewell_financials FOR SELECT USING (
+  public.is_farewell_member(farewell_id)
+);
+CREATE POLICY "Manage financials" ON public.farewell_financials FOR ALL USING (
   public.is_farewell_admin(farewell_id)
 );
 
@@ -974,12 +1002,88 @@ CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXEC
 -- Channel Last Message
 CREATE OR REPLACE FUNCTION update_channel_last_message() RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE public.chat_channels SET last_message_at = NEW.created_at WHERE id = NEW.channel_id;
+  UPDATE public.chat_channels 
+  SET 
+    last_message_at = NEW.created_at,
+    preview_text = CASE 
+      WHEN NEW.type = 'image' THEN 'Sent an image'
+      WHEN NEW.type = 'file' THEN 'Sent a file'
+      ELSE LEFT(NEW.content, 50)
+    END
+  WHERE id = NEW.channel_id;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER on_message_sent AFTER INSERT ON public.chat_messages FOR EACH ROW EXECUTE PROCEDURE update_channel_last_message();
+
+-- ==========================================
+-- 8a. STAT TRIGGERS
+-- ==========================================
+
+-- Statistic Updates
+CREATE OR REPLACE FUNCTION public.update_farewell_stats_members() RETURNS TRIGGER AS $$
+DECLARE
+  _farewell_id UUID;
+BEGIN
+  IF (TG_OP = 'DELETE') THEN
+    _farewell_id := OLD.farewell_id;
+    UPDATE public.farewell_stats SET member_count = member_count - 1 WHERE farewell_id = _farewell_id;
+  ELSE
+    _farewell_id := NEW.farewell_id;
+    INSERT INTO public.farewell_stats (farewell_id, member_count) VALUES (_farewell_id, 1)
+    ON CONFLICT (farewell_id) DO UPDATE SET member_count = farewell_stats.member_count + 1;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_member_change AFTER INSERT OR DELETE ON public.farewell_members FOR EACH ROW EXECUTE PROCEDURE public.update_farewell_stats_members();
+
+CREATE OR REPLACE FUNCTION public.update_farewell_stats_media() RETURNS TRIGGER AS $$
+DECLARE
+  _farewell_id UUID;
+BEGIN
+  IF (TG_OP = 'DELETE') THEN
+    SELECT farewell_id INTO _farewell_id FROM public.albums WHERE id = OLD.album_id;
+    IF _farewell_id IS NOT NULL THEN
+      UPDATE public.farewell_stats SET media_count = media_count - 1 WHERE farewell_id = _farewell_id;
+    END IF;
+  ELSE
+    SELECT farewell_id INTO _farewell_id FROM public.albums WHERE id = NEW.album_id;
+    IF _farewell_id IS NOT NULL THEN
+      INSERT INTO public.farewell_stats (farewell_id, media_count) VALUES (_farewell_id, 1)
+      ON CONFLICT (farewell_id) DO UPDATE SET media_count = farewell_stats.media_count + 1;
+    END IF;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_media_change AFTER INSERT OR DELETE ON public.media FOR EACH ROW EXECUTE PROCEDURE public.update_farewell_stats_media();
+
+CREATE OR REPLACE FUNCTION public.update_farewell_stats_messages() RETURNS TRIGGER AS $$
+DECLARE
+  _farewell_id UUID;
+  _scope_id UUID;
+BEGIN
+  IF (TG_OP = 'DELETE') THEN
+    SELECT scope_id INTO _scope_id FROM public.chat_channels WHERE id = OLD.channel_id;
+    IF _scope_id IS NOT NULL THEN
+      UPDATE public.farewell_stats SET message_count = message_count - 1 WHERE farewell_id = _scope_id;
+    END IF;
+  ELSE
+    SELECT scope_id INTO _scope_id FROM public.chat_channels WHERE id = NEW.channel_id;
+    IF _scope_id IS NOT NULL THEN
+      INSERT INTO public.farewell_stats (farewell_id, message_count) VALUES (_scope_id, 1)
+      ON CONFLICT (farewell_id) DO UPDATE SET message_count = farewell_stats.message_count + 1;
+    END IF;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_message_change AFTER INSERT OR DELETE ON public.chat_messages FOR EACH ROW EXECUTE PROCEDURE public.update_farewell_stats_messages();
 
 -- ==========================================
 -- 8. INDEXES
@@ -997,7 +1101,9 @@ CREATE INDEX IF NOT EXISTS idx_announcement_reactions_user_id ON public.announce
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON public.notifications(is_read);
 CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(created_at);
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON public.push_subscriptions(user_id);
-CREATE INDEX IF NOT EXISTS idx_push_subscriptions_token ON public.push_subscriptions(token);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_channel_created ON public.chat_messages(channel_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON public.notifications(user_id) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_media_album_id ON public.media(album_id);
 
 -- ==========================================
 -- 9. ENABLE REALTIME
@@ -1026,7 +1132,41 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.timeline_events;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.highlights;
 
 -- ==========================================
--- 10. GRANTS
+-- 10. BACKFILL HELPER
+-- ==========================================
+CREATE OR REPLACE FUNCTION public.backfill_farewell_stats() RETURNS VOID AS $$
+DECLARE
+  f record;
+  _members int;
+  _messages int;
+  _media int;
+BEGIN
+  FOR f IN SELECT id FROM public.farewells LOOP
+    -- Members
+    SELECT count(*) INTO _members FROM public.farewell_members WHERE farewell_id = f.id;
+    -- Media (from albums)
+    SELECT count(*) INTO _media 
+      FROM public.media m
+      JOIN public.albums a ON m.album_id = a.id
+      WHERE a.farewell_id = f.id;
+    -- Messages (from channels scope)
+    SELECT count(*) INTO _messages 
+      FROM public.chat_messages m
+      JOIN public.chat_channels c ON m.channel_id = c.id
+      WHERE c.scope_id = f.id;
+
+    INSERT INTO public.farewell_stats (farewell_id, member_count, media_count, message_count)
+    VALUES (f.id, _members, _media, _messages)
+    ON CONFLICT (farewell_id) DO UPDATE SET
+      member_count = EXCLUDED.member_count,
+      media_count = EXCLUDED.media_count,
+      message_count = EXCLUDED.message_count;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ==========================================
+-- 11. GRANTS
 -- ==========================================
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;

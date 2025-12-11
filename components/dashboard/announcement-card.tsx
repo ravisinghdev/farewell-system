@@ -1,6 +1,7 @@
 "use client";
 
 import { Announcement } from "@/app/actions/dashboard-actions";
+import { createClient } from "@/utils/supabase/client"; // Added
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,33 @@ export function AnnouncementCard({
     }
   }, [announcement.id, userId]);
 
+  // Realtime subscription for reactions
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`reactions-${announcement.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "announcement_reactions",
+          filter: `announcement_id=eq.${announcement.id}`,
+        },
+        () => {
+          // Re-fetch reactions when any reaction for this announcement changes
+          if (userId) {
+            getAnnouncementReactionsAction(announcement.id).then(setReactions);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [announcement.id, userId]);
+
   const handleDelete = () => {
     startTransition(async () => {
       const res = await deleteAnnouncementAction(announcement.id, farewellId);
@@ -144,121 +172,127 @@ export function AnnouncementCard({
       <Card
         id={announcement.id}
         className={cn(
-          "relative overflow-hidden transition-all duration-300 group border-0",
-          isFeatured
-            ? "bg-gradient-to-br from-primary/10 via-background to-background border border-primary/20 shadow-xl"
-            : "bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 shadow-lg backdrop-blur-md"
+          "relative overflow-hidden group border transition-all duration-500 rounded-2xl",
+          "border-white/[0.08] backdrop-blur-xl shadow-[0_4px_14px_rgba(255,255,255,0.04)]",
+          "hover:shadow-[0_8px_28px_rgba(255,255,255,0.07)] hover:border-white/20",
+          isFeatured &&
+            "border-primary/20 shadow-[0_6px_24px_rgba(0,0,0,0.15)] ring-1 ring-primary/20"
         )}
       >
-        {/* Glow Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+        {/* Soft Gradient Glow */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-white/[0.04] to-transparent" />
 
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between gap-3">
+            {/* Left: Avatar + Creator + Title */}
             <div className="flex items-center gap-3 flex-1">
               <Avatar
                 className={cn(
-                  "h-10 w-10 border-2",
+                  "h-11 w-11 border",
                   isFeatured ? "border-primary/30" : "border-white/10"
                 )}
               >
                 <AvatarImage src={announcement.creator?.avatar_url || ""} />
-                <AvatarFallback className="font-semibold bg-background/50">
+                <AvatarFallback className="font-semibold">
                   {getInitials(announcement.creator?.full_name || "Admin")}
                 </AvatarFallback>
               </Avatar>
+
               <div className="flex flex-col flex-1">
                 <h3
                   className={cn(
-                    "font-bold leading-tight tracking-tight",
-                    isFeatured ? "text-xl" : "text-lg"
+                    "font-semibold leading-tight tracking-tight",
+                    isFeatured ? "text-[1.15rem]" : "text-lg"
                   )}
                 >
                   {announcement.title}
                 </h3>
-                <div className="flex items-center gap-2 mt-1.5 text-muted-foreground">
+
+                <div className="flex items-center gap-2 mt-1 text-muted-foreground">
                   <span className="text-xs font-medium">
                     {announcement.creator?.full_name || "Admin"}
                   </span>
                   <span className="text-[10px]">•</span>
-                  <span className="text-xs">
+                  <span className="text-xs opacity-80">
                     {format(new Date(announcement.created_at), "MMM d, h:mm a")}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Admin Menu */}
+            {/* Admin Dropdown */}
             {isAdmin && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-white/10"
+                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-white/5"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="bg-background/80 backdrop-blur-xl border-white/10"
+                  className="backdrop-blur-xl border border-white/10 shadow-lg"
                 >
                   <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
                     <Pencil className="h-4 w-4 mr-2" />
                     Edit
                   </DropdownMenuItem>
+
                   <DropdownMenuItem onClick={handleTogglePin}>
                     {announcement.is_pinned ? (
                       <>
-                        <PinOff className="h-4 w-4 mr-2" />
-                        Unpin
+                        <PinOff className="h-4 w-4 mr-2" /> Unpin
                       </>
                     ) : (
                       <>
-                        <Pin className="h-4 w-4 mr-2" />
-                        Pin
+                        <Pin className="h-4 w-4 mr-2" /> Pin
                       </>
                     )}
                   </DropdownMenuItem>
+
                   <DropdownMenuSeparator className="bg-white/10" />
+
                   <DropdownMenuItem
                     onClick={() => setShowDeleteDialog(true)}
                     className="focus:text-destructive focus:bg-destructive/10"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                    <Trash2 className="h-4 w-4 mr-2" /> Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
 
-            {/* Pin Badge for Featured */}
+            {/* Small Pin Badge */}
             {announcement.is_pinned && !isAdmin && (
-              <div className="text-primary/50">
-                <Pin className="h-4 w-4 rotate-45" fill="currentColor" />
-              </div>
+              <Pin className="h-4 w-4 text-primary/60 rotate-45" />
             )}
           </div>
         </CardHeader>
 
         <CardContent className="space-y-4 relative z-10">
-          <p className="text-sm sm:text-base leading-relaxed text-foreground/90 whitespace-pre-wrap">
+          {/* Announcement Text */}
+          <p className="text-sm sm:text-[0.95rem] leading-relaxed text-foreground/95 whitespace-pre-wrap">
             {announcement.content}
           </p>
 
-          {/* User Actions */}
-          <div className="flex items-center gap-2 pt-4 border-t border-white/5">
+          {/* Divider */}
+          <div className="border-t border-white/10 pt-3" />
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            {/* Like Button */}
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "gap-2 rounded-full h-8 px-3 transition-colors hover:bg-white/10",
+                "gap-2 rounded-full h-8 px-3 hover:bg-white/5 transition-all",
                 reactions.userLiked &&
                   "text-red-500 bg-red-500/10 hover:bg-red-500/20"
               )}
               onClick={() => handleToggleReaction("like")}
-              disabled={isPending}
             >
               <Heart
                 className={cn(
@@ -271,16 +305,16 @@ export function AnnouncementCard({
               )}
             </Button>
 
+            {/* Bookmark */}
             <Button
               variant="ghost"
               size="sm"
               className={cn(
-                "gap-2 rounded-full h-8 px-3 transition-colors hover:bg-white/10",
+                "gap-2 rounded-full h-8 px-3 hover:bg-white/5 transition-all",
                 reactions.userBookmarked &&
                   "text-primary bg-primary/10 hover:bg-primary/20"
               )}
               onClick={() => handleToggleReaction("bookmark")}
-              disabled={isPending}
             >
               <Bookmark
                 className={cn(
@@ -290,10 +324,11 @@ export function AnnouncementCard({
               />
             </Button>
 
+            {/* Share */}
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2 rounded-full h-8 px-3 ml-auto hover:bg-white/10"
+              className="gap-2 rounded-full h-8 px-3 ml-auto hover:bg-white/5"
               onClick={handleShare}
             >
               <Share2 className="h-4 w-4" />

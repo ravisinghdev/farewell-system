@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import {
   createOrderAction,
   verifyPaymentAction,
 } from "@/app/actions/razorpay-actions";
+import { createContributionAction } from "@/app/actions/contribution-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -12,15 +13,17 @@ import { toast } from "sonner";
 import {
   Loader2,
   CreditCard,
-  ArrowRight,
   CheckCircle2,
   AlertCircle,
   QrCode,
-  Wallet,
   ArrowLeft,
   ChevronRight,
+  Upload,
+  Smartphone,
+  Sparkles,
+  TrendingUp,
+  History,
   Banknote,
-  Building,
 } from "lucide-react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
@@ -34,13 +37,14 @@ import {
 } from "@/components/ui/dialog";
 import confetti from "canvas-confetti";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 
 interface DonateFormProps {
   farewellId: string;
   initialAmount: number;
   assignedAmount: number;
   paidAmount: number;
-  recentTransactions: any[];
+  publicTransactions: any[];
 }
 
 type PaymentStep = "amount" | "method" | "confirm";
@@ -50,13 +54,13 @@ export function DonateForm({
   initialAmount,
   assignedAmount,
   paidAmount,
-  recentTransactions,
+  publicTransactions,
 }: DonateFormProps) {
   const [step, setStep] = useState<PaymentStep>("amount");
   const [amount, setAmount] = useState(
     initialAmount > 0 ? initialAmount.toString() : ""
   );
-  const [method, setMethod] = useState<"upi" | "cash" | "bank">("upi");
+  const [method, setMethod] = useState<"upi" | "manual_upi" | "cash">("upi");
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<"idle" | "processing" | "verifying">(
     "idle"
@@ -67,6 +71,9 @@ export function DonateForm({
   const [lastContributionId, setLastContributionId] = useState<string | null>(
     null
   );
+  const [transactionId, setTransactionId] = useState("");
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
 
@@ -94,14 +101,53 @@ export function DonateForm({
     if (step === "confirm") setStep("method");
   };
 
-  async function handleDonate() {
-    const val = Number(amount);
+  const handleManualSubmit = async () => {
+    if (!transactionId) {
+      toast.error("Please enter a Transaction ID");
+      return;
+    }
 
-    // For now, we only implement Razorpay flow for UPI/Cards as standard
-    // If Cash/Bank is selected, we might want a different flow (e.g. manual record creation)
-    // But based on current backend, let's assume Razorpay handles the flow or we strictly use Razorpay for now.
-    // If the requirement implies "Manual Cash Entry", that requires a new Backend Action.
-    // Assuming Standard Razorpay for now based on props availability.
+    setStatus("processing");
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("amount", amount);
+      formData.append("method", "upi"); // Backend expects 'upi' for manual too
+      formData.append("farewellId", farewellId);
+      formData.append("transactionId", transactionId);
+      if (screenshot) {
+        formData.append("screenshot", screenshot);
+      }
+
+      const result = await createContributionAction(formData);
+
+      setStatus("idle");
+
+      if (result.success) {
+        setShowSuccess(true);
+        router.refresh();
+        // @ts-ignore
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+      } else {
+        console.error(result.error);
+        setErrorMessage(
+          (result.error as string) || "Failed to submit contribution"
+        );
+        setShowError(true);
+      }
+    });
+  };
+
+  async function handleDonate() {
+    if (method === "manual_upi") {
+      handleManualSubmit();
+      return;
+    }
+
+    const val = Number(amount);
 
     setStatus("processing");
 
@@ -171,6 +217,32 @@ export function DonateForm({
           theme: {
             color: "#10b981", // Emerald-500
           },
+          config: {
+            display: {
+              blocks: {
+                upi: {
+                  name: "Pay via UPI / Apps",
+                  instruments: [
+                    {
+                      method: "upi",
+                    },
+                  ],
+                },
+                other: {
+                  name: "Other Payment Methods",
+                  instruments: [
+                    { method: "card" },
+                    { method: "netbanking" },
+                    { method: "wallet" },
+                  ],
+                },
+              },
+              sequence: ["block.upi", "block.other"],
+              preferences: {
+                show_default_blocks: false,
+              },
+            },
+          },
           modal: {
             ondismiss: function () {
               setStatus("idle");
@@ -195,276 +267,514 @@ export function DonateForm({
   ];
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
 
-      {/* Steps Indicator */}
-      <div className="flex items-center justify-between mb-8 px-4">
-        {steps.map((s, i) => {
-          const isActive = s.id === step;
-          const isPast = steps.findIndex((st) => st.id === step) > i;
+      {/* LEFT SIDE: Payment Form (Span 7) */}
+      <div className="lg:col-span-7 space-y-8 w-full">
+        {/* Steps Indicator */}
+        <div className="flex items-center justify-between mb-8 px-2">
+          {steps.map((s, i) => {
+            const isActive = s.id === step;
+            const isPast = steps.findIndex((st) => st.id === step) > i;
 
-          return (
-            <div
-              key={s.id}
-              className="flex flex-col items-center gap-2 relative z-10"
-            >
+            return (
               <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(var(--primary),0.5)] scale-110"
-                    : isPast
-                    ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/50"
-                    : "bg-white/5 text-muted-foreground border border-white/10"
-                )}
+                key={s.id}
+                className="flex flex-col items-center gap-2 relative z-10 group cursor-pointer"
+                onClick={() => {
+                  if (isPast) setStep(s.id as PaymentStep);
+                }}
               >
-                {isPast ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                <div
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 border-2",
+                    isActive
+                      ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.4)] scale-110"
+                      : isPast
+                      ? "bg-emerald-500 text-black border-emerald-500 hover:scale-105"
+                      : "bg-black/40 text-white/30 border-white/10"
+                  )}
+                >
+                  {isPast ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-bold uppercase tracking-widest transition-colors",
+                    isActive ? "text-white" : "text-white/40"
+                  )}
+                >
+                  {s.label}
+                </span>
               </div>
-              <span
-                className={cn(
-                  "text-[10px] font-medium uppercase tracking-wider transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                {s.label}
-              </span>
-            </div>
-          );
-        })}
-        {/* Progress Bar Line */}
-        <div className="absolute top-[28px] left-[calc(50%-100px)] w-[200px] h-[2px] bg-white/5 -z-0">
-          <div
-            className="h-full bg-primary transition-all duration-500"
-            style={{
-              width:
-                step === "amount" ? "0%" : step === "method" ? "50%" : "100%",
-            }}
-          />
+            );
+          })}
+          {/* Progress Bar Line */}
+          <div className="absolute top-[20px] left-[50px] right-[50px] lg:left-[calc(50%-150px)] lg:w-[300px] h-[2px] bg-white/10 -z-0 hidden md:block">
+            <div
+              className="h-full bg-emerald-500 transition-all duration-500"
+              style={{
+                width:
+                  step === "amount" ? "0%" : step === "method" ? "50%" : "100%",
+              }}
+            />
+          </div>
         </div>
-      </div>
 
-      <GlassCard className="p-8 relative overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/20 blur-[50px] rounded-full pointer-events-none" />
+        <GlassCard className="p-0 relative overflow-hidden border-white/10 bg-[#0a0a0a]/60 backdrop-blur-2xl min-h-[500px] flex flex-col">
+          {/* Animated Glows */}
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-        {/* STEP 1: AMOUNT */}
-        {step === "amount" && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold">How much?</h2>
-              <p className="text-muted-foreground text-sm">
-                Enter the amount you wish to contribute.
-              </p>
-            </div>
+          {/* Header */}
+          <div className="p-8 border-b border-white/5 bg-white/[0.02]">
+            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+              {step === "amount" && (
+                <>
+                  <Sparkles className="w-6 h-6 text-amber-400" /> Choose
+                  Contribution
+                </>
+              )}
+              {step === "method" && (
+                <>
+                  <CreditCard className="w-6 h-6 text-blue-400" /> Select Method
+                </>
+              )}
+              {step === "confirm" && (
+                <>
+                  <CheckCircle2 className="w-6 h-6 text-emerald-400" /> Confirm
+                  Payment
+                </>
+              )}
+            </h2>
+            <p className="text-white/40 text-sm">
+              {step === "amount" &&
+                "Every contribution counts towards making this farewell memorable."}
+              {step === "method" &&
+                "Secure payment gateways powered by Razorpay."}
+              {step === "confirm" &&
+                "Review your contribution details before proceeding."}
+            </p>
+          </div>
 
-            <div className="relative group">
-              <span className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xl group-focus-within:text-primary transition-colors">
-                ₹
-              </span>
-              <Input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="pl-12 h-20 bg-black/20 border-white/10 text-4xl font-bold placeholder:text-muted-foreground/20 focus:border-primary/50 transition-all text-center rounded-2xl"
-                placeholder="0"
-                min="1"
-                autoFocus
-              />
-            </div>
+          <div className="p-8 flex-1 flex flex-col">
+            {/* STEP 1: AMOUNT */}
+            {step === "amount" && (
+              <div className="space-y-8 animate-in slide-in-from-right-8 fade-in duration-500">
+                <div className="relative group max-w-sm mx-auto">
+                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30 font-bold text-3xl group-focus-within:text-white transition-colors">
+                    ₹
+                  </span>
+                  <Input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="pl-14 h-24 bg-black/40 border-white/10 text-5xl font-bold text-white placeholder:text-white/10 focus:border-white/30 transition-all text-center rounded-3xl"
+                    placeholder="0"
+                    min="1"
+                    autoFocus
+                  />
+                </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {[500, 1000, 2000].map((val) => (
-                <button
-                  key={val}
-                  onClick={() => setAmount(val.toString())}
-                  className="py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-sm font-medium transition-colors"
-                >
-                  ₹{val}
-                </button>
-              ))}
-            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[500, 1000, 2000].map((val) => (
+                    <button
+                      key={val}
+                      onClick={() => setAmount(val.toString())}
+                      className="relative px-6 py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all group overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                      <span className="text-lg font-bold text-white">
+                        ₹{val}
+                      </span>
+                    </button>
+                  ))}
+                </div>
 
-            {assignedAmount > 0 && (
-              <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
-                <p className="text-xs text-blue-400 mb-1">Assigned Goal</p>
-                <p className="text-lg font-bold text-blue-300">
-                  ₹{assignedAmount}
-                </p>
-                <button
-                  onClick={() =>
-                    setAmount(
-                      Math.max(0, assignedAmount - paidAmount).toString()
-                    )
-                  }
-                  className="text-[10px] uppercase tracking-wider font-bold text-blue-400/80 hover:text-blue-400 mt-1"
-                >
-                  Pay Remaining (₹{Math.max(0, assignedAmount - paidAmount)})
-                </button>
+                {assignedAmount > 0 && (
+                  <div
+                    className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between group cursor-pointer hover:bg-indigo-500/20 transition-colors"
+                    onClick={() =>
+                      setAmount(
+                        Math.max(0, assignedAmount - paidAmount).toString()
+                      )
+                    }
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-indigo-200 font-bold uppercase tracking-wider">
+                          Assigned Goal
+                        </p>
+                        <p className="text-sm text-indigo-200/60">
+                          Tap to pay remaining
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-white">
+                        ₹{Math.max(0, assignedAmount - paidAmount)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 2: METHOD */}
+            {step === "method" && (
+              <div className="space-y-6 animate-in slide-in-from-right-8 fade-in duration-500">
+                <div className="grid gap-4">
+                  <button
+                    onClick={() => setMethod("upi")}
+                    className={cn(
+                      "flex items-center gap-6 p-6 rounded-3xl border-2 transition-all text-left group hover:scale-[1.01] relative overflow-hidden",
+                      method === "upi"
+                        ? "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                        : "bg-black/40 border-white/5 hover:bg-white/5 text-white"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0",
+                        method === "upi"
+                          ? "bg-black text-white"
+                          : "bg-white/10 text-white/60"
+                      )}
+                    >
+                      <CreditCard className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold mb-1">
+                        Pay Online (Razorpay)
+                      </h3>
+                      <p
+                        className={cn(
+                          "text-sm",
+                          method === "upi" ? "text-black/60" : "text-white/40"
+                        )}
+                      >
+                        Instant verification. UPI Apps, Cards, Netbanking. Fast
+                        & Secure.
+                      </p>
+                    </div>
+                    {method === "upi" && (
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                        <CheckCircle2
+                          className="w-8 h-8 text-black"
+                          fill="white"
+                        />
+                      </div>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setMethod("manual_upi")}
+                    className={cn(
+                      "flex items-center gap-6 p-6 rounded-3xl border-2 transition-all text-left group hover:scale-[1.01] relative overflow-hidden",
+                      method === "manual_upi"
+                        ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]"
+                        : "bg-black/40 border-white/5 hover:bg-white/5 text-white"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0",
+                        method === "manual_upi"
+                          ? "bg-white/20 text-white"
+                          : "bg-white/10 text-white/60"
+                      )}
+                    >
+                      <Smartphone className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold mb-1">
+                        Direct UPI / Scan
+                      </h3>
+                      <p
+                        className={cn(
+                          "text-sm",
+                          method === "manual_upi"
+                            ? "text-white/80"
+                            : "text-white/40"
+                        )}
+                      >
+                        Scan QR manually via GPay/PhonePe and upload a receipt.
+                      </p>
+                    </div>
+                    {method === "manual_upi" && (
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                        <CheckCircle2 className="w-8 h-8 text-white" />
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: CONFIRM */}
+            {step === "confirm" && (
+              <div className="space-y-6 animate-in slide-in-from-right-8 fade-in duration-500">
+                {method === "manual_upi" ? (
+                  <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex-1 space-y-6">
+                      <div className="p-6 bg-white rounded-3xl flex flex-col items-center justify-center text-center shadow-xl">
+                        <div className="bg-black/5 p-4 rounded-2xl mb-4">
+                          <QrCode className="w-32 h-32 text-black" />
+                        </div>
+                        <p className="text-black font-mono font-bold text-lg bg-black/10 px-4 py-2 rounded-lg break-all">
+                          scanner@ybl
+                        </p>
+                        <p className="text-black/40 text-xs mt-3 uppercase font-bold tracking-widest">
+                          Scan with any UPI App
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                          Transaction ID
+                        </label>
+                        <Input
+                          placeholder="Enter 12-digit UTR"
+                          value={transactionId}
+                          onChange={(e) => setTransactionId(e.target.value)}
+                          className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-mono"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                          Proof of Payment
+                        </label>
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          className="border border-dashed border-white/20 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors group h-24"
+                        >
+                          {screenshot ? (
+                            <div className="flex items-center gap-2 text-emerald-400">
+                              <CheckCircle2 className="w-5 h-5" />
+                              <span className="text-sm font-medium">
+                                {screenshot.name}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2">
+                              <Upload className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+                              <span className="text-xs text-white/40">
+                                Upload Screenshot
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files?.[0])
+                              setScreenshot(e.target.files[0]);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                    <div className="flex justify-between items-center pb-6 border-b border-white/5">
+                      <span className="text-white/60 text-lg">
+                        Total Amount
+                      </span>
+                      <span className="text-4xl font-bold text-white">
+                        ₹{Number(amount).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/40">Method</span>
+                        <span className="text-white font-medium flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" /> Razorpay Secure
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-white/40">Processing Fee</span>
+                        <span className="text-emerald-400 font-medium">
+                          ₹0 (Waived)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
 
-        {/* STEP 2: METHOD */}
-        {step === "method" && (
-          <div className="space-y-6 animate-in slide-in-from-right-4 fade-in duration-300">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold">Payment Method</h2>
-              <p className="text-muted-foreground text-sm">
-                Choose how you want to pay.
-              </p>
-            </div>
+          {/* Footer Actions */}
+          <div className="p-8 border-t border-white/5 bg-black/20 flex gap-4">
+            {step !== "amount" && (
+              <Button
+                variant="outline"
+                onClick={handleBackStep}
+                className="h-14 px-8 rounded-2xl border-white/10 hover:bg-white/5 bg-transparent text-white"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" /> Back
+              </Button>
+            )}
 
-            <div className="grid gap-4">
-              <button
-                onClick={() => setMethod("upi")}
+            {step === "confirm" ? (
+              <Button
+                onClick={handleDonate}
+                disabled={isPending || status !== "idle"}
                 className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all text-left group hover:scale-[1.02]",
-                  method === "upi"
-                    ? "bg-primary/10 border-primary/50"
-                    : "bg-white/5 border-white/5 hover:bg-white/10"
+                  "flex-1 h-14 rounded-2xl text-lg font-bold shadow-lg transition-all transform active:scale-95",
+                  method === "manual_upi"
+                    ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20"
+                    : "bg-white hover:bg-white/90 text-black shadow-white/20"
                 )}
               >
-                <div
-                  className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
-                    method === "upi"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-white/10 text-muted-foreground"
-                  )}
-                >
-                  <QrCode className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3
-                    className={cn(
-                      "font-bold",
-                      method === "upi" ? "text-primary" : "text-foreground"
-                    )}
+                {isPending ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : method === "manual_upi" ? (
+                  "Submit Verification"
+                ) : (
+                  "Pay Now"
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNextStep}
+                className="flex-1 h-14 rounded-2xl bg-white text-black text-lg font-bold hover:bg-white/90 shadow-lg shadow-white/10 transition-all transform active:scale-95"
+              >
+                Continue <ChevronRight className="w-5 h-5 ml-1" />
+              </Button>
+            )}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* RIGHT SIDE: Impact Board (Span 5) */}
+      <div className="lg:col-span-5 h-full space-y-6">
+        <GlassCard className="h-full relative overflow-hidden border-white/10 bg-gradient-to-b from-[#0a0a0a]/80 to-[#0a0a0a]/40 backdrop-blur-3xl rounded-3xl flex flex-col">
+          <div className="p-8 border-b border-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <History className="w-5 h-5 text-emerald-400" /> Live Feed
+              </h3>
+              <span className="flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            </div>
+            <p className="text-white/40 text-xs uppercase tracking-widest font-bold">
+              Recent contributions from the community
+            </p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto max-h-[600px] p-6 space-y-4 custom-scrollbar">
+            {publicTransactions && publicTransactions.length > 0 ? (
+              publicTransactions.map((tx, i) => {
+                const isAnonymous = !tx.users;
+                const name = isAnonymous
+                  ? "Anonymous"
+                  : tx.users?.full_name || "User";
+                const avatar = tx.users?.avatar_url;
+
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group animate-in slide-in-from-bottom-4 duration-500"
+                    style={{ animationDelay: `${i * 100}ms` }}
                   >
-                    UPI / QR Code
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Pay via GPay, PhonePe, Paytm
+                    <div className="flex items-center gap-4">
+                      {avatar ? (
+                        <img
+                          src={avatar}
+                          alt={name}
+                          className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/10">
+                          {name.charAt(0)}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-white font-bold text-sm group-hover:text-emerald-300 transition-colors">
+                          {name}
+                        </p>
+                        <p className="text-[10px] text-white/40 font-medium uppercase tracking-wider">
+                          {formatDistanceToNow(new Date(tx.created_at), {
+                            addSuffix: true,
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-emerald-400 font-bold text-sm">
+                        +₹{Number(tx.amount).toLocaleString()}
+                      </p>
+                      <p
+                        className={cn(
+                          "text-[10px] font-bold uppercase",
+                          tx.status === "verified" || tx.status === "approved"
+                            ? "text-emerald-500/60"
+                            : "text-amber-500/60"
+                        )}
+                      >
+                        {tx.status}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center h-48 opacity-50">
+                <History className="w-12 h-12 text-white/20 mb-4" />
+                <p className="text-white/40 text-sm">No recent transactions</p>
+              </div>
+            )}
+          </div>
+        </GlassCard>
+
+        {/* Panic Button */}
+        <div className="text-center">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex items-center gap-2 text-white/20 hover:text-white/60 hover:bg-transparent text-xs"
+              >
+                <AlertCircle className="w-3 h-3" />
+                Having trouble payment?
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10 text-white">
+              <DialogTitle>Payment Support</DialogTitle>
+              <DialogDescription className="text-white/60">
+                Common solutions for payment issues.
+              </DialogDescription>
+              <div className="space-y-4 mt-4">
+                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                  <h4 className="font-bold text-blue-400 mb-1 flex items-center gap-2">
+                    <Banknote className="w-4 h-4" /> Money Deducted?
+                  </h4>
+                  <p className="text-xs text-blue-200/80">
+                    Do not pay again. Wait for 15 minutes, or contact admin with
+                    your Transaction ID.
                   </p>
                 </div>
-                {method === "upi" && (
-                  <CheckCircle2 className="w-5 h-5 ml-auto text-primary" />
-                )}
-              </button>
-
-              <button
-                onClick={() => setMethod("cash")}
-                className={cn(
-                  "flex items-center gap-4 p-4 rounded-xl border transition-all text-left group hover:scale-[1.02] opacity-50 cursor-not-allowed",
-                  method === "cash"
-                    ? "bg-amber-500/10 border-amber-500/50"
-                    : "bg-white/5 border-white/5"
-                )}
-                disabled
-              >
-                <div
-                  className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
-                    method === "cash"
-                      ? "bg-amber-500 text-black"
-                      : "bg-white/10 text-muted-foreground"
-                  )}
+                <Button
+                  className="w-full bg-white text-black"
+                  onClick={() => window.open(`mailto:support@farewell.com`)}
                 >
-                  <Banknote className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3
-                    className={cn(
-                      "font-bold",
-                      method === "cash" ? "text-amber-500" : "text-foreground"
-                    )}
-                  >
-                    Cash Payment
-                  </h3>
-                  <p className="text-xs text-muted-foreground">Coming Soon</p>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 3: CONFIRM */}
-        {step === "confirm" && (
-          <div className="space-y-8 animate-in slide-in-from-right-4 fade-in duration-300">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold">Confirm Payment</h2>
-              <p className="text-muted-foreground text-sm">
-                Review details before proceeding.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 space-y-4">
-              <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                <span className="text-sm text-muted-foreground">Amount</span>
-                <span className="text-2xl font-bold text-foreground">
-                  ₹{amount}
-                </span>
+                  Contact Admin
+                </Button>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Method</span>
-                <span className="flex items-center gap-2 text-sm font-medium">
-                  <QrCode className="w-4 h-4" /> UPI / Online
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">
-                  Transaction Fee
-                </span>
-                <span className="text-sm font-medium text-emerald-400">
-                  ₹0 (Free)
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Buttons */}
-        <div className="flex gap-4 mt-8">
-          {step !== "amount" && (
-            <Button
-              variant="outline"
-              onClick={handleBackStep}
-              className="flex-1 h-12 rounded-xl border-white/10 hover:bg-white/5"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
-            </Button>
-          )}
-
-          {step === "confirm" ? (
-            <Button
-              onClick={handleDonate}
-              disabled={isPending || status !== "idle"}
-              className="flex-[2] h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 shadow-[0_0_20px_rgba(var(--primary),0.3)] transition-all"
-            >
-              {isPending ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                "Pay Now"
-              )}
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNextStep}
-              className="flex-[2] h-12 rounded-xl bg-white text-black font-bold hover:bg-white/90"
-            >
-              Next Step <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          )}
+            </DialogContent>
+          </Dialog>
         </div>
-      </GlassCard>
-
-      {/* FOOTER TEXT */}
-      <div className="flex items-center justify-center gap-2 text-muted-foreground text-xs mt-6 opacity-60">
-        <CreditCard className="w-3 h-3" />
-        <span>Secured by Razorpay. 100% Safe Transaction.</span>
       </div>
 
       {/* Processing/Verifying Dialog */}
@@ -472,21 +782,24 @@ export function DonateForm({
         open={status !== "idle"}
         onOpenChange={(open) => !open && setStatus("idle")}
       >
-        <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10 text-white [&>button]:hidden">
-          <div className="flex flex-col items-center justify-center py-8 space-y-6">
+        <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10 text-white [&>button]:hidden backdrop-blur-xl">
+          <div className="flex flex-col items-center justify-center py-10 space-y-8">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
-              <Loader2 className="w-16 h-16 animate-spin text-primary relative z-10" />
+              <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full animate-pulse" />
+              <div className="relative z-10 w-24 h-24 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <CreditCard className="w-8 h-8 text-emerald-500" />
+              </div>
             </div>
             <div className="space-y-2 text-center">
-              <DialogTitle className="text-2xl font-bold">
-                {status === "verifying"
-                  ? "Verifying Payment..."
-                  : "Processing..."}
+              <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                {status === "verifying" ? "Verifying Payment" : "Processing"}
               </DialogTitle>
-              <DialogDescription className="text-white/60 text-center">
-                {status === "verifying"
-                  ? "Checking payment status with bank."
+              <DialogDescription className="text-white/60 text-center max-w-xs mx-auto text-base">
+                {method === "manual_upi"
+                  ? "Securely submitting your payment details..."
+                  : status === "verifying"
+                  ? "Checking status with bank..."
                   : "Please complete the payment in the popup."}
               </DialogDescription>
             </div>
@@ -496,41 +809,35 @@ export function DonateForm({
 
       {/* Success Dialog */}
       <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
-        <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10 text-white">
-          <div className="flex flex-col items-center justify-center py-6 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 mb-2 animate-in zoom-in duration-300">
-              <CheckCircle2 className="w-8 h-8" />
+        <DialogContent className="sm:max-w-md bg-[#0a0a0a] border-white/10 text-white backdrop-blur-xl">
+          {/* Confetti should happen here */}
+          <div className="flex flex-col items-center justify-center py-6 space-y-6">
+            <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 mb-2 animate-in zoom-in duration-500">
+              <CheckCircle2 className="w-10 h-10" />
             </div>
-            <DialogTitle className="text-2xl font-bold text-center">
-              Payment Successful!
-            </DialogTitle>
-            <DialogDescription className="text-white/60 text-center max-w-xs">
-              Thank you for your contribution of{" "}
-              <span className="text-white font-bold">₹{amount}</span>. Your
-              payment is now <strong>pending admin verification</strong>. You
-              will be notified once approved.
-            </DialogDescription>
-            <div className="flex flex-col w-full gap-2 mt-4">
+            <div className="text-center space-y-2">
+              <DialogTitle className="text-3xl font-bold text-white">
+                Payment Submitted!
+              </DialogTitle>
+              <DialogDescription className="text-white/60 text-center max-w-xs mx-auto">
+                Thank you for your contribution of{" "}
+                <span className="text-emerald-400 font-bold text-lg">
+                  ₹{amount}
+                </span>
+                .
+              </DialogDescription>
+            </div>
+
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl w-full text-center">
+              <p className="text-sm text-emerald-300">
+                Your payment is now pending verification. You'll be notified
+                once approved.
+              </p>
+            </div>
+
+            <div className="flex flex-col w-full gap-3 mt-4">
               <Button
-                className="w-full bg-white text-black hover:bg-white/90"
-                onClick={() => {
-                  setShowSuccess(false);
-                  if (lastContributionId) {
-                    router.push(
-                      `/dashboard/${farewellId}/contributions/receipt/${lastContributionId}`
-                    );
-                  } else {
-                    router.push(
-                      `/dashboard/${farewellId}/contributions/overview`
-                    );
-                  }
-                }}
-              >
-                View Receipt
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full bg-transparent border-white/10 text-white hover:bg-white/5"
+                className="w-full h-12 rounded-xl bg-white text-black hover:bg-white/90 font-bold shadow-lg shadow-white/10"
                 onClick={() => {
                   setShowSuccess(false);
                   router.push(
@@ -545,7 +852,7 @@ export function DonateForm({
         </DialogContent>
       </Dialog>
 
-      {/* Error Dialog with Support Options */}
+      {/* Error Dialog */}
       <Dialog open={showError} onOpenChange={setShowError}>
         <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10 text-white">
           <div className="flex flex-col items-center justify-center py-6 space-y-4">
@@ -558,19 +865,6 @@ export function DonateForm({
             <DialogDescription className="text-white/60 text-center max-w-xs">
               {errorMessage}
             </DialogDescription>
-
-            <div className="w-full p-4 bg-white/5 rounded-xl border border-white/5 space-y-2">
-              <p className="text-xs text-white/40 text-center uppercase tracking-wider">
-                Troubleshooting Steps
-              </p>
-              <ul className="text-sm text-white/80 space-y-1 list-disc pl-4">
-                <li>Check your internet connection.</li>
-                <li>Ensure your bank account has sufficient funds.</li>
-                <li>
-                  If money was deducted, <strong>do not pay again</strong>.
-                </li>
-              </ul>
-            </div>
 
             <div className="flex flex-col w-full gap-2 mt-4">
               <Button
@@ -593,46 +887,6 @@ export function DonateForm({
               >
                 Contact Admin
               </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Support Dialog (Panic Button) */}
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            className="mx-auto flex items-center gap-2 text-white/40 hover:text-white hover:bg-white/5 text-xs mt-4"
-          >
-            <AlertCircle className="w-3 h-3" />
-            Having trouble?
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10 text-white">
-          <DialogTitle>Payment Support</DialogTitle>
-          <DialogDescription className="text-white/60">
-            Common solutions for payment issues.
-          </DialogDescription>
-
-          <div className="space-y-4 mt-4">
-            <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-              <h4 className="font-bold text-blue-400 mb-1 flex items-center gap-2">
-                <Banknote className="w-4 h-4" /> Money Deducted?
-              </h4>
-              <p className="text-sm text-blue-200/80">
-                Don't panic! If money was deducted but not reflected here, it is
-                safe with your bank. It will be{" "}
-                <strong>automatically refunded</strong> within 24-48 hours.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-              <h4 className="font-bold text-white mb-1">UPI Payment Stuck?</h4>
-              <p className="text-sm text-white/60">
-                Wait for 5-10 minutes. Sometimes banks take longer to confirm
-                transactions. You can check the status again later.
-              </p>
             </div>
           </div>
         </DialogContent>

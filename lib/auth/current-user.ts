@@ -90,7 +90,6 @@ export async function getCurrentUserWithRole(
     (claims.user_metadata as { full_name?: string; avatar_url?: string }) || {};
   const email = (claims.email as string) || "";
 
-  // console.log("User claims: ", claims);
   let role: UserRoleName = "student";
 
   // Try to get role from Custom Claims (app_metadata)

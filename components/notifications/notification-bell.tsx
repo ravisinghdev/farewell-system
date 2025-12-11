@@ -80,7 +80,12 @@ export function NotificationBell({ userId, className }: NotificationBellProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
-        <NotificationList onMarkAsRead={handleMarkAsRead} />
+        <NotificationList
+          onMarkAsRead={handleMarkAsRead}
+          onNotificationsChanged={() =>
+            getUnreadCountAction().then(setUnreadCount)
+          }
+        />
       </PopoverContent>
     </Popover>
   );

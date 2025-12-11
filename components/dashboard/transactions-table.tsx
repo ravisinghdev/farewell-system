@@ -33,6 +33,10 @@ interface Transaction {
     full_name: string;
     avatar_url?: string;
   };
+  metadata?: {
+    is_anonymous?: boolean;
+    [key: string]: any;
+  };
 }
 
 interface TransactionsTableProps {
@@ -44,9 +48,13 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
 
   const filteredTransactions = transactions.filter((t) => {
     const query = searchQuery.toLowerCase();
-    const userName = t.users?.full_name?.toLowerCase() || "";
+    const isAnonymous = t.metadata?.is_anonymous === true;
+    const userData = Array.isArray(t.users) ? t.users[0] : t.users;
+    const userName = isAnonymous
+      ? "Anonymous"
+      : userData?.full_name || "Unknown User";
     const method = t.method?.toLowerCase() || "";
-    return userName.includes(query) || method.includes(query);
+    return userName.toLowerCase().includes(query) || method.includes(query);
   });
 
   return (
@@ -92,55 +100,63 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
             </TableHeader>
             <TableBody>
               {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage
-                            src={transaction.users?.avatar_url}
-                            alt={transaction.users?.full_name}
-                          />
-                          <AvatarFallback>
-                            {transaction.users?.full_name
-                              ?.charAt(0)
-                              .toUpperCase() || "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>
-                          {transaction.users?.full_name || "Unknown User"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="capitalize">
-                      {transaction.method.replace("_", " ")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          transaction.status === "verified"
-                            ? "default" // Use default (primary) for verified/success
-                            : transaction.status === "rejected"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                        className={
-                          transaction.status === "verified"
-                            ? "bg-green-500 hover:bg-green-600"
-                            : ""
-                        }
-                      >
-                        {transaction.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(transaction.created_at), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right font-bold">
-                      ₹{transaction.amount.toLocaleString()}
-                    </TableCell>
-                  </TableRow>
-                ))
+                filteredTransactions.map((transaction) => {
+                  const isAnonymous =
+                    transaction.metadata?.is_anonymous === true;
+                  const userData = Array.isArray(transaction.users)
+                    ? transaction.users[0]
+                    : transaction.users;
+                  const userName = isAnonymous
+                    ? "Anonymous"
+                    : userData?.full_name || "Unknown User";
+                  const userAvatar = isAnonymous ? null : userData?.avatar_url;
+
+                  return (
+                    <TableRow key={transaction.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={userAvatar} alt={userName} />
+                            <AvatarFallback>
+                              {userName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{userName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {transaction.method.replace("_", " ")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            transaction.status === "verified"
+                              ? "default" // Use default (primary) for verified/success
+                              : transaction.status === "rejected"
+                              ? "destructive"
+                              : "secondary"
+                          }
+                          className={
+                            transaction.status === "verified"
+                              ? "bg-green-500 hover:bg-green-600"
+                              : ""
+                          }
+                        >
+                          {transaction.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {format(
+                          new Date(transaction.created_at),
+                          "MMM d, yyyy"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        ₹{transaction.amount.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell

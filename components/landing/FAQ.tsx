@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
+import Link from "next/link";
 
 // Categorized Data
 const faqCategories = [
@@ -138,9 +139,11 @@ export default function FAQ() {
           <p className="text-muted-foreground mb-6">
             Can't find the answer you're looking for?
           </p>
-          <button className="px-6 py-3 rounded-full bg-foreground text-background font-medium hover:opacity-90 transition-opacity">
-            Contact Support
-          </button>
+          <Link href="/contact">
+            <button className="px-6 py-3 cursor-pointer rounded-full bg-foreground text-background font-medium hover:opacity-90 transition-opacity">
+              Contact Support
+            </button>
+          </Link>
         </div>
       </div>
     </section>

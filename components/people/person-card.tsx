@@ -1,5 +1,6 @@
 import { useState, useTransition } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Database } from "@/types/supabase";
@@ -177,10 +178,11 @@ export function PersonCard({ member, farewellId }: PersonCardProps) {
         <CardHeader className="p-0">
           <div className="aspect-square w-full bg-muted/20 relative group">
             {user.avatar_url ? (
-              <img
+              <Image
                 src={user.avatar_url}
                 alt={user.full_name || "User"}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-secondary/50">

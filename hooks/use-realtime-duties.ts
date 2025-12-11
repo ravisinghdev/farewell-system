@@ -33,10 +33,17 @@ export function useRealtimeDuties(farewellId: string, onUpdate: () => void) {
           event: "*",
           schema: "public",
           table: "duty_assignments",
-          // We can't filter by farewell_id directly on assignments easily without join,
-          // but we can just listen to all assignments and filter or just refresh.
-          // For scalability, maybe we rely on the fact that RLS filters what we receive?
-          // Actually, RLS applies to subscriptions too.
+        },
+        () => {
+          onUpdate();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "duty_receipts",
         },
         () => {
           onUpdate();

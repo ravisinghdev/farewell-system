@@ -20,6 +20,7 @@ import { redirect } from "next/navigation";
 import { AppearanceProvider } from "@/components/settings/appearance-provider";
 import { FarewellProvider } from "@/components/providers/farewell-provider";
 import { AdminNotifications } from "@/components/admin/admin-notifications";
+import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
 
 // Metadata for dashboard pages
 export const metadata: Metadata = {
@@ -151,7 +152,10 @@ export default async function DashboardLayout({
               <AppSidebar />
               <SidebarInset>
                 <SiteHeader />
-                <div className="flex flex-1 flex-col gap-4 p-2 pt-0">
+                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+                  <div className="px-1 py-2">
+                    <DashboardBreadcrumb />
+                  </div>
                   {children}
                 </div>
               </SidebarInset>

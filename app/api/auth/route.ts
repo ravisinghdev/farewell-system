@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
-    console.log("AUTH ACTION:", action);
     if (!action) throw new ApiError("missing_action", 400);
 
     const body = await req.json();
@@ -40,7 +39,6 @@ export async function POST(req: NextRequest) {
         });
 
         if (error) {
-          console.error("createUserWithPassword error:", error);
           throw new ApiError("supabase_create_user_failed", 500, error.message);
         }
 
@@ -95,7 +93,6 @@ export async function POST(req: NextRequest) {
         throw new ApiError("unknown_action", 400);
     }
   } catch (err: any) {
-    console.error("SIGNUP ERROR:", err);
     const handled = handleApiError(err);
     return NextResponse.json(handled.body, { status: handled.status });
   }

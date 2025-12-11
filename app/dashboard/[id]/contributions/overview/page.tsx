@@ -23,27 +23,39 @@ export default async function ContributionOverviewPage({
 
   const isAdmin = checkIsAdmin(user.role);
 
-  // Fetch contributions based on role
-  const contributionsResult = isAdmin
-    ? await getAllContributionsAction(id)
-    : await getContributionsAction(id);
+  // Fetch data in parallel
+  const [contributionsResult, statsResult, budgetResult] = await Promise.all([
+    isAdmin ? getAllContributionsAction(id) : getContributionsAction(id),
+    getFinancialStatsAction(id),
+    getFarewellBudgetDetailsAction(id),
+  ]);
+
+  const totalAmount = statsResult.collectedAmount || 0;
 
   const contributions = Array.isArray(contributionsResult)
     ? contributionsResult
     : (contributionsResult as any).contributions || [];
 
-  // Fetch stats
-  const statsResult = await getFinancialStatsAction(id);
-  const stats = { total: statsResult.totalCollected || 0 };
-
-  // Fetch budget details
-  const budgetResult = await getFarewellBudgetDetailsAction(id);
+  const stats = {
+    total: totalAmount,
+    contribution_count: statsResult.totalContributors || 0,
+  };
+  // console.log("Stats: ", stats);
   const budgetGoal = budgetResult.budgetGoal || 0;
   const members = budgetResult.members || [];
 
   // Find current user's assigned amount
   const currentUserMember = members.find((m) => m.userId === user.id);
   const assignedAmount = currentUserMember?.assignedAmount || 0;
+
+  // Debug Logs
+  // console.log("--- Dashboard Overview Debug ---");
+  // console.log("User ID:", user.id);
+  // console.log("Is Admin:", isAdmin);
+  // console.log("Budget Goal (Raw):", budgetGoal);
+  // console.log("Member Found:", currentUserMember);
+  // console.log("Assigned Amount (Calculated):", assignedAmount);
+  // console.log("Stats: ", stats); // Already logged
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">
@@ -59,7 +71,7 @@ export default async function ContributionOverviewPage({
         farewellId={id}
         userId={user.id}
         isAdmin={isAdmin}
-        userName={user.name}
+        userName={user.name || "User"}
         assignedAmount={assignedAmount}
         budgetGoal={budgetGoal}
       />

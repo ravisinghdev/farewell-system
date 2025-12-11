@@ -7,9 +7,10 @@ import { Loader2 } from "lucide-react";
 
 interface FinancialStatsProps {
   initialStats: {
-    total_collected: number;
-    balance: number;
-    contribution_count: number;
+    collectedAmount: number;
+    totalContributors: number;
+    pendingCount: number;
+    targetAmount?: number;
   };
   farewellId: string;
 }
@@ -21,6 +22,13 @@ export function FinancialStats({
   const [stats, setStats] = useState(initialStats);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // Update local state when initialStats changes (e.g. from parent re-fetch)
+    setStats(initialStats);
+  }, [initialStats]);
+
+  // We rely on parent to pass updated "initialStats" via realtime now,
+  // OR we can keep the internal subscription. Use internal for safety.
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -35,8 +43,14 @@ export function FinancialStats({
         },
         async () => {
           setLoading(true);
+          // Dynamically import to avoid server-action-in-client-effect issues if needed,
+          // though typically fine if action is marked 'use server'.
+          const { getFinancialStatsAction } = await import(
+            "@/app/actions/contribution-actions"
+          );
           const newStats = await getFinancialStatsAction(farewellId);
-          setStats(newStats);
+          // Cast/Ensure type safety if needed, or rely on JS
+          setStats(newStats as any);
           setLoading(false);
         }
       )
@@ -54,7 +68,7 @@ export function FinancialStats({
           Total Verified
         </div>
         <div className="text-2xl font-bold flex items-center gap-2">
-          ₹{stats.total_collected.toLocaleString()}
+          ₹{stats.collectedAmount}
           {loading && (
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
           )}
@@ -63,15 +77,12 @@ export function FinancialStats({
         <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-primary/10 to-transparent pointer-events-none" />
       </div>
 
-      {/* You can add more stat cards here if needed, e.g., Balance, Count */}
-      {/* 
       <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
         <div className="text-sm font-medium text-muted-foreground">
-          Contribution Count
+          Active Contributors
         </div>
-        <div className="text-2xl font-bold">{stats.contribution_count}</div>
+        <div className="text-2xl font-bold">{stats.totalContributors}</div>
       </div>
-      */}
     </div>
   );
 }

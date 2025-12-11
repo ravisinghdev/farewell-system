@@ -57,7 +57,7 @@ export type Transaction = {
   id: string;
   amount: number;
   method: "upi" | "cash" | "bank_transfer" | "razorpay" | "stripe";
-  status: "pending" | "verified" | "rejected";
+  status: "pending" | "verified" | "rejected" | "approved";
   created_at: string;
   transaction_id: string | null;
   users: {
@@ -181,14 +181,16 @@ export function TransactionTable({
         return (
           <Badge
             variant={
-              status === "verified"
+              status === "verified" || status === "approved"
                 ? "default" // Emerald/Green usually
                 : status === "rejected"
                 ? "destructive"
                 : "secondary"
             }
             className={`capitalize ${
-              status === "verified" ? "bg-emerald-500 hover:bg-emerald-600" : ""
+              status === "verified" || status === "approved"
+                ? "bg-emerald-500 hover:bg-emerald-600"
+                : ""
             }`}
           >
             {status}
@@ -290,11 +292,14 @@ export function TransactionTable({
     },
   ];
 
+  const [globalFilter, setGlobalFilter] = React.useState("");
+
   const table = useReactTable({
     data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -304,25 +309,66 @@ export function TransactionTable({
     state: {
       sorting,
       columnFilters,
+      globalFilter,
       columnVisibility,
       rowSelection,
+    },
+    // Simple global filter function
+    globalFilterFn: (row, columnId, filterValue) => {
+      const value = row.getValue(columnId);
+      if (!value) return false;
+      return String(value)
+        .toLowerCase()
+        .includes(String(filterValue).toLowerCase());
     },
   });
 
   return (
     <div className="w-full space-y-4">
+      {/* Summary Stats */}
+      {isAdmin && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+            <p className="text-xs text-white/40 uppercase font-bold">Total</p>
+            <p className="text-2xl font-bold mt-1">{data.length}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+            <p className="text-xs text-white/40 uppercase font-bold">
+              Verified
+            </p>
+            <p className="text-2xl font-bold mt-1 text-emerald-400">
+              {
+                data.filter(
+                  (t) => t.status === "verified" || t.status === "approved"
+                ).length
+              }
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+            <p className="text-xs text-white/40 uppercase font-bold">Pending</p>
+            <p className="text-2xl font-bold mt-1 text-amber-400">
+              {data.filter((t) => t.status === "pending").length}
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+            <p className="text-xs text-white/40 uppercase font-bold">
+              Rejected
+            </p>
+            <p className="text-2xl font-bold mt-1 text-red-400">
+              {data.filter((t) => t.status === "rejected").length}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="relative max-w-sm w-full">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Filter users..."
-              value={
-                (table.getColumn("full_name")?.getFilterValue() as string) ?? ""
-              }
-              onChange={(event) =>
-                table.getColumn("full_name")?.setFilterValue(event.target.value)
-              }
+              placeholder="Search all columns..."
+              value={globalFilter ?? ""}
+              onChange={(event) => setGlobalFilter(event.target.value)}
               className="pl-8 bg-white/5 border-white/10"
             />
           </div>
@@ -350,6 +396,13 @@ export function TransactionTable({
                 }
               >
                 Verified
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  table.getColumn("status")?.setFilterValue("approved")
+                }
+              >
+                Approved
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() =>

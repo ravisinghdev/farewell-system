@@ -297,6 +297,11 @@ export function AppSidebar({
           label: "Duties & Assignments",
           icon: ClipboardList,
         },
+        {
+          href: "/dashboard/settings",
+          label: "Settings",
+          icon: Settings,
+        },
         ...(checkIsAdmin(role)
           ? [
               {
@@ -304,11 +309,7 @@ export function AppSidebar({
                 label: "Access & Roles",
                 icon: Shield,
               },
-              {
-                href: "/dashboard/settings",
-                label: "Admin Settings",
-                icon: Settings,
-              },
+
               {
                 href: "/dashboard/activity",
                 label: "System Activity",

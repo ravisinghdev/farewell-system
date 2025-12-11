@@ -18,9 +18,8 @@ export default async function ContributionsLayout({
   const isAdmin = checkIsAdmin(user.role);
 
   return (
-    <div className="min-h-screen p-2 md:p-6 font-sans">
-      {/* <ContributionsNav farewellId={id} isAdmin={isAdmin} /> */}
-      <main className="max-w-[1600px] mx-auto">{children}</main>
+    <div className="min-h-screen font-sans">
+      <main className="w-full h-full">{children}</main>
     </div>
   );
 }

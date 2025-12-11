@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Logo } from "@/components/ui/logo";
 
 export default function Footer() {
   return (
@@ -24,15 +25,10 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-4">
             <Link href="/" className="flex items-center gap-3 mb-6 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 p-[1px] group-hover:scale-110 transition-transform">
-                <div className="w-full h-full bg-background rounded-[11px] flex items-center justify-center overflow-hidden">
-                  <img
-                    src="/images/logo.jpg"
-                    alt="Farewell Logo"
-                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                  />
-                </div>
-              </div>
+              <Logo
+                size="md"
+                className="shadow-lg group-hover:scale-110 transition-transform duration-300"
+              />
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">
                 Farewell
               </span>

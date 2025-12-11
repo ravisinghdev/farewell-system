@@ -179,6 +179,29 @@ export async function getAllContributionsAction(farewellId: string) {
   return data;
 }
 
+export async function getPublicRecentTransactionsAction(
+  farewellId: string,
+  limit = 20
+) {
+  // Use admin client to bypass RLS since this is a public feed (read-only, limited fields)
+  const { data, error } = await supabaseAdmin
+    .from("contributions")
+    .select(
+      "amount, created_at, status, method, users:user_id(full_name, avatar_url)"
+    )
+    .eq("farewell_id", farewellId)
+    .in("status", ["approved", "verified", "pending"])
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Fetch recent transactions error:", error);
+    return [];
+  }
+
+  return data;
+}
+
 export async function verifyContributionAction(contributionId: string) {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -297,25 +320,47 @@ export async function getFinancialStatsAction(farewellId: string) {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData || !claimsData.claims)
-    return { total_collected: 0, balance: 0, contribution_count: 0 };
+    return {
+      collectedAmount: 0,
+      totalContributors: 0,
+      pendingCount: 0,
+      targetAmount: 0,
+    };
   const userId = claimsData.claims.sub;
 
   const authorized = await isFarewellAdmin(supabase, userId, farewellId);
   if (!authorized)
-    return { total_collected: 0, balance: 0, contribution_count: 0 };
+    return {
+      collectedAmount: 0,
+      totalContributors: 0,
+      pendingCount: 0,
+      targetAmount: 0,
+    };
 
-  const { data, error } = await supabaseAdmin
+  // 1. Get financial totals from view
+  const { data: financialData, error: financialError } = await supabaseAdmin
     .from("farewell_financials")
-    .select("*")
+    .select("total_collected, contribution_count")
     .eq("farewell_id", farewellId)
     .single();
 
-  if (error) {
-    // If no record, return zeros (might be first time)
-    return { total_collected: 0, balance: 0, contribution_count: 0 };
+  // 2. Get pending count directly
+  const { count: pendingCount, error: pendingError } = await supabaseAdmin
+    .from("contributions")
+    .select("*", { count: "exact", head: true })
+    .eq("farewell_id", farewellId)
+    .eq("status", "pending");
+
+  if (financialError) {
+    console.log("Error fetching financials:", financialError);
   }
 
-  return data;
+  return {
+    collectedAmount: financialData?.total_collected || 0,
+    totalContributors: financialData?.contribution_count || 0,
+    pendingCount: pendingCount || 0,
+    targetAmount: 50000, // Default, will be overridden by settings client-side
+  };
 }
 
 export async function getLeaderboardAction(farewellId: string) {
@@ -328,15 +373,18 @@ export async function getLeaderboardAction(farewellId: string) {
   // We use admin client to get everyone's data for the leaderboard
   const { data, error } = await supabaseAdmin
     .from("contributions")
-    .select(
-      "amount, user_id, users!contributions_user_id_fkey(full_name, avatar_url)"
-    )
+    .select("amount, user_id, users:user_id(full_name, avatar_url)")
     .eq("farewell_id", farewellId)
-    .eq("status", "verified");
+    .in("status", ["verified", "approved", "paid_pending_admin_verification"]);
 
   if (error) {
     console.error("Fetch leaderboard error:", error);
     return [];
+  }
+
+  // console.log("Leaderboard Raw Data:", data);
+  if (!data || data.length === 0) {
+    console.log("No contributions found for leaderboard");
   }
 
   // Aggregate by user
@@ -348,10 +396,11 @@ export async function getLeaderboardAction(farewellId: string) {
   data.forEach((c: any) => {
     if (!c.user_id) return;
 
+    const userData = Array.isArray(c.users) ? c.users[0] : c.users;
     const current = leaderboardMap.get(c.user_id) || {
       userId: c.user_id,
-      name: c.users?.full_name || "Anonymous",
-      avatar: c.users?.avatar_url || "",
+      name: userData?.full_name || "Anonymous",
+      avatar: userData?.avatar_url || "",
       amount: 0,
     };
 
@@ -475,7 +524,150 @@ export async function createManualContributionAction(
     return { error: "Failed to create contribution" };
   }
 
-  revalidatePath(`/dashboard/${farewellId}/admin/contributions`);
+  revalidatePath(`/dashboard/${farewellId}/contributions/manage`);
+  return { success: true };
+}
+
+export async function getContributionRankAction(
+  farewellId: string,
+  userId: string
+) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { rank: 0, percentile: 0 };
+
+  // 1. Get all verified contributions for this farewell
+  const { data, error } = await supabaseAdmin
+    .from("contributions")
+    .select("amount, user_id")
+    .eq("farewell_id", farewellId)
+    .in("status", ["verified", "approved", "paid_pending_admin_verification"]);
+
+  if (error) {
+    console.error("Rank calculation error:", error);
+    return { rank: 0, percentile: 0 };
+  }
+
+  // 2. Aggregate by user
+  const userTotals = new Map<string, number>();
+  data.forEach((c) => {
+    const current = userTotals.get(c.user_id) || 0;
+    userTotals.set(c.user_id, current + Number(c.amount));
+  });
+
+  // 3. Sort users by total amount descending
+  const sortedUsers = Array.from(userTotals.entries()).sort(
+    (a, b) => b[1] - a[1]
+  );
+
+  // 4. Find current user's rank
+  const rankIndex = sortedUsers.findIndex((u) => u[0] === userId);
+  const totalUsers = sortedUsers.length;
+
+  if (rankIndex === -1) {
+    return { rank: 0, percentile: 0 };
+  }
+
+  const rank = rankIndex + 1;
+  const percentile =
+    totalUsers > 1 ? Math.round(((totalUsers - rank) / totalUsers) * 100) : 100;
+
+  return { rank, percentile };
+}
+// ... existing code
+
+export async function getUserStatsAction(farewellId: string, userId: string) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims)
+    return { rank: 0, percentile: 0, totalContribution: 0 };
+
+  // Reuse existing rank logic or call it
+  const rankData = await getContributionRankAction(farewellId, userId);
+
+  // Get total contribution
+  const { data, error } = await supabase
+    .from("contributions")
+    .select("amount")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", userId)
+    .in("status", ["verified", "approved", "paid_pending_admin_verification"]);
+
+  if (error) {
+    console.error("User stats error:", error);
+    return { ...rankData, totalContribution: 0 };
+  }
+
+  const totalContribution = data.reduce((sum, c) => sum + Number(c.amount), 0);
+
+  return {
+    ...rankData,
+    totalContribution,
+  };
+}
+// ... existing code ...
+
+export async function getFarewellSettingsAction(farewellId: string) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return null;
+  const userId = claimsData.claims.sub;
+
+  const authorized = await isFarewellAdmin(supabase, userId, farewellId);
+  if (!authorized) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from("farewells")
+    .select(
+      "target_amount, is_maintenance_mode, accepting_payments, payment_config"
+    )
+    .eq("id", farewellId)
+    .single();
+
+  if (error) {
+    console.error("Get settings error:", error);
+    return null;
+  }
+  return data;
+}
+
+export async function updateFarewellSettingsAction(
+  farewellId: string,
+  settings: {
+    targetAmount?: number;
+    isMaintenanceMode?: boolean;
+    acceptingPayments?: boolean;
+    paymentConfig?: any;
+  }
+) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
+
+  const authorized = await isFarewellAdmin(supabase, userId, farewellId);
+  if (!authorized) return { error: "Unauthorized" };
+
+  const updateData: any = {};
+  if (settings.targetAmount !== undefined)
+    updateData.target_amount = settings.targetAmount;
+  if (settings.isMaintenanceMode !== undefined)
+    updateData.is_maintenance_mode = settings.isMaintenanceMode;
+  if (settings.acceptingPayments !== undefined)
+    updateData.accepting_payments = settings.acceptingPayments;
+  if (settings.paymentConfig !== undefined)
+    updateData.payment_config = settings.paymentConfig;
+
+  const { error } = await supabaseAdmin
+    .from("farewells")
+    .update(updateData)
+    .eq("id", farewellId);
+
+  if (error) {
+    console.error("Update settings error:", error);
+    return { error: "Failed to update settings" };
+  }
+
   revalidatePath(`/dashboard/${farewellId}/contributions/manage`);
   return { success: true };
 }

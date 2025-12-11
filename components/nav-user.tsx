@@ -54,10 +54,10 @@ export function NavUser({
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant={"ghost"}
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground w-auto p-0 rounded-full hover:bg-transparent hover:ring-2 hover:ring-gray-200 dark:hover:ring-gray-700 transition-all"
+            <button
+              // variant={"outline"}
+              // size="lg"
+              className="cursor-pointer data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground w-auto p-0 rounded-full hover:bg-transparent hover:ring-2 hover:ring-gray-200 dark:hover:ring-gray-700 transition-all"
             >
               <Avatar className="h-8 w-8 rounded-full">
                 <AvatarImage
@@ -68,7 +68,7 @@ export function NavUser({
                   {displayUser?.name?.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-            </Button>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-56 rounded-xl shadow-lg border-border/50"

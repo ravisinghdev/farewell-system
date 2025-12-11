@@ -197,13 +197,48 @@ export const ReceiptView = forwardRef<HTMLDivElement, ReceiptViewProps>(
               <div className="grid grid-cols-2 gap-y-2 text-sm">
                 <span className="text-[#6b7280]">Payment Mode:</span>
                 <span className="font-medium text-right capitalize text-[#111827]">
-                  {contribution.method.replace("_", " ")}
+                  {metadata.method || contribution.method.replace("_", " ")}
                 </span>
 
-                <span className="text-[#6b7280]">Transaction ID:</span>
-                <span className="font-mono text-xs text-right text-[#111827] break-all">
-                  {contribution.transaction_id || "N/A"}
-                </span>
+                {metadata.razorpay_order_id && (
+                  <>
+                    <span className="text-[#6b7280]">Order ID:</span>
+                    <span className="font-mono text-xs text-right text-[#111827] break-all">
+                      {metadata.razorpay_order_id}
+                    </span>
+                  </>
+                )}
+
+                {contribution.transaction_id && (
+                  <>
+                    <span className="text-[#6b7280]">Transaction ID:</span>
+                    <span className="font-mono text-xs text-right text-[#111827] break-all">
+                      {contribution.transaction_id}
+                    </span>
+                  </>
+                )}
+
+                {(metadata.card_id || metadata.vpa || metadata.wallet) && (
+                  <>
+                    <span className="text-[#6b7280]">Method Details:</span>
+                    <span className="font-mono text-xs text-right text-[#111827] break-all">
+                      {metadata.vpa ||
+                        metadata.wallet ||
+                        (metadata.card_id
+                          ? `Card: ...${metadata.card_id.slice(-4)}`
+                          : "N/A")}
+                    </span>
+                  </>
+                )}
+
+                {metadata.bank && (
+                  <>
+                    <span className="text-[#6b7280]">Bank:</span>
+                    <span className="text-xs text-right text-[#111827] uppercase">
+                      {metadata.bank}
+                    </span>
+                  </>
+                )}
 
                 <span className="text-[#6b7280]">Status:</span>
                 <span className="font-bold text-right text-[#059669] uppercase text-xs border border-[#a7f3d0] bg-[#ecfdf5] px-2 py-0.5 rounded-full inline-block w-fit ml-auto">
@@ -245,6 +280,38 @@ export const ReceiptView = forwardRef<HTMLDivElement, ReceiptViewProps>(
                     ₹{contribution.amount.toLocaleString()}
                   </td>
                 </tr>
+                {metadata.fee && (
+                  <tr className="border-b border-[#f3f4f6]">
+                    <td className="py-4 text-sm text-[#6b7280] align-top">
+                      02
+                    </td>
+                    <td className="py-4 align-top">
+                      <p className="text-sm font-bold text-[#111827]">
+                        Processing Fee & Tax
+                      </p>
+                      <p className="text-xs text-[#6b7280] mt-1 leading-relaxed">
+                        Transaction processing charges and applicable taxes
+                        (included/excluded based on policy).
+                      </p>
+                    </td>
+                    <td className="py-4 text-sm font-bold text-[#6b7280] text-right align-top italic">
+                      {/* Assuming fee is in paise if mostly razorpay, but be careful.
+                           Usually metadata fee is total charged fee.
+                           If the amount stored in DB is the FINAL amount, we don't add this.
+                           If amount is NET amount, we might.
+                           Let's assume simply listing it as info if it exists, or just avoiding adding it to total if not sure.
+                           Actually, better to separate it: 
+                           If displaying as lined item, it implies it's part of the total.
+                           Let's check if the user request implies showing it. Yes "use metadata".
+                           Let's just show it in the summary below if needed, or as a note.
+                           Actually, sticking to showing it as a line item might be confusing if the 'amount' in DB is inclusive.
+                           Risk: Double counting visual. 
+                           Safer: Show it in the "Payment Details" or a "Breakdown" section.
+                       */}
+                      (₹{(metadata.fee / 100).toFixed(2)})
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -258,6 +325,24 @@ export const ReceiptView = forwardRef<HTMLDivElement, ReceiptViewProps>(
                   ₹{contribution.amount.toLocaleString()}
                 </span>
               </div>
+              {metadata.fee && (
+                <div className="flex justify-between items-center py-2 border-b border-[#f3f4f6]">
+                  <span className="text-xs text-[#6b7280]">
+                    Gateway Fee (Inc. Tax)
+                  </span>
+                  <span className="text-xs font-medium text-[#6b7280]">
+                    ₹{(metadata.fee / 100).toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {metadata.tax && (
+                <div className="flex justify-between items-center py-2 border-b border-[#f3f4f6]">
+                  <span className="text-xs text-[#6b7280]">Tax Component</span>
+                  <span className="text-xs font-medium text-[#6b7280]">
+                    (₹{(metadata.tax / 100).toFixed(2)})
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between items-center py-2 border-b-2 border-[#111827]">
                 <span className="text-base font-bold text-[#111827]">
                   Total Paid

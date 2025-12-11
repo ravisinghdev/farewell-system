@@ -31,6 +31,10 @@ interface SiteHeaderProps {
   farewellId?: string; // Kept for backward compatibility but unused
 }
 
+import { DashboardStatsPill } from "@/components/dashboard/dashboard-stats-pill";
+
+// ... existing imports
+
 export function SiteHeader({}: SiteHeaderProps) {
   const { user, farewell } = useFarewell();
   const farewellId = farewell.id;
@@ -39,11 +43,12 @@ export function SiteHeader({}: SiteHeaderProps) {
     <header className="flex h-16 shrink-0 items-center justify-between gap-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b border-white/5 bg-background/40 backdrop-blur-xl px-4 shadow-sm z-50 sticky top-0">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground transition-colors" />
-        <Separator orientation="vertical" className="mr-2 h-4 bg-border/50" />
-        <DashboardBreadcrumb />
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
+        {farewellId && user?.id && (
+          <DashboardStatsPill farewellId={farewellId} userId={user.id} />
+        )}
         <div className="flex items-center gap-1">
           <NotificationBell userId={user.id} />
 

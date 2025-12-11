@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import { Send, Paperclip, Loader2 } from "lucide-react";
 import { postDutyUpdateAction } from "@/actions/duties";
 import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
+import { useEffect } from "react";
 
 interface DutyUpdatesFeedProps {
   duty: any;
@@ -22,6 +24,29 @@ export function DutyUpdatesFeed({
 }: DutyUpdatesFeedProps) {
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`duty-updates-${duty.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "duty_updates",
+          filter: `duty_id=eq.${duty.id}`,
+        },
+        () => {
+          onUpdate();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [duty.id, supabase, onUpdate]);
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -29,8 +54,7 @@ export function DutyUpdatesFeed({
     try {
       await postDutyUpdateAction(duty.id, content);
       setContent("");
-      onUpdate();
-      toast.success("Update posted");
+      // onUpdate(); // Handled by realtime now, or keep for optimistic/fast feedback
     } catch (error) {
       toast.error("Failed to post update");
     } finally {
@@ -52,7 +76,6 @@ export function DutyUpdatesFeed({
               onChange={(e) => setContent(e.target.value)}
             />
             <div className="flex justify-end gap-2">
-              {/* Attachment button could go here */}
               <Button size="sm" onClick={handleSubmit} disabled={submitting}>
                 {submitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -73,7 +96,10 @@ export function DutyUpdatesFeed({
           </p>
         ) : (
           duty.duty_updates?.map((update: any) => (
-            <div key={update.id} className="flex gap-4">
+            <div
+              key={update.id}
+              className="flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300"
+            >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={update.users?.avatar_url} />
                 <AvatarFallback>{update.users?.full_name?.[0]}</AvatarFallback>

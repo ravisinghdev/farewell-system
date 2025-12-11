@@ -49,7 +49,7 @@ export default function Hero() {
           className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[100px] animate-pulse delay-1000"
           style={{ transform: "translate(var(--move-x), var(--move-y))" }}
         />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
+        <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-[0.03] mix-blend-overlay" />
 
         {/* Grid Pattern Overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
@@ -96,13 +96,13 @@ export default function Hero() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
             <Link href="/auth" className="w-full sm:w-auto group">
-              <button className="w-full sm:w-auto px-8 py-4 rounded-full bg-primary text-primary-foreground font-bold text-lg shadow-[0_0_40px_-10px_rgba(var(--primary-rgb),0.5)] hover:shadow-[0_0_60px_-15px_rgba(var(--primary-rgb),0.6)] hover:bg-primary/90 transition-all hover:scale-105 flex items-center justify-center gap-2">
+              <button className="cursor-pointer w-full sm:w-auto px-8 py-4 rounded-full bg-primary text-primary-foreground font-bold text-lg shadow-[0_0_40px_-10px_rgba(var(--primary-rgb),0.5)] hover:shadow-[0_0_60px_-15px_rgba(var(--primary-rgb),0.6)] hover:bg-primary/90 transition-all hover:scale-105 flex items-center justify-center gap-2">
                 Start Creating Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
             <Link href="#features" className="w-full sm:w-auto">
-              <button className="w-full sm:w-auto px-8 py-4 rounded-full bg-background/50 border border-border/50 text-foreground font-semibold text-lg hover:bg-accent/50 hover:border-primary/30 backdrop-blur-sm transition-all hover:scale-105 flex items-center justify-center gap-2">
+              <button className="cursor-pointer w-full sm:w-auto px-8 py-4 rounded-full bg-background/50 border border-border/50 text-foreground font-semibold text-lg hover:bg-accent/50 hover:border-primary/30 backdrop-blur-sm transition-all hover:scale-105 flex items-center justify-center gap-2">
                 See How It Works
               </button>
             </Link>

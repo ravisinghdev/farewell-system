@@ -77,7 +77,7 @@ export default async function BudgetPage({
 
   const budgetGoal = budgetResult.budgetGoal || 0;
   const members = budgetResult.members || [];
-  const totalCollected = statsResult.total_collected || 0;
+  const totalCollected = statsResult.collectedAmount || 0;
   const expenses = expensesResult.expenses || [];
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 

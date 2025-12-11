@@ -1,7 +1,4 @@
-import { ContributionManager } from "@/components/admin/contribution-manager";
-import { Separator } from "@/components/ui/separator";
-import { getFinancialStatsAction } from "@/app/actions/contribution-actions";
-import { FinancialStats } from "@/components/admin/financial-stats";
+import { ContributionHeader } from "@/components/contributions/contribution-header";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { checkIsAdmin } from "@/lib/auth/roles";
 import { redirect } from "next/navigation";
@@ -9,7 +6,11 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ContributionHeader } from "@/components/contributions/contribution-header";
+import {
+  getFinancialStatsAction,
+  getFarewellSettingsAction,
+} from "@/app/actions/contribution-actions";
+import { ContributionControlCenter } from "@/components/admin/contribution-control-center";
 
 interface ManageContributionsPageProps {
   params: Promise<{
@@ -58,18 +59,22 @@ export default async function ManageContributionsPage({
   }
 
   const stats = await getFinancialStatsAction(id);
+  const settings = await getFarewellSettingsAction(id);
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">
+    <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-8 animate-in fade-in duration-500">
       <ContributionHeader
-        title="Contribution Management"
-        description="Verify payments and manage financial records."
+        title="Contribution Command Center"
+        description="Advanced controls for financial management and auditing."
         farewellId={id}
+        minimal={true}
       />
 
-      <FinancialStats initialStats={stats} farewellId={id} />
-
-      <ContributionManager farewellId={id} />
+      <ContributionControlCenter
+        farewellId={id}
+        initialStats={stats}
+        initialSettings={settings}
+      />
     </div>
   );
 }

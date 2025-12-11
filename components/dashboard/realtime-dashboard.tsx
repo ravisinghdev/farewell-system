@@ -62,6 +62,7 @@ export function RealtimeDashboard({
     useState<Announcement[]>(initialAnnouncements);
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [transactions, setTransactions] = useState<any[]>(initialTransactions);
+  console.log("Transactions: ", transactions);
   const supabase = createClient();
   const router = useRouter();
 
@@ -148,16 +149,26 @@ export function RealtimeDashboard({
       avatar: null,
       amount: undefined, // Explicitly undefined for TS
     })),
-    ...transactions.slice(0, 5).map((t) => ({
-      id: `tx-${t.id}`,
-      user: t.user_name || "Anonymous",
-      action: "contributed",
-      amount: `₹${t.amount}`,
-      time: new Date(t.created_at).toLocaleDateString(),
-      avatar: t.user_avatar,
-      message: undefined, // Explicitly undefined for TS
-      icon: Wallet, // Fixed: use Wallet icon instead of undefined to prevent crash
-    })),
+    ...transactions.slice(0, 5).map((t) => {
+      const isAnonymous = t.metadata?.is_anonymous === true;
+      // Handle users being an array or object
+      const userData = Array.isArray(t.users) ? t.users[0] : t.users;
+      const userName = isAnonymous
+        ? "Anonymous"
+        : userData?.full_name || "Unknown User";
+      const userAvatar = isAnonymous ? null : userData?.avatar_url;
+
+      return {
+        id: `tx-${t.id}`,
+        user: userName,
+        action: "contributed",
+        amount: `₹${t.amount}`,
+        time: new Date(t.created_at).toLocaleDateString(),
+        avatar: userAvatar,
+        message: undefined, // Explicitly undefined for TS
+        icon: Wallet, // Fixed: use Wallet icon instead of undefined to prevent crash
+      };
+    }),
   ]
     .sort(
       (a, b) =>
@@ -368,7 +379,7 @@ export function RealtimeDashboard({
             <h3 className="font-semibold mb-4">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3">
               <Link
-                href={`/dashboard/${farewellId}/chat`}
+                href={`/dashboard/${farewellId}/messages`}
                 className="flex flex-col items-center justify-center p-4 rounded-xl bg-accent/30 hover:bg-accent hover:scale-[1.02] transition-all"
               >
                 <MessageSquare className="h-6 w-6 mb-2 text-blue-500" />

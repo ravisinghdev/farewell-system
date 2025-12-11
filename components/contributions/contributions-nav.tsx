@@ -52,10 +52,10 @@ export function ContributionsNav({
   }
 
   return (
-    <div className="w-full overflow-x-auto pb-2 mb-6 scrollbar-hide ">
-      <nav className="flex items-center gap-1 p-1 bg-white/5 w-fit rounded-full border border-white/10 backdrop-blur-md mx-auto md:mx-0">
+    <div className="w-full flex justify-center pb-2 mb-2">
+      <nav className="flex items-center gap-1 p-1 bg-white/5 w-fit max-w-full overflow-x-auto rounded-full border border-white/10 backdrop-blur-md scrollbar-hide">
         {links.map((link) => {
-          const isActive = pathname === link.href;
+          const isActive = pathname.startsWith(link.href);
           return (
             <Link
               key={link.href}

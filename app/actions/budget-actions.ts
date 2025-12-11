@@ -94,6 +94,41 @@ export async function getFarewellBudgetDetailsAction(farewellId: string) {
   };
 }
 
+export async function getMyAssignedAmountAction(farewellId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
+
+  if (!userId) {
+    console.log("getMyAssignedAmountAction: No user ID");
+    return 0;
+  }
+
+  // Use admin client to ensure we can read the assigned amount regardless of RLS
+  const { data: member, error } = await supabaseAdmin
+    .from("farewell_members")
+    .select("assigned_amount")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", userId)
+    .single();
+
+  if (error) {
+    console.error("getMyAssignedAmountAction Error:", error);
+    return 0;
+  }
+
+  if (!member) {
+    console.log("getMyAssignedAmountAction: Member not found");
+    return 0;
+  }
+
+  console.log(
+    "getMyAssignedAmountAction: Found amount",
+    member.assigned_amount
+  );
+  return member.assigned_amount || 0;
+}
+
 export async function distributeBudgetEquallyAction(
   farewellId: string,
   totalAmount: number

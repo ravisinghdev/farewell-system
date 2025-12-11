@@ -26,11 +26,13 @@ import { toast } from "sonner";
 interface NotificationListProps {
   initialNotifications?: Notification[];
   onMarkAsRead?: () => void;
+  onNotificationsChanged?: () => void;
 }
 
 export function NotificationList({
   initialNotifications,
   onMarkAsRead,
+  onNotificationsChanged,
 }: NotificationListProps) {
   const [notifications, setNotifications] = useState<Notification[]>(
     initialNotifications || []
@@ -51,6 +53,7 @@ export function NotificationList({
       setLoading(true);
       const data = await getNotificationsAction();
       setNotifications(data);
+      onNotificationsChanged?.();
     } catch (error) {
       console.error("Failed to load notifications", error);
       toast.error("Failed to load notifications");
@@ -66,6 +69,7 @@ export function NotificationList({
     } else {
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       onMarkAsRead?.();
+      onNotificationsChanged?.();
     }
   };
 
@@ -78,6 +82,7 @@ export function NotificationList({
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
       onMarkAsRead?.();
+      onNotificationsChanged?.();
     }
   };
 

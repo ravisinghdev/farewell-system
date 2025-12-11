@@ -329,110 +329,29 @@ export async function getDashboardStatsAction(
 ): Promise<DashboardStats> {
   const supabase = await createClient();
 
-  const [contributions, messages, media, members] = await Promise.all([
+  // Optimized: Read from farewell_stats and farewell_financials (O(1))
+  const [statsResult, financialsResult] = await Promise.all([
     supabase
-      .from("contributions")
-      .select("amount", { count: "exact", head: true })
-      .eq("farewell_id", farewellId),
+      .from("farewell_stats")
+      .select("member_count, message_count, media_count")
+      .eq("farewell_id", farewellId)
+      .single(),
     supabase
-      .from("chat_messages")
-      .select("id", { count: "exact", head: true })
-      .eq("channel_id", farewellId), // Assuming farewell has a main channel or we need to query channels?
-    // Wait, chat_messages are linked to channels, not farewells directly.
-    // We need to find channels for this farewell.
-    // Or maybe we just count messages in ALL channels for this farewell?
-    // Let's assume for now we count messages in channels linked to this farewell.
-    // But the schema says `chat_channels` has `scope_id`. Let's assume scope_id is farewell_id.
-    supabase
-      .from("media")
-      .select("id", { count: "exact", head: true })
-      .eq("album_id", farewellId), // Wait, media is in albums. Albums are in farewells.
-    supabase
-      .from("farewell_members")
-      .select("id", { count: "exact", head: true })
-      .eq("farewell_id", farewellId),
+      .from("farewell_financials")
+      .select("total_collected")
+      .eq("farewell_id", farewellId)
+      .single(),
   ]);
 
-  // Fix queries for indirect relationships
+  const stats = statsResult.data;
+  const financials = financialsResult.data;
 
-  // 1. Contributions: direct link.
-  // 2. Members: direct link.
-
-  // 3. Messages: Need to find channels first.
-  // const { data: channels } = await supabase.from("chat_channels").select("id").eq("scope_id", farewellId);
-  // const channelIds = channels?.map(c => c.id) || [];
-  // const { count: messageCount } = await supabase.from("chat_messages").select("id", { count: "exact", head: true }).in("channel_id", channelIds);
-
-  // 4. Media: Need to find albums first.
-  // const { data: albums } = await supabase.from("albums").select("id").eq("farewell_id", farewellId);
-  // const albumIds = albums?.map(a => a.id) || [];
-  // const { count: mediaCount } = await supabase.from("media").select("id", { count: "exact", head: true }).in("album_id", albumIds);
-
-  // Let's implement this properly.
-
-  // Actually, for speed, maybe we can just do simple queries if we can.
-  // But let's do the proper relational queries.
-
-  const { count: contributionsCount } = await supabase
-    .from("contributions")
-    .select("*", { count: "exact", head: true })
-    .eq("farewell_id", farewellId);
-
-  const { count: membersCount } = await supabase
-    .from("farewell_members")
-    .select("*", { count: "exact", head: true })
-    .eq("farewell_id", farewellId);
-
-  // For messages, we need to get channels first.
-  const { data: channels } = await supabase
-    .from("chat_channels")
-    .select("id")
-    .eq("scope_id", farewellId);
-
-  let messagesCount = 0;
-  if (channels && channels.length > 0) {
-    const { count } = await supabase
-      .from("chat_messages")
-      .select("*", { count: "exact", head: true })
-      .in(
-        "channel_id",
-        channels.map((c) => c.id)
-      );
-    messagesCount = count || 0;
-  }
-
-  // For media, we need to get albums first.
-  const { data: albums } = await supabase
-    .from("albums")
-    .select("id")
-    .eq("farewell_id", farewellId);
-
-  let mediaCount = 0;
-  if (albums && albums.length > 0) {
-    const { count } = await supabase
-      .from("media")
-      .select("*", { count: "exact", head: true })
-      .in(
-        "album_id",
-        albums.map((a) => a.id)
-      );
-    mediaCount = count || 0;
-  }
-
-  // Also get total contribution amount?
-  const { data: contributionData } = await supabase
-    .from("contributions")
-    .select("amount")
-    .eq("farewell_id", farewellId);
-
-  const totalAmount =
-    contributionData?.reduce((sum, c) => sum + Number(c.amount), 0) || 0;
-
+  // Fallback to 0 if no stats found (new farewell)
   return {
-    contributions: totalAmount, // Returning amount instead of count for "Contributions"
-    messages: messagesCount,
-    media: mediaCount,
-    members: membersCount || 0,
+    contributions: Number(financials?.total_collected || 0),
+    messages: stats?.message_count || 0,
+    media: stats?.media_count || 0,
+    members: stats?.member_count || 0,
   };
 }
 
