@@ -28,6 +28,9 @@ import { format } from "date-fns";
 import { useRealtimeDutyDetails } from "@/hooks/use-realtime-duty-details";
 import { AdminVerificationPanel } from "@/components/duties/admin-verification-panel";
 import { DutyUpdatesFeed } from "@/components/duties/duty-updates-feed";
+import { SubtaskManager } from "@/components/duties/subtask-manager";
+import { CommentSection } from "@/components/duties/comment-section";
+import { DutyManagementPanel } from "@/components/duties/duty-management-panel";
 import {
   Heart,
   Download,
@@ -219,34 +222,27 @@ export default function DutyDetailsPage() {
         </div>
       </div>
 
+      {/* REMOVED: Auto-accept assignments, no need for manual acceptance
       {isAssignee && isPendingAcceptance && (
         <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-yellow-500" />
-            <div>
-              <h3 className="font-semibold text-yellow-500">Action Required</h3>
-              <p className="text-sm text-muted-foreground">
-                Please accept or decline this duty assignment.
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleDecline}>
-              Decline
-            </Button>
-            <Button onClick={handleAccept}>Accept Duty</Button>
-          </div>
+          ...
         </div>
       )}
+      */}
 
       <Separator />
 
       <Tabs defaultValue="updates" className="w-full">
         <TabsList>
           <TabsTrigger value="updates">Updates & Activity</TabsTrigger>
+          <TabsTrigger value="subtasks">Subtasks</TabsTrigger>
           <TabsTrigger value="expenses">Expenses & Receipts</TabsTrigger>
+          <TabsTrigger value="comments">Comments</TabsTrigger>
           {isFarewellAdmin && (
-            <TabsTrigger value="admin">Admin Controls</TabsTrigger>
+            <>
+              <TabsTrigger value="manage">Manage</TabsTrigger>
+              <TabsTrigger value="admin">Admin Controls</TabsTrigger>
+            </>
           )}
         </TabsList>
 
@@ -254,6 +250,14 @@ export default function DutyDetailsPage() {
           <DutyUpdatesFeed
             duty={duty}
             isAssignee={isAssignee}
+            onUpdate={fetchDuty}
+          />
+        </TabsContent>
+
+        <TabsContent value="subtasks" className="mt-6">
+          <SubtaskManager
+            dutyId={dutyId}
+            subtasks={duty.duty_subtasks || []}
             onUpdate={fetchDuty}
           />
         </TabsContent>
@@ -382,19 +386,14 @@ export default function DutyDetailsPage() {
               )}
             </div>
 
-            {isAssignee &&
-              (duty.status === "in_progress" ||
-                myAssignment?.status === "accepted") && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    Submit New Expense
-                  </h3>
-                  <ExpenseSubmissionForm
-                    dutyId={dutyId}
-                    onSuccess={fetchDuty}
-                  />
-                </div>
-              )}
+            {isAssignee && duty.status === "in_progress" && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4">
+                  Submit New Expense
+                </h3>
+                <ExpenseSubmissionForm dutyId={dutyId} onSuccess={fetchDuty} />
+              </div>
+            )}
           </div>
 
           <ReceiptDetailsDialog
@@ -406,10 +405,25 @@ export default function DutyDetailsPage() {
           />
         </TabsContent>
 
+        <TabsContent value="comments" className="mt-6">
+          <CommentSection dutyId={dutyId} currentUserId={user.id} />
+        </TabsContent>
+
         {isFarewellAdmin && (
-          <TabsContent value="admin" className="mt-6">
-            <AdminVerificationPanel duty={duty} onUpdate={fetchDuty} />
-          </TabsContent>
+          <>
+            <TabsContent value="manage" className="mt-6">
+              <DutyManagementPanel
+                duty={duty}
+                farewellId={farewell.id}
+                onUpdate={fetchDuty}
+                onDelete={() => router.push(`/dashboard/${farewell.id}/duties`)}
+              />
+            </TabsContent>
+
+            <TabsContent value="admin" className="mt-6">
+              <AdminVerificationPanel duty={duty} onUpdate={fetchDuty} />
+            </TabsContent>
+          </>
         )}
       </Tabs>
     </div>

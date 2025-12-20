@@ -27,8 +27,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  createMusicAction,
-  deleteMusicAction,
+  createResourceAction,
+  deleteResourceAction,
 } from "@/app/actions/resource-actions";
 import { checkIsAdmin } from "@/lib/auth/roles";
 import { useFarewell } from "@/components/providers/farewell-provider";
@@ -138,12 +138,17 @@ export function MusicList({ initialMusic, farewellId }: MusicListProps) {
         file_url = publicUrl;
       }
 
-      const result = await createMusicAction(farewellId, {
+      const result = await createResourceAction(farewellId, {
+        type: "music",
         title,
-        artist,
-        duration,
+        description: artist, // Mapping artist to description for generic resource
+        file_path:
+          uploadType === "file"
+            ? `music/${file_url.split("?")[0].split("/").pop() || ""}`
+            : "",
         file_url,
         category,
+        metadata: { duration, artist }, // Storing specific metadata
       });
 
       if (result.error) {
@@ -162,7 +167,7 @@ export function MusicList({ initialMusic, farewellId }: MusicListProps) {
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this track?")) return;
-    const result = await deleteMusicAction(id, farewellId);
+    const result = await deleteResourceAction(id, farewellId, "music");
     if (result.error) {
       toast.error(result.error);
     } else {

@@ -16,11 +16,19 @@ export interface Announcement {
     full_name: string | null;
     avatar_url: string | null;
   };
+  is_read?: boolean; // Virtual field
 }
 
 export async function getAnnouncementsAction(farewellId: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  // Fetch announcements
+  const { data: announcements, error } = await supabase
     .from("announcements")
     .select(
       `
@@ -33,7 +41,44 @@ export async function getAnnouncementsAction(farewellId: string) {
     .order("created_at", { ascending: false });
 
   if (error) return [];
-  return data as Announcement[];
+
+  // Fetch read status for current user
+  const { data: reads } = await supabase
+    .from("announcement_reads")
+    .select("announcement_id")
+    .eq("user_id", user.id)
+    .in(
+      "announcement_id",
+      announcements.map((a) => a.id)
+    );
+
+  const readIds = new Set(reads?.map((r) => r.announcement_id));
+
+  return announcements.map((a) => ({
+    ...a,
+    is_read: readIds.has(a.id),
+  })) as Announcement[];
+}
+
+export async function markAnnouncementAsReadAction(
+  announcementId: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase.from("announcement_reads").upsert(
+    {
+      user_id: user.id,
+      announcement_id: announcementId,
+    },
+    { onConflict: "user_id, announcement_id" }
+  );
+
+  if (error) return { error: error.message };
+  return { success: true };
 }
 
 export async function createAnnouncementAction(
@@ -201,6 +246,7 @@ export interface TimelineEvent {
   title: string;
   description: string | null;
   event_date: string;
+  location: string | null;
   icon: string;
   created_at: string;
 }
@@ -222,6 +268,7 @@ export async function createTimelineEventAction(
   title: string,
   description: string,
   date: Date,
+  location: string,
   icon: string
 ): Promise<ActionState> {
   const supabase = await createClient();
@@ -234,9 +281,39 @@ export async function createTimelineEventAction(
     title,
     description,
     event_date: date.toISOString(),
+    location,
     icon,
     created_by: userId,
   });
+
+  if (error) return { error: error.message };
+  revalidatePath(`/dashboard/${farewellId}/timeline`);
+  return { success: true };
+}
+
+export async function updateTimelineEventAction(
+  id: string,
+  farewellId: string,
+  title: string,
+  description: string,
+  date: Date,
+  location: string,
+  icon: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data || !data.claims) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("timeline_events")
+    .update({
+      title,
+      description,
+      event_date: date.toISOString(),
+      location,
+      icon,
+    })
+    .eq("id", id);
 
   if (error) return { error: error.message };
   revalidatePath(`/dashboard/${farewellId}/timeline`);
@@ -329,29 +406,68 @@ export async function getDashboardStatsAction(
 ): Promise<DashboardStats> {
   const supabase = await createClient();
 
-  // Optimized: Read from farewell_stats and farewell_financials (O(1))
-  const [statsResult, financialsResult] = await Promise.all([
-    supabase
-      .from("farewell_stats")
-      .select("member_count, message_count, media_count")
-      .eq("farewell_id", farewellId)
-      .single(),
+  // Optimized: Hybrid approach
+  // 1. Financials: farewell_financials (cached approved) + sum(verified pending approval)
+  // 2. Counts: Direct exact counts for accuracy (performant enough for <100k records)
+
+  const [
+    financialsResult,
+    verifiedContributionsResult,
+    memberCountResult,
+    mediaCountResult,
+    messageCountResult,
+  ] = await Promise.all([
+    // 1. Get approved financials
     supabase
       .from("farewell_financials")
       .select("total_collected")
       .eq("farewell_id", farewellId)
       .single(),
+
+    // 2. Get verified (but not approved) contributions sum
+    supabase
+      .from("contributions")
+      .select("amount")
+      .eq("farewell_id", farewellId)
+      .eq("status", "verified"),
+
+    // 3. Direct Member Count
+    supabase
+      .from("farewell_members")
+      .select("*", { count: "exact", head: true })
+      .eq("farewell_id", farewellId),
+
+    // 4. Direct Media Count (via albums)
+    supabase
+      .from("media")
+      .select("id, albums!inner(farewell_id)", { count: "exact", head: true })
+      .eq("albums.farewell_id", farewellId),
+
+    // 5. Direct Message Count (via channels)
+    // Note: This counts messages in channels linked to this farewell
+    supabase
+      .from("chat_messages")
+      .select("id, chat_channels!inner(farewell_id)", {
+        count: "exact",
+        head: true,
+      })
+      .eq("chat_channels.farewell_id", farewellId),
   ]);
 
-  const stats = statsResult.data;
-  const financials = financialsResult.data;
+  // Calculate Total Collected
+  const approvedTotal = Number(financialsResult.data?.total_collected || 0);
+  const verifiedSum = (verifiedContributionsResult.data || []).reduce(
+    (sum, c) => sum + Number(c.amount),
+    0
+  );
 
-  // Fallback to 0 if no stats found (new farewell)
+  const totalCollected = approvedTotal + verifiedSum;
+
   return {
-    contributions: Number(financials?.total_collected || 0),
-    messages: stats?.message_count || 0,
-    media: stats?.media_count || 0,
-    members: stats?.member_count || 0,
+    contributions: totalCollected,
+    messages: messageCountResult.count || 0,
+    media: mediaCountResult.count || 0,
+    members: memberCountResult.count || 0,
   };
 }
 

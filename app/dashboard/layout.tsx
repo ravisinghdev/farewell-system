@@ -150,15 +150,21 @@ export default async function DashboardLayout({
           <SettingsProvider initialSettings={settings} userId={userId}>
             <AppearanceProvider>
               <AppSidebar />
-              <SidebarInset>
+              <SidebarInset className="flex flex-col overflow-hidden">
                 <SiteHeader />
-                <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                  <div className="px-1 py-2">
-                    <DashboardBreadcrumb />
+
+                {/* MAIN SCROLL CONTAINER */}
+                <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                  <div className="flex flex-col gap-4 p-4 pt-0 max-w-full">
+                    <div className="px-1 py-2">
+                      <DashboardBreadcrumb />
+                    </div>
+
+                    {children}
                   </div>
-                  {children}
                 </div>
               </SidebarInset>
+
               <AdminNotifications userId={userId} role={role} />
             </AppearanceProvider>
           </SettingsProvider>

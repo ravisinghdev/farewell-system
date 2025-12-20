@@ -143,3 +143,30 @@ export async function registerPushTokenAction(
 
   return { success: true };
 }
+
+export async function createSystemNotification(
+  userId: string,
+  farewellId: string,
+  title: string,
+  message: string,
+  type: Notification["type"],
+  link?: string,
+  metadata: Record<string, any> = {}
+) {
+  const supabase = createAdminClient(); // Use admin client to bypass RLS if needed, or ensuring it works
+
+  const { error } = await supabase.from("notifications").insert({
+    user_id: userId,
+    farewell_id: farewellId,
+    title,
+    message,
+    type,
+    link,
+    metadata,
+    is_read: false,
+  });
+
+  if (error) {
+    console.error("Failed to create system notification:", error);
+  }
+}

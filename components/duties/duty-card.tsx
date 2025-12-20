@@ -61,139 +61,141 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
   return (
     <>
       <Card
-        className="flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer"
+        className="
+          group relative flex flex-col h-full 
+          rounded-2xl border border-border/50 
+          bg-gradient-to-br from-card/80 to-card/40 
+          backdrop-blur-sm shadow-sm hover:shadow-lg hover:border-border
+          transition-all duration-300 cursor-pointer overflow-hidden
+        "
         onClick={() =>
           router.push(`/dashboard/${farewellId}/duties/${duty.id}`)
         }
       >
-        <CardHeader className="pb-3">
-          <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-lg font-semibold line-clamp-2">
-              {duty.title}
-            </CardTitle>
-            <Badge
-              variant={
-                duty.status === "completed"
-                  ? "default"
-                  : duty.status === "in_progress"
-                  ? "secondary"
-                  : "outline"
-              }
-            >
-              {duty.status.replace(/_/g, " ")}
-            </Badge>
-          </div>
-          {duty.deadline && (
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Due {format(new Date(duty.deadline), "MMM d, yyyy")}
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className="flex-1 space-y-4">
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {duty.description}
-          </p>
+        {/* Status Stripe */}
+        <div
+          className={`absolute top-0 left-0 w-1 h-full transition-colors ${
+            duty.status === "completed"
+              ? "bg-emerald-500"
+              : duty.status === "in_progress"
+              ? "bg-blue-500"
+              : "bg-amber-500"
+          }`}
+        />
 
-          {duty.expense_limit > 0 && (
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span>Spent: ₹{totalSpent}</span>
-                <span className="text-muted-foreground">
-                  Limit: ₹{duty.expense_limit}
-                </span>
-              </div>
-              <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${
-                    progress > 100 ? "bg-destructive" : "bg-primary"
-                  }`}
-                  style={{ width: `${Math.min(progress, 100)}%` }}
-                />
-              </div>
+        <div className="flex flex-col h-full pl-5">
+          {" "}
+          {/* Offset for stripe */}
+          <CardHeader className="pb-2 pt-5 pr-5">
+            <div className="flex justify-between items-start gap-4">
+              <CardTitle className="font-semibold text-lg leading-tight tracking-tight group-hover:text-primary transition-colors line-clamp-2">
+                {duty.title}
+              </CardTitle>
+              <Badge
+                variant="secondary"
+                className={`
+                    shrink-0 capitalize px-2 py-0.5 text-xs font-medium border
+                    ${
+                      duty.status === "completed"
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        : duty.status === "in_progress"
+                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                        : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                    }
+                  `}
+              >
+                {duty.status.replace(/_/g, " ")}
+              </Badge>
             </div>
-          )}
+          </CardHeader>
+          <CardContent className="flex-1 space-y-4 pr-5 pb-4">
+            <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+              {duty.description || "No description provided."}
+            </p>
 
-          <div className="space-y-2">
-            <div className="text-xs font-medium text-muted-foreground">
-              Assigned to
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {duty.duty_assignments?.length > 0 ? (
-                duty.duty_assignments.map((assignment: any) => (
+            {/* Budget Progress */}
+            {duty.expense_limit > 0 && (
+              <div className="space-y-1.5 pt-2">
+                <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                  <span>Budget Used</span>
+                  <span>
+                    {Math.round(progress)}% (₹{totalSpent} / ₹
+                    {duty.expense_limit})
+                  </span>
+                </div>
+                <div className="h-2 w-full bg-secondary/50 rounded-full overflow-hidden">
                   <div
-                    key={assignment.id}
-                    className={`flex items-center gap-1 rounded-full px-2 py-1 border ${
-                      assignment.status === "accepted"
-                        ? "bg-secondary/50 border-transparent"
-                        : assignment.status === "rejected"
-                        ? "bg-destructive/10 border-destructive/20"
-                        : "bg-muted border-dashed"
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      progress > 100
+                        ? "bg-destructive"
+                        : progress > 90
+                        ? "bg-amber-500"
+                        : "bg-primary"
                     }`}
+                    style={{ width: `${Math.min(progress, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="pt-4 pb-5 pr-5 border-t border-border/40 flex items-center justify-between">
+            {/* Assignees Avatars */}
+            <div className="flex -space-x-2 overflow-hidden">
+              {duty.duty_assignments?.length > 0 ? (
+                duty.duty_assignments.map((assignment: any, i: number) => (
+                  <Avatar
+                    key={i}
+                    className="inline-block h-8 w-8 rounded-full ring-2 ring-background"
                   >
-                    <Avatar className="h-4 w-4">
-                      <AvatarImage src={assignment.users?.avatar_url} />
-                      <AvatarFallback className="text-[10px]">
-                        {assignment.users?.full_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs max-w-[80px] truncate">
-                      {assignment.users?.full_name}
-                    </span>
-                    {assignment.status === "accepted" && (
-                      <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    )}
-                    {assignment.status === "rejected" && (
-                      <XCircle className="h-3 w-3 text-red-500" />
-                    )}
-                    {assignment.status === "pending" && (
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                    )}
-                  </div>
+                    <AvatarImage src={assignment.users?.avatar_url} />
+                    <AvatarFallback className="bg-muted text-[10px]">
+                      {assignment.users?.full_name
+                        ?.substring(0, 2)
+                        .toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
                 ))
               ) : (
-                <span className="text-xs text-muted-foreground italic">
-                  No one assigned
+                <span className="text-xs text-muted-foreground italic pl-1">
+                  Unassigned
                 </span>
               )}
             </div>
-          </div>
 
-          {isPendingAcceptance && (
-            <div className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded-md p-2 text-xs flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Action Required: Accept Duty
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="pt-2 border-t flex gap-2">
-          {isFarewellAdmin ? (
+            {duty.deadline && (
+              <div className="flex items-center text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md">
+                <Clock className="mr-1 h-3 w-3" />
+                {format(new Date(duty.deadline), "MMM d")}
+              </div>
+            )}
+          </CardFooter>
+        </div>
+
+        {/* Action Overlay for Admin (optional hover effect) */}
+        {isFarewellAdmin && !duty.duty_assignments?.length && (
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-[1px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none group-hover:pointer-events-auto">
             <Button
-              variant="outline"
               size="sm"
-              className="flex-1"
               onClick={(e) => {
                 e.stopPropagation();
                 setAssignOpen(true);
               }}
+              className="shadow-lg"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              Assign
+              Assign Duty
             </Button>
-          ) : (
-            <div className="flex-1"></div>
-          )}
-          <Button size="sm" variant="ghost" className="gap-2">
-            Details <ArrowRight className="h-4 w-4" />
-          </Button>
-        </CardFooter>
+          </div>
+        )}
       </Card>
 
       <AssignmentDialog
-        dutyId={duty.id}
-        farewellId={farewellId}
         open={assignOpen}
         onOpenChange={setAssignOpen}
+        dutyId={duty.id}
+        farewellId={farewellId}
+        currentAssignees={
+          duty.duty_assignments?.map((a: any) => a.user_id) || []
+        }
         onSuccess={onUpdate}
       />
     </>

@@ -7,8 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LayoutTemplate, Download, Trash2, Search, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
-  deleteTemplateAction,
-  createTemplateAction,
+  deleteResourceAction,
+  createResourceAction,
 } from "@/app/actions/resource-actions";
 import { checkIsAdmin } from "@/lib/auth/roles";
 import { useFarewell } from "@/components/providers/farewell-provider";
@@ -93,7 +93,7 @@ export function TemplatesList({
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this template?")) return;
-    const result = await deleteTemplateAction(id, farewellId);
+    const result = await deleteResourceAction(id, farewellId, "template");
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -108,10 +108,12 @@ export function TemplatesList({
     const file_url = formData.get("file_url") as string;
     const category = "Social Media"; // Default or add select
 
-    const result = await createTemplateAction(farewellId, {
+    const result = await createResourceAction(farewellId, {
+      type: "template",
       title,
       description,
       file_url,
+      file_path: "", // External URL, no storage path
       category,
     });
 

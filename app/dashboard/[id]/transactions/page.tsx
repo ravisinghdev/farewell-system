@@ -60,11 +60,7 @@ export default async function TransactionsPage({
       </div>
 
       <GlassCard className="p-6">
-        <TransactionTable
-          data={transactions as any}
-          farewellId={id}
-          isAdmin={isAdmin}
-        />
+        <TransactionTable farewellId={id} isAdmin={isAdmin} />
       </GlassCard>
     </div>
   );

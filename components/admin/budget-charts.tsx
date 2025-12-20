@@ -78,7 +78,7 @@ export function BudgetCharts({
       <GlassCard className="p-6 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-purple-500/20 transition-all duration-500" />
 
-        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+        <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
           <span className="w-1 h-6 bg-purple-500 rounded-full" />
           Expense Distribution
         </h3>
@@ -101,20 +101,19 @@ export function BudgetCharts({
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
-                      className="filter drop-shadow-[0_0_10px_rgba(255,255,255,0.1)] hover:opacity-80 transition-opacity"
+                      className="filter drop-shadow-[0_0_10px_rgba(0,0,0,0.1)] hover:opacity-80 transition-opacity"
                     />
                   ))}
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "rgba(9, 9, 11, 0.9)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    backgroundColor: "hsl(var(--popover))",
+                    border: "1px solid hsl(var(--border))",
                     borderRadius: "12px",
-                    color: "#fff",
-                    boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-                    backdropFilter: "blur(10px)",
+                    color: "hsl(var(--popover-foreground))",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
                   }}
-                  itemStyle={{ color: "#fff" }}
+                  itemStyle={{ color: "hsl(var(--popover-foreground))" }}
                   formatter={(value: any) => [
                     `₹${value.toLocaleString()}`,
                     "Amount",
@@ -124,9 +123,9 @@ export function BudgetCharts({
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-white/40 space-y-2">
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-white/20" />
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-2">
+              <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground/50" />
               </div>
               <p>No expenses recorded yet</p>
             </div>
@@ -137,7 +136,7 @@ export function BudgetCharts({
       <GlassCard className="p-6 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[50px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500" />
 
-        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+        <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
           <span className="w-1 h-6 bg-blue-500 rounded-full" />
           Financial Health
         </h3>
@@ -161,32 +160,31 @@ export function BudgetCharts({
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#ffffff05"
+                stroke="hsl(var(--border) / 0.1)"
                 vertical={false}
               />
               <XAxis
                 dataKey="name"
-                stroke="#ffffff40"
+                stroke="hsl(var(--muted-foreground))"
                 tickLine={false}
                 axisLine={false}
                 tick={{ fontSize: 12 }}
               />
               <YAxis
-                stroke="#ffffff40"
+                stroke="hsl(var(--muted-foreground))"
                 tickLine={false}
                 axisLine={false}
                 tick={{ fontSize: 12 }}
                 tickFormatter={(value) => `₹${value / 1000}k`}
               />
               <Tooltip
-                cursor={{ fill: "#ffffff05" }}
+                cursor={{ fill: "hsl(var(--muted) / 0.1)" }}
                 contentStyle={{
-                  backgroundColor: "rgba(9, 9, 11, 0.9)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  backgroundColor: "hsl(var(--popover))",
+                  border: "1px solid hsl(var(--border))",
                   borderRadius: "12px",
-                  color: "#fff",
-                  boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-                  backdropFilter: "blur(10px)",
+                  color: "hsl(var(--popover-foreground))",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
                 }}
                 formatter={(value: any) => [
                   `₹${value.toLocaleString()}`,

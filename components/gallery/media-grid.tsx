@@ -10,6 +10,16 @@ import { deleteMediaAction } from "@/app/actions/gallery-actions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CustomVideoPlayer } from "@/components/ui/video-player";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Media {
   id: string;
@@ -24,27 +34,61 @@ interface MediaGridProps {
   farewellId: string;
 }
 
-export function MediaGrid({ media, albumId, farewellId }: MediaGridProps) {
-  useRealtimeSubscription({
-    table: "gallery_media",
-    filter: `album_id=eq.${albumId}`,
-  });
+export function MediaGrid({
+  media: initialMedia,
+  albumId,
+  farewellId,
+}: MediaGridProps) {
+  // useRealtimeSubscription({
+  //   table: "gallery_media",
+  //   filter: `album_id=eq.${albumId}`,
+  // });
 
+  const [media, setMedia] = useState<Media[]>(initialMedia);
   const [isPending, startTransition] = useTransition();
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [mediaToDelete, setMediaToDelete] = useState<string | null>(null);
 
-  const handleDelete = (e: React.MouseEvent, mediaId: string) => {
-    e.stopPropagation();
-    if (!confirm("Delete this memory?")) return;
+  // Track deleted IDs locally to filter out stale data from server revalidations
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
+  // Sync props to state if they change (e.g. revalidation),
+  // but ensure we don't bring back items we just deleted.
+  const [prevInitialMedia, setPrevInitialMedia] = useState(initialMedia);
+  if (initialMedia !== prevInitialMedia) {
+    setMedia(initialMedia.filter((item) => !deletedIds.has(item.id)));
+    setPrevInitialMedia(initialMedia);
+  }
+
+  const confirmDelete = () => {
+    if (!mediaToDelete) return;
+
+    // Optimistically update UI
+    setMedia((prev) => prev.filter((m) => m.id !== mediaToDelete));
+
+    const idToDelete = mediaToDelete;
+    setDeletedIds((prev) => {
+      const next = new Set(prev);
+      next.add(idToDelete);
+      return next;
+    });
+
+    setMediaToDelete(null); // Close dialog immediately
 
     startTransition(async () => {
-      const res = await deleteMediaAction(mediaId, farewellId, albumId);
+      const res = await deleteMediaAction(idToDelete, farewellId, albumId);
       if (res.error) {
         toast.error(res.error);
+        // Rollback if needed, but for now we assume success
       } else {
         toast.success("Memory deleted");
       }
     });
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, mediaId: string) => {
+    e.stopPropagation();
+    setMediaToDelete(mediaId);
   };
 
   const downloadMedia = async (
@@ -122,7 +166,6 @@ export function MediaGrid({ media, albumId, farewellId }: MediaGridProps) {
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                   sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                  unoptimized
                 />
               </div>
             )}
@@ -132,7 +175,7 @@ export function MediaGrid({ media, albumId, farewellId }: MediaGridProps) {
                 variant="destructive"
                 size="icon"
                 className="h-8 w-8 rounded-full shadow-lg"
-                onClick={(e) => handleDelete(e, item.id)}
+                onClick={(e) => handleDeleteClick(e, item.id)}
                 disabled={isPending}
               >
                 <Trash2 className="w-4 h-4" />
@@ -145,6 +188,36 @@ export function MediaGrid({ media, albumId, farewellId }: MediaGridProps) {
           </div>
         ))}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!mediaToDelete}
+        onOpenChange={() => setMediaToDelete(null)}
+      >
+        <AlertDialogContent className="bg-zinc-900 border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this memory?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              This action cannot be undone. This will permanently delete this
+              media from the album.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setMediaToDelete(null)}
+              className="bg-transparent border-white/10 hover:bg-white/10 hover:text-white"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={!!selectedMedia}
@@ -207,7 +280,7 @@ export function MediaGrid({ media, albumId, farewellId }: MediaGridProps) {
                       fill
                       className="object-contain"
                       sizes="100vw"
-                      unoptimized
+                      unoptimized={false}
                       priority
                     />
                   </div>

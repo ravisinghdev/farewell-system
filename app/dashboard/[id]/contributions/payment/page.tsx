@@ -19,10 +19,10 @@ export default async function DonatePage({
     .reduce((sum, c) => sum + Number(c.amount), 0);
 
   // Fetch Public Recent Transactions for Ticker
-  const { getPublicRecentTransactionsAction } = await import(
-    "@/app/actions/contribution-actions"
-  );
+  const { getPublicRecentTransactionsAction, getPublicFarewellSettingsAction } =
+    await import("@/app/actions/contribution-actions");
   const publicTransactions = await getPublicRecentTransactionsAction(id);
+  const settings = await getPublicFarewellSettingsAction(id);
 
   // Fetch Assigned Amount safely
   const { getMyAssignedAmountAction } = await import(
@@ -45,6 +45,7 @@ export default async function DonatePage({
         assignedAmount={myAssigned}
         paidAmount={myTotal}
         publicTransactions={publicTransactions}
+        initialSettings={settings}
       />
     </div>
   );

@@ -107,14 +107,14 @@ export function AppSidebar({
       items: [
         { href: "/dashboard", label: "Home", icon: Home },
         {
-          href: "/dashboard/announcements",
-          label: "Announcements",
-          icon: Bell,
-        },
-        {
           href: "/dashboard/timeline",
           label: "Farewell Timeline",
           icon: CalendarDays,
+        },
+        {
+          href: "/dashboard/announcements",
+          label: "Announcements",
+          icon: Bell,
         },
         {
           href: "/dashboard/highlights",
@@ -124,7 +124,39 @@ export function AppSidebar({
       ],
     },
 
-    /* ------------------- CONTRIBUTIONS ------------------- */
+    /* ------------------- EVENTS (High Priority) ------------------- */
+    {
+      title: "Events & Planning",
+      items: [
+        {
+          href: "/dashboard/rehearsals",
+          label: "Rehearsals & Planning",
+          icon: ClipboardList,
+        },
+        {
+          href: "/dashboard/tasks",
+          label: "Event Task Board",
+          icon: ListChecks,
+        },
+        {
+          href: "/dashboard/decor",
+          label: "Decoration & Setup",
+          icon: Palette,
+        },
+        {
+          href: "/dashboard/performances",
+          label: "Performances & Acts",
+          icon: Music,
+        },
+        {
+          href: "/dashboard/farewell-event",
+          label: "Main Farewell Event",
+          icon: PartyPopper,
+        },
+      ],
+    },
+
+    /* ------------------- CONTRIBUTIONS (High Priority) ------------------- */
     {
       title: "Contributions",
       items: [
@@ -142,16 +174,6 @@ export function AppSidebar({
           href: "/dashboard/contributions/receipt",
           label: "Receipts & Downloads",
           icon: ReceiptText,
-        },
-        {
-          href: "/dashboard/contributions/history",
-          label: "Payment History",
-          icon: FolderClock,
-        },
-        {
-          href: "/dashboard/contributions/analytics",
-          label: "Analytics & Insights",
-          icon: LineChart,
         },
         {
           href: "/dashboard/contributions/leaderboard",
@@ -179,123 +201,19 @@ export function AppSidebar({
       ],
     },
 
-    /* ------------------- CONNECTIONS ------------------- */
-    {
-      title: "Connections",
-      items: [
-        {
-          href: "/dashboard/memories",
-          label: "Photo & Video Gallery",
-          icon: Image,
-        },
-        {
-          href: "/dashboard/artworks",
-          label: "Art & Creative Works",
-          icon: Brush,
-        },
-        {
-          href: "/dashboard/yearbook",
-          label: "Digital Yearbook",
-          icon: BookOpen,
-        },
-      ],
-    },
-
-    /* ------------------- PEOPLE ------------------- */
-    {
-      title: "People",
-      items: [
-        {
-          href: "/dashboard/students",
-          label: "12th Grade Students",
-          icon: Users,
-        },
-        {
-          href: "/dashboard/teachers",
-          label: "Teachers & Mentors",
-          icon: GraduationCap,
-        },
-        {
-          href: "/dashboard/juniors",
-          label: "Junior Contributors",
-          icon: User,
-        },
-        {
-          href: "/dashboard/organizers",
-          label: "Farewell Giving Class",
-          icon: Users,
-        },
-      ],
-    },
-
-    /* ------------------- EVENTS ------------------- */
-    {
-      title: "Events",
-      items: [
-        {
-          href: "/dashboard/farewell-event",
-          label: "Main Farewell Event",
-          icon: PartyPopper,
-        },
-        {
-          href: "/dashboard/rehearsals",
-          label: "Rehearsals & Planning",
-          icon: ClipboardList,
-        },
-        {
-          href: "/dashboard/performances",
-          label: "Performances & Acts",
-          icon: Music,
-        },
-        {
-          href: "/dashboard/decor",
-          label: "Decoration & Setup",
-          icon: Palette,
-        },
-        {
-          href: "/dashboard/tasks",
-          label: "Event Task Board",
-          icon: ListChecks,
-        },
-      ],
-    },
-
-    /* ------------------- LEGACY ------------------- */
-    {
-      title: "Legacy",
-      items: [
-        {
-          href: "/dashboard/quotes",
-          label: "Best Quotes & Memories",
-          icon: Quote,
-        },
-        {
-          href: "/dashboard/farewell-video",
-          label: "Farewell Film",
-          icon: Film,
-        },
-        {
-          href: "/dashboard/gift-wall",
-          label: "Gift & Wishes Wall",
-          icon: Gift,
-        },
-        { href: "/dashboard/thankyou", label: "Thank You Notes", icon: Heart },
-      ],
-    },
-
-    /* ------------------- MANAGEMENT ------------------- */
+    /* ------------------- MANAGEMENT (Admin Tools) ------------------- */
     {
       title: "Management",
       items: [
         {
-          href: "/dashboard/committees",
-          label: "Organizing Committees",
-          icon: ClipboardCheck,
-        },
-        {
           href: "/dashboard/duties",
           label: "Duties & Assignments",
           icon: ClipboardList,
+        },
+        {
+          href: "/dashboard/committees",
+          label: "Organizing Committees",
+          icon: ClipboardCheck,
         },
         {
           href: "/dashboard/settings",
@@ -338,6 +256,78 @@ export function AppSidebar({
       ],
     },
 
+    /* ------------------- PEOPLE (Secondary) ------------------- */
+    {
+      title: "People",
+      items: [
+        {
+          href: "/dashboard/students",
+          label: "12th Grade Students",
+          icon: Users,
+        },
+        {
+          href: "/dashboard/teachers",
+          label: "Teachers & Mentors",
+          icon: GraduationCap,
+        },
+        {
+          href: "/dashboard/juniors",
+          label: "Junior Contributors",
+          icon: User,
+        },
+        {
+          href: "/dashboard/organizers",
+          label: "Farewell Giving Class",
+          icon: Users,
+        },
+      ],
+    },
+
+    /* ------------------- CONNECTIONS (Secondary) ------------------- */
+    {
+      title: "Connections",
+      items: [
+        {
+          href: "/dashboard/memories",
+          label: "Photo & Video Gallery",
+          icon: Image,
+        },
+        {
+          href: "/dashboard/artworks",
+          label: "Art & Creative Works",
+          icon: Brush,
+        },
+        {
+          href: "/dashboard/yearbook",
+          label: "Digital Yearbook",
+          icon: BookOpen,
+        },
+      ],
+    },
+
+    /* ------------------- LEGACY (Reference) ------------------- */
+    {
+      title: "Legacy",
+      items: [
+        {
+          href: "/dashboard/quotes",
+          label: "Best Quotes & Memories",
+          icon: Quote,
+        },
+        {
+          href: "/dashboard/farewell-video",
+          label: "Farewell Film",
+          icon: Film,
+        },
+        {
+          href: "/dashboard/gift-wall",
+          label: "Gift & Wishes Wall",
+          icon: Gift,
+        },
+        { href: "/dashboard/thankyou", label: "Thank You Notes", icon: Heart },
+      ],
+    },
+
     /* ------------------- COMMUNITY ------------------- */
     {
       title: "Community",
@@ -356,7 +346,7 @@ export function AppSidebar({
     <Sidebar
       collapsible="icon"
       {...props}
-      className="border-r border-white/10 bg-black/40 dark:bg-black/40 backdrop-blur-xl z-50 shadow-2xl"
+      className="border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl z-50 shadow-2xl"
     >
       <SidebarHeader className="pb-4 pt-4">
         <FarewellHeader name={farewellName} year={farewellYear} />
@@ -365,7 +355,7 @@ export function AppSidebar({
       <SidebarContent className="px-2">
         {navGroups.map((group) => (
           <SidebarGroup key={group.title} className="py-2">
-            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-1">
+            <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/70 mb-1">
               {group.title}
             </SidebarGroupLabel>
             <SidebarMenu>
@@ -382,7 +372,7 @@ export function AppSidebar({
                         "relative transition-all duration-200 ease-in-out group/item overflow-hidden",
                         isActive
                           ? "bg-primary/15 text-primary shadow-[0_0_20px_rgba(var(--primary),0.3)] hover:bg-primary/20 hover:text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5 hover:translate-x-1"
+                          : "text-muted-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent hover:translate-x-1"
                       )}
                     >
                       <Link
@@ -405,7 +395,7 @@ export function AppSidebar({
                         </span>
 
                         {/* Hover Glow Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 pointer-events-none" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-sidebar-accent/10 to-transparent -translate-x-full group-hover/item:translate-x-full transition-transform duration-700 pointer-events-none" />
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

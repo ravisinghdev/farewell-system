@@ -75,7 +75,7 @@ export function StatsModal({
             >
               <Wallet className="w-5 h-5 text-white/60 mb-2" />
               <p className="text-2xl font-bold text-white mb-0.5">
-                ₹{stats.totalContribution.toLocaleString()}
+                ₹{stats.totalContribution}
               </p>
               <p className="text-[10px] text-white/40 uppercase tracking-widest">
                 Total Contributed

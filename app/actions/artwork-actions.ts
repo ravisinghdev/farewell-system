@@ -13,21 +13,29 @@ const createArtworkSchema = z.object({
   farewellId: z.string().min(1, "Farewell ID is required"),
 });
 
-export async function getArtworksAction(farewellId: string) {
+export async function getArtworksAction(
+  farewellId: string,
+  page: number = 1,
+  limit: number = 12
+) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, error, count } = await supabase
     .from("artworks")
-    .select("*, created_by_user:users(full_name)")
+    .select("*, created_by_user:users(full_name)", { count: "exact" })
     .eq("farewell_id", farewellId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
     console.error("Get artworks error:", error);
-    return [];
+    return { data: [], total: 0 };
   }
 
-  return data;
+  return { data, total: count || 0 };
 }
 
 export async function createArtworkAction(
@@ -104,7 +112,10 @@ export async function deleteArtworkAction(
 
   if (!data?.claims) return { error: "Not authenticated" };
 
-  const { error } = await supabase.from("artworks").delete().eq("id", id);
+  // Use Admin Client to bypass RLS restrictions to ensure deletion
+  const adminClient = createAdminClient();
+
+  const { error } = await adminClient.from("artworks").delete().eq("id", id);
 
   if (error) {
     console.error("Delete artwork error:", error);

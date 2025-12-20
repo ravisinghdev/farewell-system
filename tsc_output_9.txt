@@ -1,0 +1,1 @@
+﻿components/duties/create-duty-wizard.tsx(175,9): error TS2353: Object literal may only specify known properties, and 'category' does not exist in type '{ title: string; description: string; expenseLimit: number; deadline?: string | undefined; priority?: "low" | "medium" | "high" | undefined; expenseLimitHard?: boolean | undefined; }'.

@@ -26,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { FinancialStats } from "./financial-stats";
+import { AnalyticsCard } from "./analytics-card";
 
 interface ContributionControlCenterProps {
   farewellId: string;
@@ -66,16 +67,7 @@ export function ContributionControlCenter({
     }
   );
 
-  const [transactions, setTransactions] = useState<any[]>([]);
-
-  // Data Actions
-  const fetchTransactions = async () => {
-    const { getAllContributionsAction } = await import(
-      "@/app/actions/contribution-actions"
-    );
-    const data = await getAllContributionsAction(farewellId);
-    setTransactions(data);
-  };
+  const [transactionsRefreshKey, setTransactionsRefreshKey] = useState(0);
 
   const fetchStats = async () => {
     const { getFinancialStatsAction } = await import(
@@ -84,11 +76,6 @@ export function ContributionControlCenter({
     const newStats = await getFinancialStatsAction(farewellId);
     setStats(newStats);
   };
-
-  // Initial Fetch
-  useEffect(() => {
-    fetchTransactions();
-  }, [farewellId]);
 
   // Realtime Subscription
   useEffect(() => {
@@ -124,8 +111,8 @@ export function ContributionControlCenter({
         },
         () => {
           fetchStats();
-          fetchTransactions();
-          toast.info("Data updated from server");
+          setTransactionsRefreshKey((prev) => prev + 1);
+          toast.info("Ledger updated");
         }
       )
       .subscribe();
@@ -165,31 +152,31 @@ export function ContributionControlCenter({
         {/* Top Control Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div className="w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-            <TabsList className="bg-white/5 border border-white/10 p-1 h-12 w-full md:w-auto inline-flex min-w-max">
+            <TabsList className="bg-secondary/50 border border-border/50 p-1 h-12 w-full md:w-auto inline-flex min-w-max">
               <TabsTrigger
                 value="overview"
-                className="h-10 px-6 data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                className="h-10 px-6 data-[state=active]:bg-emerald-500 data-[state=active]:text-white dark:data-[state=active]:text-black"
               >
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="ledger"
-                className="h-10 px-6 data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                className="h-10 px-6 data-[state=active]:bg-emerald-500 data-[state=active]:text-white dark:data-[state=active]:text-black"
               >
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                 Ledger
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                className="h-10 px-6 data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                className="h-10 px-6 data-[state=active]:bg-emerald-500 data-[state=active]:text-white dark:data-[state=active]:text-black"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </TabsTrigger>
               <TabsTrigger
                 value="gateways"
-                className="h-10 px-6 data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                className="h-10 px-6 data-[state=active]:bg-emerald-500 data-[state=active]:text-white dark:data-[state=active]:text-black"
               >
                 <CreditCard className="w-4 h-4 mr-2" />
                 Gateways
@@ -200,7 +187,7 @@ export function ContributionControlCenter({
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="bg-white/5 border-white/10 hover:bg-white/10 text-white"
+              className="bg-secondary/50 border-input hover:bg-secondary hover:text-foreground text-foreground"
             >
               <Download className="w-4 h-4 mr-2" />
               Export Report
@@ -217,16 +204,16 @@ export function ContributionControlCenter({
           {/* KPI Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <GlassCard className="p-6 border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent">
-              <p className="text-blue-200/60 text-sm font-medium uppercase tracking-wider truncate">
+              <p className="text-blue-600 dark:text-blue-200/60 text-sm font-medium uppercase tracking-wider truncate">
                 Pending Review
               </p>
               <div className="flex items-end justify-between mt-2">
-                <p className="text-4xl font-bold text-white truncate">
+                <p className="text-4xl font-bold text-foreground truncate">
                   {stats?.pendingCount || 0}
                 </p>
                 <RefreshCw className="w-6 h-6 text-blue-500 animate-spin-slow opacity-50 flex-shrink-0" />
               </div>
-              <div className="mt-4 flex items-center gap-2 text-xs text-blue-300 font-medium">
+              <div className="mt-4 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-300 font-medium">
                 <span className="bg-blue-500/20 px-2 py-1 rounded truncate">
                   Action Required
                 </span>
@@ -234,26 +221,26 @@ export function ContributionControlCenter({
             </GlassCard>
 
             <GlassCard className="p-6 border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent">
-              <p className="text-emerald-200/60 text-sm font-medium uppercase tracking-wider truncate">
+              <p className="text-emerald-600 dark:text-emerald-200/60 text-sm font-medium uppercase tracking-wider truncate">
                 Total Verified
               </p>
               <div className="flex items-end justify-between mt-2">
-                <p className="text-3xl font-bold text-white truncate">
+                <p className="text-3xl font-bold text-foreground truncate">
                   ₹{(stats?.collectedAmount || 0).toLocaleString()}
                 </p>
                 <Banknote className="w-6 h-6 text-emerald-500 opacity-50 flex-shrink-0" />
               </div>
-              <div className="mt-4 text-xs text-emerald-300 font-medium truncate">
+              <div className="mt-4 text-xs text-emerald-600 dark:text-emerald-300 font-medium truncate">
                 Synced to Ledger
               </div>
             </GlassCard>
 
             <GlassCard className="p-6 border-l-4 border-l-amber-500 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent">
-              <p className="text-amber-200/60 text-sm font-medium uppercase tracking-wider truncate">
+              <p className="text-amber-600 dark:text-amber-200/60 text-sm font-medium uppercase tracking-wider truncate">
                 Goal Progress
               </p>
               <div className="flex items-end justify-between mt-2">
-                <p className="text-3xl font-bold text-white truncate">
+                <p className="text-3xl font-bold text-foreground truncate">
                   {(
                     ((stats?.collectedAmount || 0) / (goalAmount || 1)) *
                     100
@@ -272,7 +259,7 @@ export function ContributionControlCenter({
                   }
                 />
               </div>
-              <div className="mt-4 w-full bg-white/10 h-1 rounded-full overflow-hidden">
+              <div className="mt-4 w-full bg-secondary h-1 rounded-full overflow-hidden">
                 <div
                   className="bg-amber-500 h-full transition-all duration-1000"
                   style={{
@@ -285,34 +272,32 @@ export function ContributionControlCenter({
             </GlassCard>
 
             <GlassCard className="p-6 border-l-4 border-l-purple-500 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent">
-              <p className="text-purple-200/60 text-sm font-medium uppercase tracking-wider truncate">
+              <p className="text-purple-600 dark:text-purple-200/60 text-sm font-medium uppercase tracking-wider truncate">
                 Contributors
               </p>
               <div className="flex items-end justify-between mt-2">
-                <p className="text-4xl font-bold text-white truncate">
+                <p className="text-4xl font-bold text-foreground truncate">
                   {stats?.totalContributors || 0}
                 </p>
                 <Settings className="w-6 h-6 text-purple-500 opacity-50 flex-shrink-0" />
               </div>
-              <div className="mt-4 text-xs text-purple-300 font-medium truncate">
+              <div className="mt-4 text-xs text-purple-600 dark:text-purple-300 font-medium truncate">
                 Active Members
               </div>
             </GlassCard>
           </div>
 
           {/* Quick Stats/Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GlassCard className="p-6 h-[400px]">
-              <h3 className="font-bold text-white mb-4">
+          <div className="flex flex-col gap-6">
+            <GlassCard className="p-6 h-auto min-h-[400px]">
+              <h3 className="font-bold text-foreground mb-4">
                 Financial Health Overview
               </h3>
               <FinancialStats initialStats={stats} farewellId={farewellId} />
             </GlassCard>
-            <GlassCard className="p-6 h-[400px] flex items-center justify-center border-dashed border-2 border-white/10 bg-transparent">
-              <div className="text-center space-y-2 opacity-50">
-                <LayoutDashboard className="w-12 h-12 mx-auto" />
-                <p>Advanced Analytics Pending</p>
-              </div>
+
+            <GlassCard className="p-6 h-[400px] bg-transparent border-dashed border-2 border-border/50 hover:border-border transition-colors">
+              <AnalyticsCard farewellId={farewellId} />
             </GlassCard>
           </div>
         </TabsContent>
@@ -320,28 +305,32 @@ export function ContributionControlCenter({
         {/* Ledger Tab */}
         <TabsContent value="ledger" className="outline-none">
           <GlassCard className="border-t-4 border-t-emerald-500 overflow-hidden">
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+            <div className="p-6 border-b border-border/10 flex items-center justify-between bg-secondary/20">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-500/10 rounded-lg">
                   <FileSpreadsheet className="w-6 h-6 text-emerald-500" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-foreground">
                     Master Transaction Ledger
                   </h3>
-                  <p className="text-sm text-white/40">
+                  <p className="text-sm text-muted-foreground">
                     View, verify, and audit all financial records.
                   </p>
                 </div>
               </div>
-              <Button size="sm" variant="ghost" className="text-white/60">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground"
+              >
                 <RefreshCw className="w-4 h-4 mr-2" /> Refresh Data
               </Button>
             </div>
             <div className="p-6">
               <TransactionTable
                 farewellId={farewellId}
-                data={transactions}
+                refreshTrigger={transactionsRefreshKey}
                 isAdmin={true}
               />
             </div>
@@ -357,22 +346,24 @@ export function ContributionControlCenter({
             <GlassCard className="p-8">
               <div className="flex items-start justify-between mb-8">
                 <div>
-                  <h3 className="text-xl font-bold text-white">
+                  <h3 className="text-xl font-bold text-foreground">
                     System Configuration
                   </h3>
-                  <p className="text-white/40">
+                  <p className="text-muted-foreground">
                     Manage global settings for the contribution module.
                   </p>
                 </div>
-                <div className="p-3 bg-white/5 rounded-full">
-                  <Settings className="w-6 h-6 text-white" />
+                <div className="p-3 bg-secondary rounded-full">
+                  <Settings className="w-6 h-6 text-foreground" />
                 </div>
               </div>
 
               <div className="space-y-8">
                 <div className="grid gap-2">
-                  <Label className="text-white">Target Goal Amount (₹)</Label>
-                  <p className="text-sm text-white/40 mb-2">
+                  <Label className="text-foreground">
+                    Target Goal Amount (₹)
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-2">
                     Set the total collection target for this farewell.
                   </p>
                   <div className="flex gap-4">
@@ -380,7 +371,7 @@ export function ContributionControlCenter({
                       type="number"
                       value={goalAmount}
                       onChange={(e) => setGoalAmount(Number(e.target.value))}
-                      className="bg-white/5 border-white/10 text-white font-mono text-lg max-w-[300px]"
+                      className="bg-background border-input text-foreground font-mono text-lg max-w-[300px]"
                     />
                     <Button
                       onClick={handleSaveSettings}
@@ -391,14 +382,14 @@ export function ContributionControlCenter({
                   </div>
                 </div>
 
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-border/50" />
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label className="text-white text-base">
+                    <Label className="text-foreground text-base">
                       Accept New Contributions
                     </Label>
-                    <p className="text-sm text-white/40">
+                    <p className="text-sm text-muted-foreground">
                       If disabled, users will see a "Contributions Closed"
                       message.
                     </p>
@@ -410,14 +401,14 @@ export function ContributionControlCenter({
                   />
                 </div>
 
-                <div className="h-px bg-white/10" />
+                <div className="h-px bg-border/50" />
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label className="text-white text-base">
+                    <Label className="text-foreground text-base">
                       Maintenance Mode
                     </Label>
-                    <p className="text-sm text-white/40">
+                    <p className="text-sm text-muted-foreground">
                       Hide the contribution section entirely from non-admin
                       users.
                     </p>
@@ -430,11 +421,11 @@ export function ContributionControlCenter({
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
+              <div className="mt-8 pt-6 border-t border-border/50 flex justify-end">
                 <Button
                   size="lg"
                   onClick={handleSaveSettings}
-                  className="bg-white text-black hover:bg-white/90"
+                  className="bg-foreground text-background hover:bg-foreground/90"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   Save All Changes
@@ -443,17 +434,17 @@ export function ContributionControlCenter({
             </GlassCard>
 
             <GlassCard className="p-8 border-red-500/20 bg-red-500/5">
-              <div className="flex items-center gap-4 text-red-400 mb-4">
+              <div className="flex items-center gap-4 text-red-500 dark:text-red-400 mb-4">
                 <ShieldAlert className="w-6 h-6" />
                 <h3 className="font-bold">Danger Zone</h3>
               </div>
-              <p className="text-red-300/60 mb-6 text-sm">
+              <p className="text-red-600/60 dark:text-red-300/60 mb-6 text-sm">
                 Irreversible actions that affect financial data.
               </p>
               <div className="flex gap-4">
                 <Button
                   variant="destructive"
-                  className="border-red-500/20 text-red-400 hover:bg-red-500/10"
+                  className="border-red-500/20 text-muted-foreground dark:text-red-400 text-red-500 hover:bg-red-500/10"
                 >
                   Reset All Stats
                 </Button>
@@ -476,10 +467,10 @@ export function ContributionControlCenter({
           <GlassCard className="p-8 space-y-8">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-xl font-bold text-white">
+                <h3 className="text-xl font-bold text-foreground">
                   Payment Methods
                 </h3>
-                <p className="text-white/40">
+                <p className="text-muted-foreground">
                   Configure accepted payment types and details.
                 </p>
               </div>
@@ -492,16 +483,16 @@ export function ContributionControlCenter({
             </div>
 
             <div className="grid gap-4">
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-500/20 rounded-lg text-indigo-400">
+                  <div className="p-3 bg-indigo-500/20 rounded-lg text-indigo-500 dark:text-indigo-400">
                     <QrCode className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold text-white truncate">
+                    <p className="font-bold text-foreground truncate">
                       UPI / QR Code
                     </p>
-                    <p className="text-sm text-white/40 truncate max-w-[200px] md:max-w-none">
+                    <p className="text-sm text-muted-foreground truncate max-w-[200px] md:max-w-none">
                       Accept payments via GPay, PhonePe, Paytm
                     </p>
                   </div>
@@ -515,16 +506,16 @@ export function ContributionControlCenter({
                 />
               </div>
 
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-green-500/20 rounded-lg text-green-400">
+                  <div className="p-3 bg-green-500/20 rounded-lg text-green-500 dark:text-green-400">
                     <Banknote className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold text-white truncate">
+                    <p className="font-bold text-foreground truncate">
                       Cash Collection
                     </p>
-                    <p className="text-sm text-white/40 truncate max-w-[200px] md:max-w-none">
+                    <p className="text-sm text-muted-foreground truncate max-w-[200px] md:max-w-none">
                       Allow manual cash entry for offline payments
                     </p>
                   </div>
@@ -538,16 +529,16 @@ export function ContributionControlCenter({
                 />
               </div>
 
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-secondary/20 border border-border/50 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-500/20 rounded-lg text-blue-400">
+                  <div className="p-3 bg-blue-500/20 rounded-lg text-blue-500 dark:text-blue-400">
                     <CreditCard className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="font-bold text-white truncate">
+                    <p className="font-bold text-foreground truncate">
                       Bank Transfer (IMPS/NEFT)
                     </p>
-                    <p className="text-sm text-white/40 truncate max-w-[200px] md:max-w-none">
+                    <p className="text-sm text-muted-foreground truncate max-w-[200px] md:max-w-none">
                       Direct bank account transfers
                     </p>
                   </div>
@@ -562,8 +553,8 @@ export function ContributionControlCenter({
               </div>
             </div>
 
-            <div className="pt-6 border-t border-white/10">
-              <Label className="text-white mb-2 block">
+            <div className="pt-6 border-t border-border/50">
+              <Label className="text-foreground mb-2 block">
                 UPI ID for Collection
               </Label>
               <div className="flex gap-4">
@@ -573,11 +564,11 @@ export function ContributionControlCenter({
                     updatePaymentConfig("upi_id", e.target.value)
                   }
                   placeholder="example@oksbi"
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-background border-input text-foreground"
                 />
                 <Button
                   onClick={handleSaveSettings}
-                  className="bg-white text-black hover:bg-white/90"
+                  className="bg-foreground text-background hover:bg-foreground/90"
                 >
                   Update UPI
                 </Button>

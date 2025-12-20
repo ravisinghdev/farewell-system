@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { ActionState } from "@/types/custom";
 import { logAudit } from "@/lib/audit-logger";
 import { isFarewellAdmin } from "@/lib/auth/roles-server";
+import { createSystemNotification } from "./notifications";
 
 export interface Duty {
   id: string;
@@ -17,6 +18,11 @@ export interface Duty {
   created_by: string;
   created_at: string;
   updated_at: string;
+  priority?: "low" | "medium" | "high";
+  expense_limit_hard?: boolean;
+  category?: string;
+  location?: string;
+  estimated_hours?: number;
   assignments?: DutyAssignment[];
   receipts?: DutyReceipt[];
 }
@@ -83,10 +89,15 @@ export async function createDutyAction(
   data: {
     title: string;
     description: string;
-    expenseLimit: number;
+    expense_limit: number;
     deadline?: string;
+    priority?: "low" | "medium" | "high";
+    expense_limit_hard?: boolean;
+    category?: string;
+    location?: string;
+    estimated_hours?: number | null;
   }
-): Promise<ActionState> {
+): Promise<ActionState<Duty>> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
@@ -101,9 +112,14 @@ export async function createDutyAction(
       farewell_id: farewellId,
       title: data.title,
       description: data.description,
-      expense_limit: data.expenseLimit,
+      expense_limit: data.expense_limit,
       deadline: data.deadline,
       created_by: userId,
+      priority: data.priority || "medium",
+      expense_limit_hard: data.expense_limit_hard || false,
+      category: data.category,
+      location: data.location,
+      estimated_hours: data.estimated_hours,
     })
     .select()
     .single();
@@ -119,7 +135,7 @@ export async function createDutyAction(
   });
 
   revalidatePath(`/dashboard/${farewellId}/duties`);
-  return { success: true };
+  return { success: true, data: duty as unknown as Duty };
 }
 
 export async function assignDutiesAction(
@@ -138,6 +154,7 @@ export async function assignDutiesAction(
   const assignments = userIds.map((uid) => ({
     duty_id: dutyId,
     user_id: uid,
+    status: "accepted", // Auto-accept to skip acceptance step
   }));
 
   const { error } = await supabase.from("duty_assignments").insert(assignments);
@@ -147,6 +164,13 @@ export async function assignDutiesAction(
     return { error: error.message };
   }
 
+  // Auto-transition duty to in_progress since assignments are auto-accepted
+  await supabase
+    .from("duties")
+    .update({ status: "in_progress" })
+    .eq("id", dutyId)
+    .eq("status", "pending");
+
   await logAudit({
     farewellId,
     action: "assign_duty",
@@ -154,6 +178,98 @@ export async function assignDutiesAction(
     targetType: "duty",
     metadata: { assigned_user_ids: userIds },
   });
+
+  // Notify assigned users
+  // Get Duty Title for notification
+  const { data: duty } = await supabase
+    .from("duties")
+    .select("title, farewell_id")
+    .eq("id", dutyId)
+    .single();
+  if (duty) {
+    for (const uid of userIds) {
+      await createSystemNotification(
+        uid,
+        farewellId,
+        "New Duty Assigned",
+        `You have been assigned to: ${duty.title}. You can start submitting expenses now.`,
+        "duty",
+        `/dashboard/${farewellId}/duties/${dutyId}`
+      );
+    }
+  }
+
+  revalidatePath(`/dashboard/${farewellId}/duties`);
+  return { success: true };
+}
+
+// Accept or Reject Duty Assignment
+export async function respondToAssignmentAction(
+  dutyId: string,
+  accept: boolean
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
+
+  // Get the assignment
+  const { data: assignment, error: fetchError } = await supabase
+    .from("duty_assignments")
+    .select("*, duties(farewell_id, title)")
+    .eq("duty_id", dutyId)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError || !assignment) {
+    return { error: "Assignment not found" };
+  }
+
+  const newStatus = accept ? "accepted" : "rejected";
+
+  // Update assignment status
+  const { error: updateError } = await supabase
+    .from("duty_assignments")
+    .update({ status: newStatus })
+    .eq("duty_id", dutyId)
+    .eq("user_id", userId);
+
+  if (updateError) return { error: updateError.message };
+
+  // If accepted, update duty status to in_progress if it was pending
+  if (accept) {
+    const { error: dutyUpdateError } = await supabase
+      .from("duties")
+      .update({ status: "in_progress" })
+      .eq("id", dutyId)
+      .eq("status", "pending");
+
+    if (dutyUpdateError) {
+      console.error("Failed to update duty status:", dutyUpdateError);
+    }
+  }
+
+  // Log audit
+  await logAudit({
+    farewellId: (assignment.duties as any).farewell_id,
+    action: accept ? "accept_duty" : "reject_duty",
+    targetId: dutyId,
+    targetType: "duty",
+    metadata: { assignment_id: assignment.id },
+  });
+
+  // Send notification to admins
+  const farewellId = (assignment.duties as any).farewell_id;
+  const dutyTitle = (assignment.duties as any).title;
+
+  await createSystemNotification(
+    userId,
+    farewellId,
+    accept ? "Duty Accepted" : "Duty Declined",
+    accept ? `You accepted: ${dutyTitle}` : `You declined: ${dutyTitle}`,
+    "duty",
+    `/dashboard/${farewellId}/duties/${dutyId}`
+  );
 
   revalidatePath(`/dashboard/${farewellId}/duties`);
   return { success: true };
@@ -207,6 +323,18 @@ export async function uploadDutyReceiptAction(
     .from("receipts")
     .upload(fileName, file);
 
+  // Validate Assignment
+  const { data: assignment, error: assignmentError } = await supabase
+    .from("duty_assignments")
+    .select("id")
+    .eq("duty_id", dutyId)
+    .eq("user_id", userId)
+    .single();
+
+  if (assignmentError || !assignment) {
+    return { error: "You are not assigned to this duty." };
+  }
+
   if (uploadError) return { error: "Failed to upload receipt image" };
 
   const {
@@ -252,17 +380,23 @@ export async function approveDutyReceiptAction(
   const isAdmin = await isFarewellAdmin(farewellId, userId);
   if (!isAdmin) return { error: "Unauthorized" };
 
-  const { error } = await supabase
-    .from("duty_receipts")
-    .update({
-      status: "approved",
-      reviewed_by: userId,
-      reviewed_at: new Date().toISOString(),
-      admin_notes: adminNotes,
-    })
-    .eq("id", receiptId);
+  /* 
+     CALLING RPC for Transactional Approval 
+     Reference: 20251213010000_duty_ledger_system.sql
+  */
+  const { data: rpcData, error } = await supabase.rpc("approve_duty_receipt", {
+    p_receipt_id: receiptId,
+    p_admin_notes: adminNotes || null,
+  });
 
   if (error) return { error: error.message };
+
+  // RPC returns { success: boolean, error?: string }
+  // We need to cast or check it. Supabase RPC returns `any` often, or typed if we had types.
+  const result = rpcData as any;
+  if (!result.success) {
+    return { error: result.error || "Approval failed" };
+  }
 
   await logAudit({
     farewellId,
@@ -270,6 +404,30 @@ export async function approveDutyReceiptAction(
     targetId: receiptId,
     targetType: "receipt",
   });
+
+  // Notify Uploader
+  // Need to fetch receipt details first or depend on what we know?
+  // We only have receiptId.
+  const { data: receipt } = await supabase
+    .from("duty_receipts")
+    .select("uploader_id, sections:duties(title)")
+    .eq("id", receiptId)
+    .single();
+  // Note: sections:duties(...) join might fail if not set up, using query
+  // But we know dutyId... wait, we don't have dutyId in args here easily, passed via client?
+  // We can fetch it.
+  if (receipt && receipt.uploader_id) {
+    // @ts-ignore
+    const dutyTitle = receipt.sections?.title || "Duty";
+    await createSystemNotification(
+      receipt.uploader_id,
+      farewellId,
+      "Expense Approved",
+      `Your expense for ${dutyTitle} has been approved.`,
+      "finance",
+      `/dashboard/${farewellId}/duties`
+    );
+  }
 
   revalidatePath(`/dashboard/${farewellId}/duties`);
   return { success: true };
@@ -305,6 +463,84 @@ export async function rejectDutyReceiptAction(
     action: "reject_receipt",
     targetId: receiptId,
     targetType: "receipt",
+  });
+
+  // Notify Uploader
+  const { data: receiptRec } = await supabase
+    .from("duty_receipts")
+    .select("uploader_id, duties(title)")
+    .eq("id", receiptId)
+    .single();
+  if (receiptRec && receiptRec.uploader_id) {
+    // @ts-ignore
+    const dutyTitle = receiptRec.duties?.title || "Duty";
+    await createSystemNotification(
+      receiptRec.uploader_id,
+      farewellId,
+      "Expense Rejected",
+      `Your expense for ${dutyTitle} was rejected.${
+        adminNotes ? ` Reason: ${adminNotes}` : ""
+      }`,
+      "finance",
+      `/dashboard/${farewellId}/duties`
+    );
+  }
+
+  revalidatePath(`/dashboard/${farewellId}/duties`);
+  return { success: true };
+}
+
+export async function getLedgerAction(farewellId: string) {
+  const supabase = await createClient();
+
+  // Note: RLS allows all farewell members to view
+  const { data, error } = await supabase
+    .from("ledger")
+    .select(
+      `
+      *,
+      created_by_user:users!created_by(full_name, avatar_url)
+    `
+    )
+    .eq("farewell_id", farewellId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching ledger:", error);
+    return [];
+  }
+
+  return data;
+}
+
+// Unassign a user from a duty
+export async function unassignDutyAction(
+  farewellId: string,
+  dutyId: string,
+  userIdToRemove: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
+
+  const isAdmin = await isFarewellAdmin(farewellId, userId);
+  if (!isAdmin) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("duty_assignments")
+    .delete()
+    .eq("duty_id", dutyId)
+    .eq("user_id", userIdToRemove);
+
+  if (error) return { error: error.message };
+
+  await logAudit({
+    farewellId,
+    action: "unassign_duty",
+    targetId: dutyId,
+    targetType: "duty",
+    metadata: { removed_user_id: userIdToRemove },
   });
 
   revalidatePath(`/dashboard/${farewellId}/duties`);

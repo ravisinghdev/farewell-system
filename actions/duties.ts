@@ -27,7 +27,7 @@ async function createNotification(
 export async function getDutiesAction(farewellId: string) {
   const supabase = await createClient();
 
-  const { data, error } = await (supabase
+  const { data, error } = await supabase
     .from("duties")
     .select(
       `
@@ -48,35 +48,26 @@ export async function getDutiesAction(farewellId: string) {
         status,
         created_at,
         image_url,
-        items,
         evidence_files,
+        notes,
+        items,
         uploader_id,
         receipt_votes (
-            user_id
-        )
-      ),
-      duty_updates (
-        id,
-        content,
-        attachments,
-        created_at,
-        user_id,
-        users!duty_updates_user_id_fkey (
-            full_name,
-            avatar_url
+          id,
+          user_id
         )
       )
     `
     )
     .eq("farewell_id", farewellId)
-    .order("created_at", { ascending: false }) as PromiseLike<any>);
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Error fetching duties:", error);
-    throw new Error("Failed to fetch duties");
+    return [];
   }
 
-  return data;
+  return data || [];
 }
 
 // --- Create Duty ---

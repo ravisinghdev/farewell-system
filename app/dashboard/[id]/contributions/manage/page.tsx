@@ -46,7 +46,7 @@ export default async function ManageContributionsPage({
             <Button
               asChild
               variant="outline"
-              className="border-white/10 h-12 px-8 rounded-xl"
+              className="border-input hover:border-accent h-12 px-8 rounded-xl"
             >
               <Link href={`/dashboard/${id}/contributions`}>
                 Return to Overview

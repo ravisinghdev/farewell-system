@@ -1,6 +1,6 @@
 import { PageScaffold } from "@/components/dashboard/page-scaffold";
-import { TemplatesList } from "@/components/resources/templates-list";
-import { getTemplatesAction } from "@/app/actions/resource-actions";
+import { ResourceFeed } from "@/components/resources/resource-feed";
+import { getResourcesAction } from "@/app/actions/resource-actions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -8,14 +8,18 @@ interface PageProps {
 
 export default async function TemplatesPage({ params }: PageProps) {
   const { id } = await params;
-  const templates = await getTemplatesAction(id);
+  const templates = await getResourcesAction(id, "template");
 
   return (
     <PageScaffold
       title="Templates & Designs"
       description="Downloadable assets for social media and print."
     >
-      <TemplatesList farewellId={id} initialTemplates={templates} />
+      <ResourceFeed
+        farewellId={id}
+        type="template"
+        initialResources={templates as any}
+      />
     </PageScaffold>
   );
 }

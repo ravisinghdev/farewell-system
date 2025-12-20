@@ -1,6 +1,6 @@
 import { PageScaffold } from "@/components/dashboard/page-scaffold";
-import { MusicList } from "@/components/resources/music-list";
-import { getMusicAction } from "@/app/actions/resource-actions";
+import { ResourceFeed } from "@/components/resources/resource-feed";
+import { getResourcesAction } from "@/app/actions/resource-actions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -8,14 +8,18 @@ interface PageProps {
 
 export default async function MusicLibraryPage({ params }: PageProps) {
   const { id } = await params;
-  const music = await getMusicAction(id);
+  const music = await getResourcesAction(id, "music");
 
   return (
     <PageScaffold
       title="Music & Backgrounds"
       description="Curated playlist for the event and videos."
     >
-      <MusicList farewellId={id} initialMusic={music} />
+      <ResourceFeed
+        farewellId={id}
+        type="music"
+        initialResources={music as any}
+      />
     </PageScaffold>
   );
 }

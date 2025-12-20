@@ -33,12 +33,12 @@ export function ReceiptUploadDialog({
   const { farewell } = useFarewell();
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !amount) return;
+    if (files.length === 0 || !amount) return;
 
     setSubmitting(true);
     try {
@@ -46,10 +46,13 @@ export function ReceiptUploadDialog({
       formData.append("dutyId", dutyId);
       formData.append("amount", amount);
       formData.append("notes", notes);
-      formData.append("file", file);
+
+      files.forEach((f) => {
+        formData.append("files", f);
+      });
 
       await uploadDutyReceiptAction(farewell.id, formData);
-      toast.success("Receipt uploaded successfully");
+      toast.success("Receipts uploaded successfully");
       onSuccess();
       onOpenChange(false);
     } catch (error) {
@@ -78,16 +81,27 @@ export function ReceiptUploadDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="file">Receipt Image/PDF</Label>
-            <div className="flex items-center gap-2">
+            <Label htmlFor="file">Receipt Images/PDFs</Label>
+            <div className="flex flex-col gap-2">
               <Input
                 id="file"
                 type="file"
                 accept="image/*,application/pdf"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                multiple
+                onChange={(e) => {
+                  const files = e.target.files;
+                  if (files) {
+                    setFiles(Array.from(files));
+                  }
+                }}
                 required
                 className="cursor-pointer"
               />
+              {files.length > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  {files.length} file(s) selected
+                </div>
+              )}
             </div>
           </div>
           <div className="space-y-2">
@@ -107,7 +121,10 @@ export function ReceiptUploadDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting || !file || !amount}>
+            <Button
+              type="submit"
+              disabled={submitting || files.length === 0 || !amount}
+            >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Upload
             </Button>

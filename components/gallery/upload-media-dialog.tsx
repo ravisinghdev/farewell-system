@@ -10,11 +10,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { UploadCloud, Loader2, ImagePlus, X, CheckCircle2 } from "lucide-react";
-import { saveMediaRecordAction } from "@/app/actions/gallery-actions";
+import {
+  UploadCloud,
+  Loader2,
+  ImagePlus,
+  X,
+  CheckCircle2,
+  FileVideo,
+  FileImage,
+} from "lucide-react";
+import { saveMediaBatchAction } from "@/app/actions/gallery-actions";
+import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/utils/supabase/client";
 
 interface UploadMediaDialogProps {
   farewellId: string;
@@ -27,8 +35,7 @@ export function UploadMediaDialog({
 }: UploadMediaDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState(0); // Progress percentage
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,87 +53,111 @@ export function UploadMediaDialog({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(Array.from(e.dataTransfer.files));
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      handleFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      handleFiles(Array.from(e.target.files));
     }
   };
 
-  const handleFile = (file: File) => {
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-      toast.error("Please upload an image or video file.");
-      return;
+  const handleFiles = (files: File[]) => {
+    const validFiles = files.filter(
+      (file) => file.type.startsWith("image/") || file.type.startsWith("video/")
+    );
+
+    if (validFiles.length !== files.length) {
+      toast.warning("Some files were skipped (only images/videos supported).");
     }
-    // No hard limit on client-side upload size here, Supabase handles it (default 50MB-5GB depending on plan).
-    // Let's warn if HUGE but allow it.
-    if (file.size > 1024 * 1024 * 1024) {
-      toast.warning("File is over 1GB, upload may take a while.");
+
+    if (validFiles.length > 0) {
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
     }
-    setSelectedFile(file);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   async function handleUpload() {
-    if (!selectedFile) return;
+    if (selectedFiles.length === 0) return;
 
     setIsUploading(true);
-    setProgress(0);
+
     const supabase = createClient();
+    const uploadedItems: { url: string; type: string }[] = [];
+    let failureCount = 0;
 
     try {
-      const fileExt = selectedFile.name.split(".").pop();
-      const fileName = `${albumId}/${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(7)}.${fileExt}`;
+      // 1. Upload all files to Supabase Storage (Client-side)
+      const uploadPromises = selectedFiles.map(async (file, index) => {
+        try {
+          const fileExt = file.name.split(".").pop();
+          const fileName = `${albumId}/${Date.now()}-${Math.random()
+            .toString(36)
+            .substring(7)}-${index}.${fileExt}`;
 
-      // 1. Direct Upload to Storage
-      const { data, error } = await supabase.storage
-        .from("memories")
-        .upload(fileName, selectedFile, {
-          cacheControl: "3600",
-          upsert: false,
-          // Supabase JS doesn't expose native XHR progress easily in upload() wrapper yet without TUS in some versions,
-          // but we can fake progress or use TUS if enabled.
-          // For standard upload, it waits. Let's simulate distinct phases.
-        });
+          const { error: uploadError } = await supabase.storage
+            .from("memories")
+            .upload(fileName, file, {
+              cacheControl: "3600",
+              upsert: false,
+            });
 
-      if (error) throw error;
+          if (uploadError) throw uploadError;
 
-      setProgress(50); // Upload done, saving record
+          const { data: publicUrlData } = supabase.storage
+            .from("memories")
+            .getPublicUrl(fileName);
 
-      // 2. Get Public URL
-      const { data: publicUrlData } = supabase.storage
-        .from("memories")
-        .getPublicUrl(fileName);
+          uploadedItems.push({
+            url: publicUrlData.publicUrl,
+            type: file.type.startsWith("video/") ? "video" : "image",
+          });
+        } catch (err) {
+          console.error(`Failed to upload ${file.name}`, err);
+          failureCount++;
+        }
+      });
 
-      // 3. Save Record via Server Action
-      const type = selectedFile.type.startsWith("video/") ? "video" : "image";
-      const result = await saveMediaRecordAction(
-        albumId,
+      await Promise.all(uploadPromises);
+
+      if (uploadedItems.length === 0) {
+        throw new Error("Failed to upload any files.");
+      }
+
+      // 2. Save Metadata to DB (Batch)
+      const result = await saveMediaBatchAction(
         farewellId,
-        publicUrlData.publicUrl,
-        type
+        albumId,
+        uploadedItems
       );
 
       if (result.error) {
         throw new Error(result.error);
       }
 
-      setProgress(100);
-      toast.success("Media uploaded successfully!");
+      if (failureCount > 0) {
+        toast.warning(
+          `Uploaded ${uploadedItems.length} files. ${failureCount} failed.`
+        );
+      } else {
+        toast.success(
+          `Successfully uploaded ${uploadedItems.length} media items!`
+        );
+      }
+
       setIsOpen(false);
-      setSelectedFile(null);
+      setSelectedFiles([]);
     } catch (error: any) {
-      console.error("Upload failed:", error);
-      toast.error(error.message || "Upload failed");
+      console.error("Upload process failed:", error);
+      toast.error(error.message || "Upload process failed");
     } finally {
       setIsUploading(false);
-      setProgress(0);
     }
   }
 
@@ -137,7 +168,7 @@ export function UploadMediaDialog({
           <UploadCloud className="w-4 h-4 mr-2" /> Upload Media
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10 text-white">
+      <DialogContent className="sm:max-w-xl bg-zinc-900 border-white/10 text-white">
         <DialogHeader>
           <DialogTitle>Upload to Album</DialogTitle>
         </DialogHeader>
@@ -159,73 +190,82 @@ export function UploadMediaDialog({
             <Input
               ref={inputRef}
               type="file"
+              multiple
               accept="image/*,video/*"
               className="hidden"
               onChange={handleChange}
               disabled={isUploading}
             />
 
-            {selectedFile ? (
-              <div className="relative w-full">
-                <div className="w-16 h-16 bg-emerald-500/20 text-emerald-500 rounded-xl flex items-center justify-center mb-3 mx-auto">
-                  {isUploading ? (
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="w-8 h-8" />
-                  )}
-                </div>
-                <p className="text-sm font-medium text-emerald-400 mb-1">
-                  {isUploading ? "Uploading..." : "Ready to upload"}
-                </p>
-                <p className="text-xs text-white/60 truncate max-w-[200px] mx-auto">
-                  {selectedFile.name}
-                </p>
-
-                {!isUploading && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute -top-2 -right-2 text-white/40 hover:text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedFile(null);
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="w-16 h-16 bg-white/5 text-white/40 rounded-xl flex items-center justify-center mb-3 group-hover:text-white/60 transition-colors">
-                  <UploadCloud className="w-8 h-8" />
-                </div>
-                <p className="text-sm font-medium text-white mb-1">
-                  Drag & drop or click to upload
-                </p>
-                <p className="text-xs text-white/40">
-                  Supports High Quality Images & Videos
-                </p>
-              </>
-            )}
+            <div className="w-16 h-16 bg-white/5 text-white/40 rounded-xl flex items-center justify-center mb-3 group-hover:text-white/60 transition-colors">
+              <UploadCloud className="w-8 h-8" />
+            </div>
+            <p className="text-sm font-medium text-white mb-1">
+              Drag & drop or click to upload
+            </p>
+            <p className="text-xs text-white/40">
+              Supports multiple files (Images & Videos)
+            </p>
           </div>
 
-          {/* Progress Bar (Visual only for now since simple upload) */}
-          {isUploading && (
-            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500 ease-in-out"
-                style={{ width: `${progress === 0 ? 10 : progress}%` }}
-              />
+          {/* File List */}
+          {selectedFiles.length > 0 && (
+            <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
+              {selectedFiles.map((file, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 bg-white/5 p-3 rounded-lg border border-white/5 group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                    {file.type.startsWith("video/") ? (
+                      <FileVideo className="w-5 h-5 text-pink-400" />
+                    ) : (
+                      <FileImage className="w-5 h-5 text-purple-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium truncate text-white/90">
+                      {file.name}
+                    </p>
+                    <p className="text-xs text-white/40">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  {!isUploading && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-white/40 hover:text-red-400 hover:bg-red-400/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFile(i);
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
           <Button
             onClick={handleUpload}
-            disabled={!selectedFile || isUploading}
+            disabled={selectedFiles.length === 0 || isUploading}
             className="w-full bg-white text-black hover:bg-white/90 font-bold rounded-xl h-11"
           >
-            {isUploading ? "Uploading in background..." : "Upload Now"}
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading{" "}
+                {selectedFiles.length} files...
+              </>
+            ) : (
+              `Upload ${
+                selectedFiles.length > 0
+                  ? selectedFiles.length + " items"
+                  : "Files"
+              }`
+            )}
           </Button>
         </div>
       </DialogContent>

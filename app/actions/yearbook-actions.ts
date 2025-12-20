@@ -13,21 +13,29 @@ const createEntrySchema = z.object({
   farewellId: z.string().min(1, "Farewell ID is required"),
 });
 
-export async function getYearbookEntriesAction(farewellId: string) {
+export async function getYearbookEntriesAction(
+  farewellId: string,
+  page: number = 1,
+  limit: number = 12
+) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, error, count } = await supabase
     .from("yearbook_entries")
-    .select("*, created_by_user:users(full_name)")
+    .select("*, created_by_user:users(full_name)", { count: "exact" })
     .eq("farewell_id", farewellId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
     console.error("Get yearbook entries error:", error);
-    return [];
+    return { data: [], total: 0 };
   }
 
-  return data;
+  return { data, total: count || 0 };
 }
 
 export async function createYearbookEntryAction(
@@ -108,7 +116,10 @@ export async function deleteYearbookEntryAction(
   if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
   // userId not strictly needed for delete if RLS handles it, but good for auditing if added later
 
-  const { error } = await supabase
+  // Use Admin Client to bypass RLS restrictions to ensure deletion
+  const adminClient = createAdminClient();
+
+  const { error } = await adminClient
     .from("yearbook_entries")
     .delete()
     .eq("id", id);

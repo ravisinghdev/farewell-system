@@ -37,7 +37,7 @@ export function DashboardStatsPill({
       >
         <div className="flex items-center gap-2 border-r border-white/10 pr-2 md:pr-3">
           <TrendingUp className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-          <span className="text-xs font-bold text-white uppercase tracking-wider group-hover:text-emerald-300 transition-colors">
+          <span className="text-xs font-bold text-foreground uppercase tracking-wider group-hover:text-emerald-300 transition-colors">
             <span className="hidden md:inline">Rank </span>
             <span className="text-emerald-400 ml-0.5">#{stats.rank}</span>
           </span>

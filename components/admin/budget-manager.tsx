@@ -143,7 +143,7 @@ export function BudgetManager({
 
   return (
     <div className="space-y-8">
-      <GlassCard className="relative p-6 border border-white/10 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.45)] overflow-hidden group bg-gradient-to-br from-zinc-900/50 via-black/50 to-zinc-900/50 backdrop-blur-2xl">
+      <GlassCard className="relative p-6 border border-border/50 rounded-3xl shadow-xl overflow-hidden group bg-card/50 backdrop-blur-2xl">
         {/* Subtle top light streak */}
         <div className="pointer-events-none absolute inset-x-0 -top-20 h-32 opacity-20 bg-gradient-to-b from-emerald-500/20 via-emerald-500/5 to-transparent blur-3xl group-hover:opacity-40 transition-opacity duration-1000" />
 
@@ -151,18 +151,18 @@ export function BudgetManager({
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] pointer-events-none mix-blend-overlay" />
 
         {/* Header Row */}
-        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between pb-6 border-b border-white/5">
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between pb-6 border-b border-border/10">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-emerald-500/80 mb-1">
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-500/80 mb-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               <p className="text-[10px] font-bold tracking-[0.25em] uppercase">
                 Budget Console
               </p>
             </div>
-            <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-white/95">
+            <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
               Farewell Budget
             </h3>
-            <p className="text-sm text-white/50 max-w-lg leading-relaxed">
+            <p className="text-sm text-muted-foreground max-w-lg leading-relaxed">
               Define goals, distribute shares, and track contributions with
               precision.
             </p>
@@ -170,7 +170,7 @@ export function BudgetManager({
 
           <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="group relative overflow-hidden inline-flex items-center justify-center rounded-full border border-emerald-500/30 px-6 py-2.5 text-sm font-semibold text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.15)] bg-emerald-950/20 hover:bg-emerald-500/10 hover:border-emerald-500/50 hover:shadow-[0_0_30px_rgba(16,185,129,0.25)] transition-all duration-300">
+              <Button className="group relative overflow-hidden inline-flex items-center justify-center rounded-full border border-emerald-500/30 px-6 py-2.5 text-sm font-semibold text-emerald-700 dark:text-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.15)] bg-emerald-100/50 dark:bg-emerald-950/20 hover:bg-emerald-200/50 dark:hover:bg-emerald-500/10 hover:border-emerald-500/50 hover:shadow-[0_0_30px_rgba(16,185,129,0.25)] transition-all duration-300">
                 <span className="relative z-10 flex items-center gap-2">
                   <Banknote className="w-4 h-4 transition-transform group-hover:scale-110" />
                   Record Payment
@@ -178,7 +178,7 @@ export function BudgetManager({
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md border border-white/10 bg-zinc-950/90 backdrop-blur-2xl shadow-[0_40px_80px_rgba(0,0,0,0.8)] text-white p-0 overflow-hidden gap-0 rounded-2xl ring-1 ring-white/5">
+            <DialogContent className="max-w-md border border-border bg-popover backdrop-blur-2xl shadow-[0_40px_80px_rgba(0,0,0,0.4)] text-foreground p-0 overflow-hidden gap-0 rounded-2xl ring-1 ring-border/5">
               <DialogHeader className="p-6 pb-2">
                 <DialogTitle className="text-lg font-semibold flex items-center gap-2">
                   <Banknote className="w-5 h-5 text-emerald-500" /> Record
@@ -188,7 +188,7 @@ export function BudgetManager({
               <form onSubmit={handleRecordPayment} className="space-y-6 pt-2">
                 <div className="px-6 space-y-5">
                   <div className="space-y-2">
-                    <Label className="text-[10px] uppercase tracking-widest text-white/40 font-bold ml-1">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">
                       Select Member
                     </Label>
                     <Select
@@ -197,18 +197,18 @@ export function BudgetManager({
                         setPaymentData({ ...paymentData, userId: val })
                       }
                     >
-                      <SelectTrigger className="border border-white/10 bg-white/5 rounded-xl text-sm h-11 backdrop-blur-xl focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all hover:bg-white/10">
+                      <SelectTrigger className="border border-input bg-secondary/50 rounded-xl text-sm h-11 backdrop-blur-xl focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all hover:bg-secondary">
                         <SelectValue placeholder="Choose member..." />
                       </SelectTrigger>
-                      <SelectContent className="border border-white/10 bg-zinc-900/95 backdrop-blur-2xl max-h-[220px] rounded-xl shadow-2xl">
+                      <SelectContent className="border border-border bg-popover backdrop-blur-2xl max-h-[220px] rounded-xl shadow-2xl">
                         {members.map((m) => (
                           <SelectItem
                             key={m.userId}
                             value={m.userId}
-                            className="focus:bg-emerald-500/10 focus:text-emerald-100 cursor-pointer"
+                            className="focus:bg-emerald-500/10 focus:text-emerald-600 dark:focus:text-emerald-100 cursor-pointer"
                           >
                             {m.name}{" "}
-                            <span className="text-white/30 text-xs ml-1">
+                            <span className="text-muted-foreground text-xs ml-1">
                               ({m.email})
                             </span>
                           </SelectItem>
@@ -218,11 +218,11 @@ export function BudgetManager({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[10px] uppercase tracking-widest text-white/40 font-bold ml-1">
+                    <Label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">
                       Amount (₹)
                     </Label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 font-serif italic text-lg">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-serif italic text-lg">
                         ₹
                       </span>
                       <Input
@@ -235,16 +235,16 @@ export function BudgetManager({
                           })
                         }
                         placeholder="0.00"
-                        className="h-11 pl-10 border border-white/10 bg-white/5 rounded-xl text-base font-medium backdrop-blur-xl focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all hover:bg-white/10 placeholder:text-white/20"
+                        className="h-11 pl-10 border border-input bg-secondary/50 rounded-xl text-base font-medium backdrop-blur-xl focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all hover:bg-secondary placeholder:text-muted-foreground/50"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 bg-white/[0.02] border-t border-white/5">
+                <div className="p-6 bg-secondary/20 border-t border-border/50">
                   <Button
                     type="submit"
-                    className="w-full h-11 rounded-xl text-sm font-bold bg-white text-black hover:bg-emerald-50 hover:text-emerald-950 transition-all shadow-xl shadow-white/5 hover:shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.99]"
+                    className="w-full h-11 rounded-xl text-sm font-bold bg-foreground text-background hover:bg-emerald-50 hover:text-emerald-950 transition-all shadow-xl shadow-black/5 dark:shadow-white/5 hover:shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.99]"
                     disabled={isRecordingPayment}
                   >
                     {isRecordingPayment ? (
@@ -262,17 +262,17 @@ export function BudgetManager({
         {/* Tabs */}
         <div className="relative mt-8">
           <Tabs defaultValue="equal" className="w-full">
-            <TabsList className="bg-black/40 border border-white/5 p-1 rounded-full text-xs font-medium backdrop-blur-xl inline-flex w-auto mb-6">
+            <TabsList className="bg-secondary/50 border border-border/50 p-1 rounded-full text-xs font-medium backdrop-blur-xl inline-flex w-auto mb-6">
               <TabsTrigger
                 value="equal"
-                className="rounded-full data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 transition-all flex items-center justify-center gap-2 px-6 py-2"
+                className="rounded-full data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground transition-all flex items-center justify-center gap-2 px-6 py-2"
               >
                 <Users className="w-3.5 h-3.5" />
                 Divide Equally
               </TabsTrigger>
               <TabsTrigger
                 value="individual"
-                className="rounded-full data-[state=active]:bg-white/10 data-[state=active]:text-white text-white/50 transition-all flex items-center justify-center gap-2 px-6 py-2"
+                className="rounded-full data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground transition-all flex items-center justify-center gap-2 px-6 py-2"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 Individual Assignment
@@ -284,19 +284,19 @@ export function BudgetManager({
               value="equal"
               className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500"
             >
-              <div className="relative rounded-3xl border border-white/10 bg-white/[0.02] p-8 overflow-hidden">
+              <div className="relative rounded-3xl border border-border/50 bg-card/20 p-8 overflow-hidden">
                 {/* subtle diagonal sheen */}
-                <div className="pointer-events-none absolute -inset-y-20 inset-x-20 opacity-20 bg-gradient-to-br from-white/10 via-transparent to-transparent group-hover:opacity-40 transition-opacity duration-700" />
+                <div className="pointer-events-none absolute -inset-y-20 inset-x-20 opacity-20 bg-gradient-to-br from-background/10 via-transparent to-transparent group-hover:opacity-40 transition-opacity duration-700" />
 
                 <div className="relative space-y-6">
                   <div className="space-y-2 max-w-2xl">
-                    <h4 className="text-xl font-semibold text-white">
+                    <h4 className="text-xl font-semibold text-foreground">
                       Set Total Budget
                     </h4>
-                    <p className="text-sm text-white/50 leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       Define the overall target amount. This value will be
                       distributed equally across{" "}
-                      <span className="font-semibold text-white/80 border-b border-white/20 pb-0.5">
+                      <span className="font-semibold text-foreground border-b border-border pb-0.5">
                         {members.length || 0} members
                       </span>
                       .
@@ -305,7 +305,7 @@ export function BudgetManager({
 
                   <div className="flex flex-col md:flex-row gap-6 items-end">
                     <div className="space-y-2.5 flex-1 w-full relative">
-                      <label className="text-[10px] uppercase tracking-widest text-emerald-400/60 font-bold ml-1">
+                      <label className="text-[10px] uppercase tracking-widest text-emerald-600/60 dark:text-emerald-400/60 font-bold ml-1">
                         Total Target Amount (₹)
                       </label>
                       <div className="relative group/input">
@@ -314,7 +314,7 @@ export function BudgetManager({
                           type="number"
                           value={budget}
                           onChange={(e) => setBudget(Number(e.target.value))}
-                          className="h-14 border border-white/10 bg-black/20 rounded-2xl text-2xl font-bold tracking-tight backdrop-blur-xl px-4 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30 font-mono"
+                          className="h-14 border border-input bg-secondary/30 rounded-2xl text-2xl font-bold tracking-tight backdrop-blur-xl px-4 focus:ring-1 focus:ring-emerald-500/30 focus:border-emerald-500/30 font-mono"
                         />
                       </div>
                     </div>
@@ -322,7 +322,7 @@ export function BudgetManager({
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
-                          className="w-full md:w-auto inline-flex items-center justify-center rounded-2xl bg-white text-black font-bold text-sm px-8 h-14 hover:bg-emerald-50 hover:text-emerald-950 transition-all shadow-[0_0_25px_rgba(255,255,255,0.1)] hover:shadow-[0_0_35px_rgba(16,185,129,0.2)] hover:-translate-y-0.5"
+                          className="w-full md:w-auto inline-flex items-center justify-center rounded-2xl bg-foreground text-background font-bold text-sm px-8 h-14 hover:bg-emerald-500 hover:text-white transition-all shadow-[0_0_25px_rgba(0,0,0,0.1)] hover:shadow-[0_0_35px_rgba(16,185,129,0.2)] hover:-translate-y-0.5"
                           disabled={isDistributing || members.length === 0}
                         >
                           {isDistributing ? (
@@ -333,27 +333,27 @@ export function BudgetManager({
                           Distribute Equally
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="max-w-md border border-white/10 bg-zinc-950/90 backdrop-blur-2xl shadow-2xl text-white rounded-2xl">
+                      <AlertDialogContent className="max-w-md border border-border bg-popover backdrop-blur-2xl shadow-2xl text-foreground rounded-2xl">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="text-xl font-bold">
                             Confirm equal distribution?
                           </AlertDialogTitle>
-                          <AlertDialogDescription className="text-base text-white/60">
+                          <AlertDialogDescription className="text-base text-muted-foreground">
                             This will overwrite all existing individual
                             assignments. Each member will be assigned
                             approximately{" "}
-                            <span className="font-bold text-white bg-white/10 px-2 py-0.5 rounded-md">
+                            <span className="font-bold text-foreground bg-secondary px-2 py-0.5 rounded-md">
                               ₹{Math.ceil(budget / (members.length || 1))}
                             </span>
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter className="gap-2 mt-4">
-                          <AlertDialogCancel className="rounded-xl border border-white/10 bg-transparent text-white text-sm px-5 h-10 hover:bg-white/5 hover:text-white mt-0">
+                          <AlertDialogCancel className="rounded-xl border border-input bg-transparent text-foreground text-sm px-5 h-10 hover:bg-secondary hover:text-foreground mt-0">
                             Cancel
                           </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={handleDistributeEqually}
-                            className="rounded-xl bg-white text-black text-sm font-bold px-6 h-10 hover:bg-white/90"
+                            className="rounded-xl bg-foreground text-background text-sm font-bold px-6 h-10 hover:bg-foreground/90"
                           >
                             Confirm
                           </AlertDialogAction>
@@ -363,21 +363,21 @@ export function BudgetManager({
                   </div>
 
                   {members.length > 0 && (
-                    <div className="relative mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.03] px-6 py-4 flex items-center justify-between group/info hover:bg-emerald-500/[0.05] transition-colors">
+                    <div className="relative mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-6 py-4 flex items-center justify-between group/info hover:bg-emerald-500/20 transition-colors">
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover/info:border-emerald-500/40 transition-colors">
-                          <Users className="w-5 h-5 text-emerald-400" />
+                        <div className="h-10 w-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20 group-hover/info:border-emerald-500/40 transition-colors">
+                          <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div>
-                          <p className="text-xs text-emerald-300/60 uppercase tracking-wider font-semibold mb-0.5">
+                          <p className="text-xs text-emerald-600/60 dark:text-emerald-300/60 uppercase tracking-wider font-semibold mb-0.5">
                             Per Person Share
                           </p>
-                          <p className="text-lg font-bold text-emerald-100">
+                          <p className="text-lg font-bold text-emerald-700 dark:text-emerald-100">
                             ₹{Math.ceil(budget / members.length)}
                           </p>
                         </div>
                       </div>
-                      <div className="hidden sm:block text-xs text-emerald-400/40 text-right">
+                      <div className="hidden sm:block text-xs text-emerald-600/40 dark:text-emerald-400/40 text-right">
                         Does not include
                         <br />
                         offline payments
@@ -393,16 +393,16 @@ export function BudgetManager({
               value="individual"
               className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-500"
             >
-              <div className="relative rounded-3xl border border-white/10 bg-white/[0.02] p-1 overflow-hidden">
+              <div className="relative rounded-3xl border border-border/50 bg-card/20 p-1 overflow-hidden">
                 {/* header sheen */}
-                <div className="pointer-events-none absolute inset-x-6 -top-8 h-24 bg-gradient-to-b from-white/5 to-transparent opacity-60" />
+                <div className="pointer-events-none absolute inset-x-6 -top-8 h-24 bg-gradient-to-b from-background/5 to-transparent opacity-60" />
 
                 <div className="p-6 pb-2 relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div className="space-y-1">
-                    <h4 className="text-lg font-bold text-white">
+                    <h4 className="text-lg font-bold text-foreground">
                       Individual Assignments
                     </h4>
-                    <p className="text-sm text-white/50">
+                    <p className="text-sm text-muted-foreground">
                       Fine-tune individual shares.
                     </p>
                   </div>
@@ -410,7 +410,7 @@ export function BudgetManager({
                     onClick={handleSaveBudget}
                     disabled={isSavingBudget}
                     variant="outline"
-                    className="w-full md:w-auto inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white text-xs font-semibold px-4 h-9 hover:bg-white/10 hover:border-white/20 transition-all"
+                    className="w-full md:w-auto inline-flex items-center justify-center rounded-xl border border-border/50 bg-secondary/50 text-foreground text-xs font-semibold px-4 h-9 hover:bg-secondary hover:border-border transition-all"
                   >
                     {isSavingBudget ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />
@@ -424,7 +424,7 @@ export function BudgetManager({
                 {/* Members table */}
                 <div className="relative">
                   {/* Header row (desktop) */}
-                  <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] border-b border-white/5">
+                  <div className="hidden md:grid grid-cols-12 gap-4 px-8 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] border-b border-border/10">
                     <div className="col-span-6">Member</div>
                     <div className="col-span-4">Assigned Amount</div>
                     <div className="col-span-2 text-right">Status</div>
@@ -434,18 +434,18 @@ export function BudgetManager({
                     {members.map((member) => (
                       <div
                         key={member.userId}
-                        className="flex flex-col md:grid md:grid-cols-12 gap-4 items-start md:items-center px-4 py-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all group/row"
+                        className="flex flex-col md:grid md:grid-cols-12 gap-4 items-start md:items-center px-4 py-3 rounded-xl hover:bg-secondary/30 border border-transparent hover:border-border/10 transition-all group/row"
                       >
                         {/* Member info */}
                         <div className="w-full md:col-span-6 flex items-center gap-4">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center shrink-0 group-hover/row:scale-110 transition-transform">
-                            <User className="w-4 h-4 text-white/70" />
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-secondary to-transparent border border-border/10 flex items-center justify-center shrink-0 group-hover/row:scale-110 transition-transform">
+                            <User className="w-4 h-4 text-muted-foreground" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-white/90 truncate group-hover/row:text-white transition-colors">
+                            <p className="text-sm font-semibold text-foreground truncate group-hover/row:text-primary transition-colors">
                               {member.name || "Unknown"}
                             </p>
-                            <p className="text-xs text-white/40 truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {member.email}
                             </p>
                           </div>
@@ -453,11 +453,11 @@ export function BudgetManager({
 
                         {/* Amount input */}
                         <div className="w-full md:col-span-4">
-                          <label className="md:hidden text-[10px] uppercase tracking-[0.2em] text-white/30 mb-1.5 block font-bold">
+                          <label className="md:hidden text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1.5 block font-bold">
                             Assigned Share
                           </label>
                           <div className="relative group/input">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-xs">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 text-xs">
                               ₹
                             </span>
                             <Input
@@ -469,7 +469,7 @@ export function BudgetManager({
                                   handleAssignAmount(member.userId, val);
                                 }
                               }}
-                              className="h-9 pl-7 border border-white/10 bg-black/20 rounded-lg text-sm font-medium backdrop-blur-xl focus:bg-black/40 transition-colors"
+                              className="h-9 pl-7 border border-input bg-secondary/30 rounded-lg text-sm font-medium backdrop-blur-xl focus:bg-secondary/60 transition-colors"
                             />
                           </div>
                         </div>
@@ -477,12 +477,12 @@ export function BudgetManager({
                         {/* Status / Loader */}
                         <div className="w-full md:col-span-2 flex justify-end min-h-[20px]">
                           {savingMemberId === member.userId ? (
-                            <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-emerald-400 font-bold bg-emerald-500/10 px-2 py-1 rounded-full">
+                            <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-emerald-500 font-bold bg-emerald-500/10 px-2 py-1 rounded-full">
                               <Loader2 className="w-3 h-3 animate-spin" />
                               Saving
                             </div>
                           ) : (
-                            <div className="opacity-0 group-hover/row:opacity-100 transition-opacity text-[10px] text-white/20 font-medium px-2 py-1">
+                            <div className="opacity-0 group-hover/row:opacity-100 transition-opacity text-[10px] text-muted-foreground font-medium px-2 py-1">
                               Edited
                             </div>
                           )}
@@ -492,8 +492,8 @@ export function BudgetManager({
                   </div>
 
                   {members.length === 0 && (
-                    <div className="py-20 text-center flex flex-col items-center justify-center text-white/30 gap-3">
-                      <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center">
+                    <div className="py-20 text-center flex flex-col items-center justify-center text-muted-foreground gap-3">
+                      <div className="h-16 w-16 rounded-full bg-secondary/20 flex items-center justify-center">
                         <Users className="w-8 h-8 opacity-50" />
                       </div>
                       <p className="text-sm max-w-[200px]">

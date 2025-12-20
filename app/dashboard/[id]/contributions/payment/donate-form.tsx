@@ -24,7 +24,9 @@ import {
   TrendingUp,
   History,
   Banknote,
+  Lock,
 } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
@@ -45,6 +47,7 @@ interface DonateFormProps {
   assignedAmount: number;
   paidAmount: number;
   publicTransactions: any[];
+  initialSettings?: any;
 }
 
 type PaymentStep = "amount" | "method" | "confirm";
@@ -55,6 +58,7 @@ export function DonateForm({
   assignedAmount,
   paidAmount,
   publicTransactions,
+  initialSettings,
 }: DonateFormProps) {
   const [step, setStep] = useState<PaymentStep>("amount");
   const [amount, setAmount] = useState(
@@ -65,6 +69,16 @@ export function DonateForm({
   const [status, setStatus] = useState<"idle" | "processing" | "verifying">(
     "idle"
   );
+
+  // Real-time Settings State
+  const [settings, setSettings] = useState(
+    initialSettings || {
+      accepting_payments: true,
+      is_maintenance_mode: false,
+      payment_config: { upi: true, cash: true, upi_id: "" },
+    }
+  );
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -82,6 +96,40 @@ export function DonateForm({
     table: "contributions",
     filter: `farewell_id=eq.${farewellId}`,
   });
+
+  // Additional Realtime Listener for Settings (Admin Changes)
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("donate-settings-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "farewells",
+          filter: `id=eq.${farewellId}`,
+        },
+        (payload) => {
+          const newData = payload.new;
+          if (newData) {
+            setSettings((prev: any) => ({
+              ...prev,
+              accepting_payments: newData.accepting_payments,
+              is_maintenance_mode: newData.is_maintenance_mode,
+              payment_config: newData.payment_config,
+            }));
+            toast.info("Collection settings updated by admin");
+            router.refresh(); // Refresh page data too
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [farewellId, router]);
 
   const handleNextStep = () => {
     if (step === "amount") {
@@ -260,6 +308,45 @@ export function DonateForm({
     });
   }
 
+  // --- Maintenance / Closed Check ---
+  if (settings.is_maintenance_mode) {
+    return (
+      <div className="w-full h-full flex items-center justify-center min-h-[500px]">
+        <GlassCard className="p-8 max-w-md text-center border-amber-500/20 bg-amber-500/10 dark:bg-amber-500/5">
+          <div className="w-16 h-16 rounded-full bg-amber-500/20 dark:bg-amber-500/10 flex items-center justify-center mx-auto mb-4 text-amber-600 dark:text-amber-500">
+            <Lock className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Under Maintenance
+          </h2>
+          <p className="text-muted-foreground">
+            Contributions are temporarily paused for maintenance. Please check
+            back later.
+          </p>
+        </GlassCard>
+      </div>
+    );
+  }
+
+  if (!settings.accepting_payments) {
+    return (
+      <div className="w-full h-full flex items-center justify-center min-h-[500px]">
+        <GlassCard className="p-8 max-w-md text-center border-red-500/20 bg-red-500/10 dark:bg-red-500/5">
+          <div className="w-16 h-16 rounded-full bg-red-500/20 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-500">
+            <AlertCircle className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Contributions Closed
+          </h2>
+          <p className="text-muted-foreground">
+            New contributions are no longer being accepted for this farewell.
+            Thank you for your support!
+          </p>
+        </GlassCard>
+      </div>
+    );
+  }
+
   const steps = [
     { id: "amount", label: "Amount" },
     { id: "method", label: "Method" },
@@ -321,14 +408,14 @@ export function DonateForm({
           </div>
         </div>
 
-        <GlassCard className="p-0 relative overflow-hidden border-white/10 bg-[#0a0a0a]/60 backdrop-blur-2xl min-h-[500px] flex flex-col">
+        <GlassCard className="p-0 relative overflow-hidden border-zinc-200 dark:border-white/10 bg-white/80 dark:bg-[#0a0a0a]/60 backdrop-blur-2xl min-h-[500px] flex flex-col">
           {/* Animated Glows */}
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none" />
 
           {/* Header */}
-          <div className="p-8 border-b border-white/5 bg-white/[0.02]">
-            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+          <div className="p-8 border-b border-zinc-100 dark:border-white/5 bg-white/[0.02]">
+            <h2 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-3">
               {step === "amount" && (
                 <>
                   <Sparkles className="w-6 h-6 text-amber-400" /> Choose
@@ -347,7 +434,7 @@ export function DonateForm({
                 </>
               )}
             </h2>
-            <p className="text-white/40 text-sm">
+            <p className="text-muted-foreground text-sm">
               {step === "amount" &&
                 "Every contribution counts towards making this farewell memorable."}
               {step === "method" &&
@@ -362,14 +449,14 @@ export function DonateForm({
             {step === "amount" && (
               <div className="space-y-8 animate-in slide-in-from-right-8 fade-in duration-500">
                 <div className="relative group max-w-sm mx-auto">
-                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-white/30 font-bold text-3xl group-focus-within:text-white transition-colors">
+                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-3xl group-focus-within:text-foreground transition-colors">
                     ₹
                   </span>
                   <Input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="pl-14 h-24 bg-black/40 border-white/10 text-5xl font-bold text-white placeholder:text-white/10 focus:border-white/30 transition-all text-center rounded-3xl"
+                    className="pl-14 h-24 bg-zinc-100 dark:bg-black/40 border-zinc-200 dark:border-white/10 text-5xl font-bold text-foreground placeholder:text-muted-foreground focus:border-emerald-500/50 transition-all text-center rounded-3xl"
                     placeholder="0"
                     min="1"
                     autoFocus
@@ -381,10 +468,10 @@ export function DonateForm({
                     <button
                       key={val}
                       onClick={() => setAmount(val.toString())}
-                      className="relative px-6 py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all group overflow-hidden"
+                      className="relative px-6 py-4 rounded-2xl bg-zinc-50 dark:bg-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 border border-zinc-200 dark:border-white/5 hover:border-emerald-500/50 dark:hover:border-white/20 transition-all group overflow-hidden"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                      <span className="text-lg font-bold text-white">
+                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 dark:via-white/5 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                      <span className="text-lg font-bold text-foreground">
                         ₹{val}
                       </span>
                     </button>
@@ -401,20 +488,20 @@ export function DonateForm({
                     }
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                      <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-500 dark:text-indigo-400">
                         <TrendingUp className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="text-xs text-indigo-200 font-bold uppercase tracking-wider">
+                        <p className="text-xs text-indigo-700 dark:text-indigo-200 font-bold uppercase tracking-wider">
                           Assigned Goal
                         </p>
-                        <p className="text-sm text-indigo-200/60">
+                        <p className="text-sm text-indigo-600/60 dark:text-indigo-200/60">
                           Tap to pay remaining
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-white">
+                      <p className="text-xl font-bold text-foreground">
                         ₹{Math.max(0, assignedAmount - paidAmount)}
                       </p>
                     </div>
@@ -427,89 +514,98 @@ export function DonateForm({
             {step === "method" && (
               <div className="space-y-6 animate-in slide-in-from-right-8 fade-in duration-500">
                 <div className="grid gap-4">
-                  <button
-                    onClick={() => setMethod("upi")}
-                    className={cn(
-                      "flex items-center gap-6 p-6 rounded-3xl border-2 transition-all text-left group hover:scale-[1.01] relative overflow-hidden",
-                      method === "upi"
-                        ? "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.2)]"
-                        : "bg-black/40 border-white/5 hover:bg-white/5 text-white"
-                    )}
-                  >
-                    <div
+                  {/* Razorpay Option - Explicitly enabled or default */}
+                  {settings.payment_config?.upi !== false && (
+                    <button
+                      onClick={() => setMethod("upi")}
                       className={cn(
-                        "w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0",
+                        "flex items-center gap-6 p-6 rounded-3xl border-2 transition-all text-left group hover:scale-[1.01] relative overflow-hidden",
                         method === "upi"
-                          ? "bg-black text-white"
-                          : "bg-white/10 text-white/60"
+                          ? "bg-white dark:bg-zinc-100 text-black border-zinc-200 dark:border-white shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                          : "bg-zinc-50 dark:bg-black/40 border-zinc-200 dark:border-white/5 hover:bg-zinc-100 dark:hover:bg-white/5 text-foreground"
                       )}
                     >
-                      <CreditCard className="w-8 h-8" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold mb-1">
-                        Pay Online (Razorpay)
-                      </h3>
-                      <p
+                      <div
                         className={cn(
-                          "text-sm",
-                          method === "upi" ? "text-black/60" : "text-white/40"
+                          "w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0",
+                          method === "upi"
+                            ? "bg-black text-white"
+                            : "bg-white/10 text-white/60"
                         )}
                       >
-                        Instant verification. UPI Apps, Cards, Netbanking. Fast
-                        & Secure.
-                      </p>
-                    </div>
-                    {method === "upi" && (
-                      <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                        <CheckCircle2
-                          className="w-8 h-8 text-black"
-                          fill="white"
-                        />
+                        <CreditCard className="w-8 h-8" />
                       </div>
-                    )}
-                  </button>
+                      <div>
+                        <h3 className="text-xl font-bold mb-1 text-foreground">
+                          Pay Online (Razorpay)
+                        </h3>
+                        <p
+                          className={cn(
+                            "text-sm",
+                            method === "upi"
+                              ? "text-zinc-600 dark:text-black/60"
+                              : "text-muted-foreground"
+                          )}
+                        >
+                          Instant verification. UPI Apps, Cards, Netbanking.
+                          Fast & Secure.
+                        </p>
+                      </div>
+                      {method === "upi" && (
+                        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                          <CheckCircle2
+                            className="w-8 h-8 text-black"
+                            fill="white"
+                          />
+                        </div>
+                      )}
+                    </button>
+                  )}
 
-                  <button
-                    onClick={() => setMethod("manual_upi")}
-                    className={cn(
-                      "flex items-center gap-6 p-6 rounded-3xl border-2 transition-all text-left group hover:scale-[1.01] relative overflow-hidden",
-                      method === "manual_upi"
-                        ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]"
-                        : "bg-black/40 border-white/5 hover:bg-white/5 text-white"
-                    )}
-                  >
-                    <div
+                  {/* Manual UPI / Cash Option */}
+                  {settings.payment_config?.cash !== false && (
+                    <button
+                      onClick={() => setMethod("manual_upi")}
                       className={cn(
-                        "w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0",
+                        "flex items-center gap-6 p-6 rounded-3xl border-2 transition-all text-left group hover:scale-[1.01] relative overflow-hidden",
                         method === "manual_upi"
-                          ? "bg-white/20 text-white"
-                          : "bg-white/10 text-white/60"
+                          ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]"
+                          : "bg-zinc-50 dark:bg-black/40 border-zinc-200 dark:border-white/5 hover:bg-zinc-100 dark:hover:bg-white/5 text-foreground"
                       )}
                     >
-                      <Smartphone className="w-8 h-8" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold mb-1">
-                        Direct UPI / Scan
-                      </h3>
-                      <p
+                      <div
                         className={cn(
-                          "text-sm",
+                          "w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0",
                           method === "manual_upi"
-                            ? "text-white/80"
-                            : "text-white/40"
+                            ? "bg-white/20 text-white"
+                            : "bg-zinc-100 dark:bg-white/10 text-zinc-500 dark:text-white/60"
                         )}
                       >
-                        Scan QR manually via GPay/PhonePe and upload a receipt.
-                      </p>
-                    </div>
-                    {method === "manual_upi" && (
-                      <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                        <CheckCircle2 className="w-8 h-8 text-white" />
+                        <Smartphone className="w-8 h-8" />
                       </div>
-                    )}
-                  </button>
+                      <div>
+                        <h3 className="text-xl font-bold mb-1 text-foreground">
+                          Direct UPI / Scan
+                        </h3>
+                        <p
+                          className={cn(
+                            "text-sm",
+                            method === "manual_upi"
+                              ? "text-white/80"
+                              : "text-muted-foreground"
+                          )}
+                        >
+                          Scan QR manually via GPay/PhonePe and upload a
+                          receipt.
+                        </p>
+                      </div>
+                      {method === "manual_upi" && (
+                        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                          <CheckCircle2 className="w-8 h-8 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -520,12 +616,12 @@ export function DonateForm({
                 {method === "manual_upi" ? (
                   <div className="flex flex-col md:flex-row gap-8">
                     <div className="flex-1 space-y-6">
-                      <div className="p-6 bg-white rounded-3xl flex flex-col items-center justify-center text-center shadow-xl">
+                      <div className="p-6 bg-white dark:bg-zinc-100 rounded-3xl flex flex-col items-center justify-center text-center shadow-xl">
                         <div className="bg-black/5 p-4 rounded-2xl mb-4">
                           <QrCode className="w-32 h-32 text-black" />
                         </div>
                         <p className="text-black font-mono font-bold text-lg bg-black/10 px-4 py-2 rounded-lg break-all">
-                          scanner@ybl
+                          {settings.payment_config?.upi_id || "scanner@ybl"}
                         </p>
                         <p className="text-black/40 text-xs mt-3 uppercase font-bold tracking-widest">
                           Scan with any UPI App
@@ -535,26 +631,26 @@ export function DonateForm({
 
                     <div className="flex-1 space-y-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                           Transaction ID
                         </label>
                         <Input
                           placeholder="Enter 12-digit UTR"
                           value={transactionId}
                           onChange={(e) => setTransactionId(e.target.value)}
-                          className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-mono"
+                          className="bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 h-12 rounded-xl text-foreground font-mono"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-white/60 uppercase tracking-wider">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                           Proof of Payment
                         </label>
                         <div
                           onClick={() => fileInputRef.current?.click()}
-                          className="border border-dashed border-white/20 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors group h-24"
+                          className="border border-dashed border-zinc-300 dark:border-white/20 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors group h-24"
                         >
                           {screenshot ? (
-                            <div className="flex items-center gap-2 text-emerald-400">
+                            <div className="flex items-center gap-2 text-emerald-500">
                               <CheckCircle2 className="w-5 h-5" />
                               <span className="text-sm font-medium">
                                 {screenshot.name}
@@ -562,8 +658,8 @@ export function DonateForm({
                             </div>
                           ) : (
                             <div className="flex flex-col items-center gap-2">
-                              <Upload className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
-                              <span className="text-xs text-white/40">
+                              <Upload className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                              <span className="text-xs text-muted-foreground">
                                 Upload Screenshot
                               </span>
                             </div>
@@ -583,25 +679,27 @@ export function DonateForm({
                     </div>
                   </div>
                 ) : (
-                  <div className="p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
-                    <div className="flex justify-between items-center pb-6 border-b border-white/5">
-                      <span className="text-white/60 text-lg">
+                  <div className="p-8 rounded-3xl bg-zinc-50 dark:bg-white/5 border border-zinc-200 dark:border-white/10 space-y-6">
+                    <div className="flex justify-between items-center pb-6 border-b border-zinc-200 dark:border-white/5">
+                      <span className="text-muted-foreground text-lg">
                         Total Amount
                       </span>
-                      <span className="text-4xl font-bold text-white">
+                      <span className="text-4xl font-bold text-foreground">
                         ₹{Number(amount).toLocaleString()}
                       </span>
                     </div>
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-white/40">Method</span>
-                        <span className="text-white font-medium flex items-center gap-2">
+                        <span className="text-muted-foreground">Method</span>
+                        <span className="text-foreground font-medium flex items-center gap-2">
                           <CreditCard className="w-4 h-4" /> Razorpay Secure
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-white/40">Processing Fee</span>
-                        <span className="text-emerald-400 font-medium">
+                        <span className="text-muted-foreground">
+                          Processing Fee
+                        </span>
+                        <span className="text-emerald-500 font-medium">
                           ₹0 (Waived)
                         </span>
                       </div>
@@ -613,12 +711,12 @@ export function DonateForm({
           </div>
 
           {/* Footer Actions */}
-          <div className="p-8 border-t border-white/5 bg-black/20 flex gap-4">
+          <div className="p-8 border-t border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-black/20 flex gap-4">
             {step !== "amount" && (
               <Button
                 variant="outline"
                 onClick={handleBackStep}
-                className="h-14 px-8 rounded-2xl border-white/10 hover:bg-white/5 bg-transparent text-white"
+                className="h-14 px-8 rounded-2xl border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-white/5 bg-transparent text-foreground"
               >
                 <ArrowLeft className="w-5 h-5 mr-2" /> Back
               </Button>
@@ -632,7 +730,7 @@ export function DonateForm({
                   "flex-1 h-14 rounded-2xl text-lg font-bold shadow-lg transition-all transform active:scale-95",
                   method === "manual_upi"
                     ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20"
-                    : "bg-white hover:bg-white/90 text-black shadow-white/20"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground shadow-black/10"
                 )}
               >
                 {isPending ? (
@@ -646,7 +744,7 @@ export function DonateForm({
             ) : (
               <Button
                 onClick={handleNextStep}
-                className="flex-1 h-14 rounded-2xl bg-white text-black text-lg font-bold hover:bg-white/90 shadow-lg shadow-white/10 transition-all transform active:scale-95"
+                className="flex-1 h-14 rounded-2xl bg-primary text-primary-foreground text-lg font-bold hover:bg-primary/90 shadow-lg shadow-black/10 transition-all transform active:scale-95"
               >
                 Continue <ChevronRight className="w-5 h-5 ml-1" />
               </Button>
@@ -657,18 +755,18 @@ export function DonateForm({
 
       {/* RIGHT SIDE: Impact Board (Span 5) */}
       <div className="lg:col-span-5 h-full space-y-6">
-        <GlassCard className="h-full relative overflow-hidden border-white/10 bg-gradient-to-b from-[#0a0a0a]/80 to-[#0a0a0a]/40 backdrop-blur-3xl rounded-3xl flex flex-col">
-          <div className="p-8 border-b border-white/5">
+        <GlassCard className="h-full relative overflow-hidden border-zinc-200 dark:border-white/10 bg-gradient-to-b from-white to-zinc-50 dark:from-[#0a0a0a]/80 dark:to-[#0a0a0a]/40 backdrop-blur-3xl rounded-3xl flex flex-col">
+          <div className="p-8 border-b border-zinc-100 dark:border-white/5">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <History className="w-5 h-5 text-emerald-400" /> Live Feed
+              <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <History className="w-5 h-5 text-emerald-500" /> Live Feed
               </h3>
               <span className="flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
             </div>
-            <p className="text-white/40 text-xs uppercase tracking-widest font-bold">
+            <p className="text-muted-foreground text-xs uppercase tracking-widest font-bold">
               Recent contributions from the community
             </p>
           </div>
@@ -685,7 +783,7 @@ export function DonateForm({
                 return (
                   <div
                     key={i}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors group animate-in slide-in-from-bottom-4 duration-500"
+                    className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-100 dark:border-white/5 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors group animate-in slide-in-from-bottom-4 duration-500"
                     style={{ animationDelay: `${i * 100}ms` }}
                   >
                     <div className="flex items-center gap-4">
@@ -693,15 +791,15 @@ export function DonateForm({
                         <img
                           src={avatar}
                           alt={name}
-                          className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+                          className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-white/10"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-white/10">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm ring-2 ring-zinc-200 dark:ring-white/10">
                           {name.charAt(0)}
                         </div>
                       )}
                       <div>
-                        <p className="text-white font-bold text-sm group-hover:text-emerald-300 transition-colors">
+                        <p className="text-foreground font-bold text-sm group-hover:text-emerald-500 dark:group-hover:text-emerald-300 transition-colors">
                           {name}
                         </p>
                         <p className="text-[10px] text-white/40 font-medium uppercase tracking-wider">

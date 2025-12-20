@@ -62,7 +62,7 @@ export function RealtimeDashboard({
     useState<Announcement[]>(initialAnnouncements);
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [transactions, setTransactions] = useState<any[]>(initialTransactions);
-  console.log("Transactions: ", transactions);
+  // console.log("Transactions: ", transactions);
   const supabase = createClient();
   const router = useRouter();
 

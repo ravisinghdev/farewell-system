@@ -25,8 +25,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  createDownloadAction,
-  deleteDownloadAction,
+  createResourceAction,
+  deleteResourceAction,
 } from "@/app/actions/resource-actions";
 import { checkIsAdmin } from "@/lib/auth/roles";
 import { useFarewell } from "@/components/providers/farewell-provider";
@@ -98,11 +98,14 @@ export function DownloadsList({
     const file_size = formData.get("file_size") as string;
     const category = "General";
 
-    const result = await createDownloadAction(farewellId, {
+    const result = await createResourceAction(farewellId, {
+      type: "download",
       title,
       file_url,
-      file_size,
+      description: file_size, // Mapping file_size to description
+      file_path: "",
       category,
+      metadata: { file_size },
     });
 
     setIsSubmitting(false);
@@ -117,7 +120,7 @@ export function DownloadsList({
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this file?")) return;
-    const result = await deleteDownloadAction(id, farewellId);
+    const result = await deleteResourceAction(id, farewellId, "download");
     if (result.error) {
       toast.error(result.error);
     } else {

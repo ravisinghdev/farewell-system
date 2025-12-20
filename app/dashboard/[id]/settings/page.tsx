@@ -6,5 +6,5 @@ export default async function SettingsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  redirect(`/dashboard/${id}/settings/profile`);
+  redirect(`/dashboard/${id}/settings/general`);
 }

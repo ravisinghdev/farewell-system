@@ -32,7 +32,7 @@ export default async function AlbumPage({ params }: AlbumPageProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 h-full w-full p-4 md:p-8">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href={`/dashboard/${id}/memories`}>

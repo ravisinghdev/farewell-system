@@ -88,7 +88,7 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-4">
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-muted-foreground hover:text-primary transition-colors rounded-full hover:bg-accent"
+                className="cursor-pointer p-2 text-muted-foreground hover:text-primary transition-colors rounded-full hover:bg-accent"
               >
                 <Search className="w-5 h-5" />
               </button>
@@ -128,7 +128,7 @@ export default function Navbar() {
             <div className="md:hidden flex items-center gap-4">
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-muted-foreground hover:text-primary transition-colors"
+                className="cursor-pointer p-2 text-muted-foreground hover:text-primary transition-colors"
               >
                 <Search className="w-5 h-5" />
               </button>

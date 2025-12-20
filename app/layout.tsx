@@ -82,7 +82,7 @@ export default function RootLayout({
           {children}
           <Toaster />
           <Analytics />
-          <GeminiAssistant />
+          {/* <GeminiAssistant /> */}
         </Provider>
       </body>
     </html>

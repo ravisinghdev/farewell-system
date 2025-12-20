@@ -70,7 +70,7 @@ export async function getFarewellBudgetDetailsAction(farewellId: string) {
 
   const { data: farewell, error: fError } = await supabase
     .from("farewells")
-    .select("budget_goal")
+    .select("budget_goal, target_amount")
     .eq("id", farewellId)
     .single();
 
@@ -84,7 +84,7 @@ export async function getFarewellBudgetDetailsAction(farewellId: string) {
   if (mError) return { error: "Failed to fetch members" };
 
   return {
-    budgetGoal: farewell.budget_goal,
+    budgetGoal: farewell.budget_goal || farewell.target_amount,
     members: members.map((m: any) => ({
       userId: m.user_id,
       name: Array.isArray(m.users) ? m.users[0]?.full_name : m.users?.full_name,

@@ -14,7 +14,7 @@ export function GradientCard({
     gold: "bg-[linear-gradient(135deg,#FCD34D_0%,#F59E0B_100%)] text-black border-none",
     purple:
       "bg-[linear-gradient(135deg,#C084FC_0%,#7C3AED_100%)] text-white border-none",
-    default: "bg-card text-card-foreground border",
+    default: "bg-card text-card-foreground border border-border shadow-sm",
   };
 
   return (

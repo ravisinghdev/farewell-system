@@ -340,10 +340,10 @@ export function ContributionDashboard({
       {/* Actions Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground mb-2">
             Financial Dashboard
           </h2>
-          <p className="text-white/50 text-sm">
+          <p className="text-muted-foreground text-sm">
             Real-time overview of all farewell contributions.
           </p>
         </div>
@@ -353,20 +353,20 @@ export function ContributionDashboard({
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-full bg-white/5 border-white/10 text-white hover:bg-white/10 w-11 h-11"
+                className="rounded-full bg-secondary/50 border-border text-foreground hover:bg-secondary w-11 h-11"
               >
                 <MoreHorizontal className="w-5 h-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56 bg-[#0a0a0a] border-white/10 text-white backdrop-blur-xl rounded-xl p-2"
+              className="w-56 bg-popover border-border text-popover-foreground backdrop-blur-xl rounded-xl p-2"
             >
-              <DropdownMenuLabel className="text-xs uppercase tracking-widest text-white/40 mb-2">
+              <DropdownMenuLabel className="text-xs uppercase tracking-widest text-muted-foreground mb-2">
                 Options
               </DropdownMenuLabel>
               <DropdownMenuItem
-                className="focus:bg-white/10 focus:text-white cursor-pointer rounded-lg px-3 py-2 text-sm"
+                className="focus:bg-secondary focus:text-foreground cursor-pointer rounded-lg px-3 py-2 text-sm"
                 onClick={handleShare}
               >
                 <Share2 className="w-4 h-4 mr-2" /> Share View
@@ -376,7 +376,7 @@ export function ContributionDashboard({
 
           <Button
             asChild
-            className="rounded-full bg-white/10 border border-white/5 text-white hover:bg-white/20 font-medium px-6 h-11 transition-all"
+            className="rounded-full bg-secondary border border-border text-foreground hover:bg-secondary/80 font-medium px-6 h-11 transition-all"
           >
             <Link
               href={`/dashboard/${farewellId}/contributions/payment/methods`}
@@ -387,7 +387,7 @@ export function ContributionDashboard({
 
           <Button
             asChild
-            className="rounded-full bg-white text-black hover:bg-emerald-50 hover:text-emerald-950 font-bold px-6 h-11 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all transform hover:scale-105"
+            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-6 h-11 shadow-lg transition-all transform hover:scale-105"
           >
             <Link href={`/dashboard/${farewellId}/contributions/payment`}>
               <Plus className="w-5 h-5 mr-2" /> Add Contribution
@@ -402,7 +402,7 @@ export function ContributionDashboard({
         <div className="xl:col-span-4 xl:row-span-2">
           <GradientCard
             variant="gold"
-            className="relative overflow-hidden h-full flex flex-col justify-between p-8 border border-white/10 rounded-3xl group shadow-2xl min-h-[420px]"
+            className="relative overflow-hidden h-full flex flex-col justify-between p-8 border border-amber-200/20 dark:border-white/10 rounded-3xl group shadow-2xl min-h-[420px]"
           >
             {/* Animated Background Mesh */}
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-amber-600/5 to-transparent opacity-50 group-hover:opacity-70 transition-opacity duration-1000" />
@@ -424,11 +424,11 @@ export function ContributionDashboard({
               </div>
 
               <div className="space-y-1 mb-8">
-                <p className="text-white/60 font-medium text-sm uppercase tracking-widest pl-1">
+                <p className="text-amber-100/80 dark:text-white/60 font-medium text-sm uppercase tracking-widest pl-1">
                   {labelTotal}
                 </p>
                 <div className="flex items-baseline gap-1">
-                  <h2 className="text-6xl font-bold tracking-tighter text-white drop-shadow-xl">
+                  <h2 className="text-6xl font-bold tracking-tighter text-white drop-shadow-sm">
                     ₹{displayAmount.toLocaleString()}
                   </h2>
                 </div>
@@ -463,10 +463,10 @@ export function ContributionDashboard({
 
         {/* Analytics Chart - Spans 5 cols, 2 rows */}
         <div className="xl:col-span-5 xl:row-span-2">
-          <GlassCard className="h-full flex flex-col p-6 rounded-3xl border border-white/10 bg-[#0a0a0a]/50 backdrop-blur-2xl">
+          <GlassCard className="h-full flex flex-col p-6 rounded-3xl border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0a0a0a]/50 backdrop-blur-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                <Activity className="w-4 h-4 text-purple-400" /> Analytics
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                <Activity className="w-4 h-4 text-purple-500" /> Analytics
               </h3>
             </div>
             <div className="flex-1 w-full min-h-0 relative">
@@ -512,12 +512,12 @@ export function ContributionDashboard({
 
         {/* Global Rank Card - Spans 3 cols, 1 row */}
         <div className="xl:col-span-3 xl:row-span-1">
-          <GlassCard className="h-full relative overflow-hidden group p-0 border border-white/10 bg-[#0a0a0a]/50 backdrop-blur-2xl rounded-3xl min-h-[200px]">
+          <GlassCard className="h-full relative overflow-hidden group p-0 border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0a0a0a]/50 backdrop-blur-2xl rounded-3xl min-h-[200px]">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-700/20 opacity-50 group-hover:opacity-100 transition-opacity" />
             {rankData.rank > 0 ? (
               <div className="relative z-10 p-6 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
-                  <p className="text-xs font-bold text-white/60 uppercase tracking-widest">
+                  <p className="text-xs font-bold text-foreground uppercase tracking-widest">
                     Global Rank
                   </p>
                   <div className="bg-white/10 p-1.5 rounded-lg text-white">
@@ -526,20 +526,20 @@ export function ContributionDashboard({
                 </div>
                 <div>
                   <div className="flex items-end gap-2">
-                    <span className="text-4xl font-bold text-white">
+                    <span className="text-4xl font-bold text-foreground">
                       #{rankData.rank}
                     </span>
-                    <span className="text-sm font-medium text-white/60 mb-1.5">
+                    <span className="text-sm font-medium text-muted-foreground mb-1.5">
                       of {stats.contribution_count || contributions.length}
                     </span>
                   </div>
-                  <div className="w-full bg-black/20 h-1.5 rounded-full mt-4 overflow-hidden">
+                  <div className="w-full bg-secondary/50 h-1.5 rounded-full mt-4 overflow-hidden">
                     <div
-                      className="bg-white/90 h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-all duration-1000"
+                      className="bg-primary h-full rounded-full shadow-sm transition-all duration-1000"
                       style={{ width: `${rankData.percentile}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-white/40 mt-2 text-right font-medium uppercase tracking-wider">
+                  <p className="text-[10px] text-muted-foreground mt-2 text-right font-medium uppercase tracking-wider">
                     Top {rankData.percentile}%
                   </p>
                 </div>
@@ -559,7 +559,7 @@ export function ContributionDashboard({
 
         {/* Recent Activity List - Spans 3 cols, 1 row */}
         <div className="xl:col-span-3 xl:row-span-1">
-          <div className="h-full bg-emerald-500/5 border border-emerald-500/10 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/20 transition-all flex flex-col min-h-[200px]">
+          <div className="h-full bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/10 rounded-3xl p-6 relative overflow-hidden group hover:border-emerald-500/20 transition-all flex flex-col min-h-[200px]">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all duration-500 pointer-events-none">
               <History className="w-24 h-24 text-emerald-500" />
             </div>
@@ -583,19 +583,19 @@ export function ContributionDashboard({
                     className="flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-[10px] font-bold text-emerald-400 border border-emerald-500/10">
+                      <div className="w-6 h-6 rounded-full bg-emerald-100/50 dark:bg-emerald-500/20 flex items-center justify-center text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-500/10">
                         {(Array.isArray(tx.users)
                           ? tx.users[0]?.full_name
                           : tx.users?.full_name
                         )?.charAt(0) || "?"}
                       </div>
-                      <span className="text-xs text-emerald-100 font-medium truncate max-w-[80px]">
+                      <span className="text-xs text-emerald-900/80 dark:text-emerald-100 font-medium truncate max-w-[80px]">
                         {(Array.isArray(tx.users)
                           ? tx.users[0]?.full_name
                           : tx.users?.full_name) || "User"}
                       </span>
                     </div>
-                    <span className="text-xs font-bold text-white">
+                    <span className="text-xs font-bold text-foreground">
                       +₹{tx.amount}
                     </span>
                   </div>
@@ -611,27 +611,27 @@ export function ContributionDashboard({
 
         {/* Quick Actions Grid - Spans 3 cols, 1 row */}
         <div className="xl:col-span-3 xl:row-span-1">
-          <GlassCard className="h-full flex flex-col justify-center p-6 rounded-3xl border border-white/10 bg-[#0a0a0a]/50 backdrop-blur-2xl">
-            <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4">
+          <GlassCard className="h-full flex flex-col justify-center p-6 rounded-3xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0a0a0a]/50 backdrop-blur-2xl">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">
               Quick Actions
             </h3>
             <div className="grid grid-cols-2 gap-3 h-full">
               <Button
                 variant="outline"
                 asChild
-                className="justify-center bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl group flex-col gap-1 h-full min-h-[80px]"
+                className="justify-center bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 text-foreground hover:bg-zinc-100 dark:hover:bg-white/10 rounded-xl group flex-col gap-1 h-full min-h-[80px]"
               >
                 <Link href={`/dashboard/${farewellId}/contributions/receipt`}>
-                  <Download className="w-5 h-5 text-white/60 group-hover:text-white mb-1 transition-colors" />
+                  <Download className="w-5 h-5 text-muted-foreground group-hover:text-foreground mb-1 transition-colors" />
                   <span className="text-[10px] font-medium">Receipt</span>
                 </Link>
               </Button>
               <Button
                 variant="outline"
                 onClick={handleShare}
-                className="justify-center bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl group flex-col gap-1 h-full min-h-[80px] cursor-pointer"
+                className="justify-center bg-zinc-50 dark:bg-white/5 border-zinc-200 dark:border-white/10 text-foreground hover:bg-zinc-100 dark:hover:bg-white/10 rounded-xl group flex-col gap-1 h-full min-h-[80px] cursor-pointer"
               >
-                <Share2 className="w-5 h-5 text-white/60 group-hover:text-white mb-1 transition-colors" />
+                <Share2 className="w-5 h-5 text-muted-foreground group-hover:text-foreground mb-1 transition-colors" />
                 <span className="text-[10px] font-medium">Share</span>
               </Button>
             </div>
@@ -640,37 +640,37 @@ export function ContributionDashboard({
       </div>
 
       {/* All Transactions Table (Full Width) */}
-      <GlassCard className="min-h-[500px] border border-white/10 bg-[#0a0a0a]/50 backdrop-blur-2xl rounded-3xl p-0 overflow-hidden">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 border-b border-white/5 gap-4">
+      <GlassCard className="min-h-[500px] border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#0a0a0a]/50 backdrop-blur-2xl rounded-3xl p-0 overflow-hidden">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 border-b border-zinc-100 dark:border-white/5 gap-4">
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
               All Transactions
-              <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-white/60">
+              <span className="text-[10px] bg-secondary px-2 py-0.5 rounded-full text-secondary-foreground">
                 {contributions.length}
               </span>
             </h3>
           </div>
           <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <div className="relative flex-1 md:w-72 group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 group-focus-within:text-white transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
               <Input
                 placeholder="Search by name, ID, or method..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-black/20 border-white/5 text-white placeholder:text-white/20 rounded-xl focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:bg-black/40 h-10 transition-all font-medium text-sm"
+                className="pl-10 bg-zinc-50/50 dark:bg-black/20 border-zinc-200 dark:border-white/5 text-foreground placeholder:text-muted-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-zinc-100 dark:focus-visible:bg-black/40 h-10 transition-all font-medium text-sm"
               />
             </div>
             <Button
               variant="outline"
               size="icon"
-              className="rounded-xl bg-white/5 border-white/5 text-white hover:bg-white/10 w-10 h-10 shrink-0"
+              className="rounded-xl bg-secondary/50 border-border text-foreground hover:bg-secondary w-10 h-10 shrink-0"
             >
               <Filter className="w-4 h-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="rounded-xl bg-white/5 border-white/5 text-white hover:bg-white/10 w-10 h-10 shrink-0"
+              className="rounded-xl bg-secondary/50 border-border text-foreground hover:bg-secondary w-10 h-10 shrink-0"
             >
               <ArrowDownLeft className="w-4 h-4" />
             </Button>
@@ -678,7 +678,7 @@ export function ContributionDashboard({
         </div>
 
         <div className="p-0">
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] border-b border-white/5 bg-white/[0.01]">
+          <div className="grid grid-cols-12 gap-4 px-6 py-3 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] border-b border-border bg-muted/30">
             <div className="col-span-6 md:col-span-4 pl-2">User details</div>
             <div className="col-span-3 md:col-span-3 hidden md:block">Date</div>
             <div className="col-span-3 md:col-span-3 hidden md:block">
@@ -701,29 +701,29 @@ export function ContributionDashboard({
               return (
                 <div
                   key={c.id}
-                  className="grid grid-cols-12 gap-4 items-center px-6 py-4 hover:bg-white/[0.03] transition-colors group border-b border-white/[0.02] last:border-0"
+                  className="grid grid-cols-12 gap-4 items-center px-6 py-4 hover:bg-muted/50 transition-colors group border-b border-border last:border-0"
                 >
                   <div className="col-span-6 md:col-span-4 flex items-center gap-4">
                     {userAvatar ? (
                       <img
                         src={userAvatar}
                         alt={userName || "User"}
-                        className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent group-hover:ring-white/10 transition-all"
+                        className="w-10 h-10 rounded-full object-cover ring-2 ring-transparent group-hover:ring-primary/10 transition-all"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center text-white font-bold ring-1 ring-white/5">
+                      <div className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-foreground font-bold ring-1 ring-border">
                         {userName ? userName.charAt(0).toUpperCase() : "?"}
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-white font-semibold text-sm truncate group-hover:text-white transition-colors">
+                      <p className="text-foreground font-semibold text-sm truncate group-hover:text-primary transition-colors">
                         {userName}
                       </p>
                       <p
                         className={`text-[10px] uppercase tracking-wider font-bold mt-0.5 ${
                           c.status === "verified" || c.status === "approved"
-                            ? "text-emerald-500"
-                            : "text-amber-500"
+                            ? "text-emerald-600 dark:text-emerald-500"
+                            : "text-amber-600 dark:text-amber-500"
                         }`}
                       >
                         {c.status === "paid_pending_admin_verification"
@@ -733,15 +733,15 @@ export function ContributionDashboard({
                     </div>
                   </div>
 
-                  <div className="col-span-3 md:col-span-3 hidden md:block text-white/40 text-xs font-medium">
+                  <div className="col-span-3 md:col-span-3 hidden md:block text-muted-foreground text-xs font-medium">
                     {format(new Date(c.created_at), "MMM d, yyyy")}{" "}
-                    <span className="text-white/20 ml-1">
+                    <span className="text-muted-foreground/60 ml-1">
                       {format(new Date(c.created_at), "h:mm a")}
                     </span>
                   </div>
 
                   <div className="col-span-3 md:col-span-3 hidden md:block">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-white/5 border border-white/5 text-[10px] font-bold text-white/70 uppercase tracking-wider shadow-sm">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary/50 border border-border text-[10px] font-bold text-foreground/70 uppercase tracking-wider shadow-sm">
                       {c.method === "bank_transfer"
                         ? "Bank"
                         : c.method.replace("_", " ")}
@@ -749,7 +749,7 @@ export function ContributionDashboard({
                   </div>
 
                   <div className="col-span-6 md:col-span-2 text-right">
-                    <p className="text-white font-bold text-sm tracking-tight group-hover:scale-105 transition-transform">
+                    <p className="text-foreground font-bold text-sm tracking-tight group-hover:scale-105 transition-transform">
                       +₹{c.amount.toLocaleString()}
                     </p>
                   </div>
@@ -761,20 +761,20 @@ export function ContributionDashboard({
           {/* Infinite Scroll Loader */}
           <div
             ref={observerTarget}
-            className="py-6 text-center border-t border-white/5"
+            className="py-6 text-center border-t border-border"
           >
             {isLoadingMore && (
-              <p className="text-white/40 text-xs font-medium animate-pulse uppercase tracking-widest">
+              <p className="text-muted-foreground text-xs font-medium animate-pulse uppercase tracking-widest">
                 Loading more...
               </p>
             )}
             {!hasMore && contributions.length > 0 && (
-              <p className="text-white/10 text-[10px] uppercase tracking-[0.3em]">
+              <p className="text-muted-foreground/50 text-[10px] uppercase tracking-[0.3em]">
                 End of list
               </p>
             )}
             {contributions.length === 0 && !isLoadingMore && (
-              <div className="py-12 flex flex-col items-center justify-center text-white/30">
+              <div className="py-12 flex flex-col items-center justify-center text-muted-foreground/50">
                 <Search className="w-12 h-12 opacity-20 mb-4" />
                 <p className="text-sm">No transactions found</p>
               </div>

@@ -34,8 +34,8 @@ export default async function AnnouncementsPage({
         <CreateAnnouncementDialog farewellId={id} />
       </div>
 
-      <div className="flex-1 overflow-auto p-4 sm:p-10">
-        <div className="max-w-6xl mx-auto">
+      <div className="flex-1 p-4 sm:p-6 overflow-hidden">
+        <div className="h-full">
           <AnnouncementsClient announcements={announcements} />
         </div>
       </div>

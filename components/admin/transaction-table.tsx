@@ -8,9 +8,6 @@ import {
   VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import {
@@ -18,11 +15,11 @@ import {
   ChevronDown,
   MoreHorizontal,
   Search,
-  Download,
-  FileText,
-  Filter,
   CheckCircle,
   XCircle,
+  Filter,
+  FileText,
+  Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -51,40 +48,97 @@ import { toast } from "sonner";
 import {
   approveContributionAction,
   rejectContributionAction,
+  getContributionsPaginatedAction,
+  getUnifiedTransactionsAction,
 } from "@/app/actions/contribution-actions";
 
 export type Transaction = {
   id: string;
   amount: number;
-  method: "upi" | "cash" | "bank_transfer" | "razorpay" | "stripe";
+  method: string;
   status: "pending" | "verified" | "rejected" | "approved";
   created_at: string;
   transaction_id: string | null;
   users: {
     full_name: string;
-    email: string;
+    email?: string;
     avatar_url: string | null;
   } | null;
   metadata?: any;
+  // Unified transaction fields
+  transaction_type?: "contribution" | "expense";
+  entry_type?: "credit" | "debit";
+  description?: string | null;
+  reference_id?: string | null;
+  user?: any;
+  user_id?: string;
 };
 
 export function TransactionTable({
-  data,
   farewellId,
   isAdmin = false,
+  refreshTrigger = 0,
 }: {
-  data: Transaction[];
   farewellId: string;
   isAdmin?: boolean;
+  refreshTrigger?: number;
 }) {
+  const [data, setData] = React.useState<Transaction[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const [page, setPage] = React.useState(1);
+  const [limit] = React.useState(10); // Page size
+
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+
+  // Filters
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isProcessing, setIsProcessing] = React.useState(false);
+
+  // Fetch Data
+  const fetchData = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // For admin, show unified view (contributions + expenses)
+      // For regular users, show only contributions
+      if (isAdmin) {
+        const unified = await getUnifiedTransactionsAction(farewellId, 100);
+        setData(unified as any);
+        setTotal(unified.length);
+      } else {
+        const res = await getContributionsPaginatedAction(
+          farewellId,
+          page,
+          limit,
+          statusFilter === "all" ? undefined : statusFilter,
+          searchQuery
+        );
+        setData(res.data as any);
+        setTotal(res.total);
+      }
+    } catch (err) {
+      toast.error("Failed to load transactions");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    farewellId,
+    page,
+    limit,
+    statusFilter,
+    searchQuery,
+    refreshTrigger,
+    isAdmin,
+  ]);
+
+  // Initial & Dependent Fetch
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleApprove = async (id: string) => {
     setIsProcessing(true);
@@ -92,6 +146,7 @@ export function TransactionTable({
       const result = await approveContributionAction(id);
       if (result.success) {
         toast.success("Contribution approved successfully");
+        fetchData(); // Refresh list
       } else {
         toast.error(result.error || "Failed to approve contribution");
       }
@@ -108,6 +163,7 @@ export function TransactionTable({
       const result = await rejectContributionAction(id);
       if (result.success) {
         toast.success("Contribution rejected");
+        fetchData(); // Refresh list
       } else {
         toast.error(result.error || "Failed to reject contribution");
       }
@@ -124,7 +180,8 @@ export function TransactionTable({
       id: "full_name",
       header: "User",
       cell: ({ row }) => {
-        const user = row.original.users;
+        // Support both old format (users) and new unified format (user)
+        const user = row.original.user || row.original.users;
         return (
           <div className="flex items-center gap-2">
             {user?.avatar_url ? (
@@ -134,17 +191,19 @@ export function TransactionTable({
                 className="w-8 h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground">
                 {user?.full_name?.charAt(0) || "?"}
               </div>
             )}
             <div className="flex flex-col">
-              <span className="font-medium">
+              <span className="font-medium text-foreground">
                 {user?.full_name || "Unknown"}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {user?.email}
-              </span>
+              {user?.email && (
+                <span className="text-xs text-muted-foreground">
+                  {user.email}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -152,25 +211,27 @@ export function TransactionTable({
     },
     {
       accessorKey: "amount",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Amount
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
+      header: "Amount",
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("amount"));
+        const isDebit = row.original.entry_type === "debit";
         const formatted = new Intl.NumberFormat("en-IN", {
           style: "currency",
           currency: "INR",
         }).format(amount);
 
-        return <div className="font-bold">{formatted}</div>;
+        return (
+          <div
+            className={`font-bold ${
+              isDebit
+                ? "text-destructive"
+                : "text-emerald-600 dark:text-emerald-400"
+            }`}
+          >
+            {isDebit ? "-" : "+"}
+            {formatted}
+          </div>
+        );
       },
     },
     {
@@ -182,14 +243,14 @@ export function TransactionTable({
           <Badge
             variant={
               status === "verified" || status === "approved"
-                ? "default" // Emerald/Green usually
+                ? "default"
                 : status === "rejected"
                 ? "destructive"
                 : "secondary"
             }
             className={`capitalize ${
               status === "verified" || status === "approved"
-                ? "bg-emerald-500 hover:bg-emerald-600"
+                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                 : ""
             }`}
           >
@@ -203,7 +264,7 @@ export function TransactionTable({
       header: "Method",
       cell: ({ row }) => {
         return (
-          <div className="capitalize">
+          <div className="capitalize text-foreground">
             {(row.getValue("method") as string).replace("_", " ")}
           </div>
         );
@@ -211,17 +272,7 @@ export function TransactionTable({
     },
     {
       accessorKey: "created_at",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Date
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
+      header: "Date",
       cell: ({ row }) => {
         return (
           <div className="text-muted-foreground text-sm">
@@ -292,132 +343,66 @@ export function TransactionTable({
     },
   ];
 
-  const [globalFilter, setGlobalFilter] = React.useState("");
-
   const table = useReactTable({
     data,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
-      columnFilters,
-      globalFilter,
       columnVisibility,
-      rowSelection,
     },
-    // Simple global filter function
-    globalFilterFn: (row, columnId, filterValue) => {
-      const value = row.getValue(columnId);
-      if (!value) return false;
-      return String(value)
-        .toLowerCase()
-        .includes(String(filterValue).toLowerCase());
-    },
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    manualPagination: true, // Tell table we handle pagination
+    pageCount: Math.ceil(total / limit),
   });
 
   return (
     <div className="w-full space-y-4">
-      {/* Summary Stats */}
-      {isAdmin && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
-            <p className="text-xs text-white/40 uppercase font-bold">Total</p>
-            <p className="text-2xl font-bold mt-1">{data.length}</p>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
-            <p className="text-xs text-white/40 uppercase font-bold">
-              Verified
-            </p>
-            <p className="text-2xl font-bold mt-1 text-emerald-400">
-              {
-                data.filter(
-                  (t) => t.status === "verified" || t.status === "approved"
-                ).length
-              }
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
-            <p className="text-xs text-white/40 uppercase font-bold">Pending</p>
-            <p className="text-2xl font-bold mt-1 text-amber-400">
-              {data.filter((t) => t.status === "pending").length}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
-            <p className="text-xs text-white/40 uppercase font-bold">
-              Rejected
-            </p>
-            <p className="text-2xl font-bold mt-1 text-red-400">
-              {data.filter((t) => t.status === "rejected").length}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Summary Stats removed from here as they should be fetched separately or calculated on server */}
 
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="relative max-w-sm w-full">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search all columns..."
-              value={globalFilter ?? ""}
-              onChange={(event) => setGlobalFilter(event.target.value)}
-              className="pl-8 bg-white/5 border-white/10"
+              placeholder="Search by ID..."
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value);
+                setPage(1); // Reset page on search
+              }}
+              className="pl-8 bg-background border-input text-foreground"
             />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="ml-auto bg-white/5 border-white/10"
+                className="ml-auto bg-background border-input capitalize text-foreground hover:bg-secondary"
               >
                 <Filter className="w-4 h-4 mr-2" />
-                Status
+                {statusFilter === "all" ? "Status: All" : statusFilter}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() =>
-                  table.getColumn("status")?.setFilterValue(undefined)
-                }
-              >
-                All
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  table.getColumn("status")?.setFilterValue("verified")
-                }
-              >
-                Verified
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  table.getColumn("status")?.setFilterValue("approved")
-                }
-              >
-                Approved
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  table.getColumn("status")?.setFilterValue("pending")
-                }
-              >
-                Pending
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  table.getColumn("status")?.setFilterValue("rejected")
-                }
-              >
-                Rejected
-              </DropdownMenuItem>
+              {["all", "verified", "approved", "pending", "rejected"].map(
+                (s) => (
+                  <DropdownMenuItem
+                    key={s}
+                    onClick={() => {
+                      setStatusFilter(s);
+                      setPage(1);
+                    }}
+                    className="capitalize"
+                  >
+                    {s}{" "}
+                    {statusFilter === s && (
+                      <CheckCircle className="w-3 h-3 ml-2 text-emerald-500" />
+                    )}
+                  </DropdownMenuItem>
+                )
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -425,7 +410,7 @@ export function TransactionTable({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="ml-auto bg-white/5 border-white/10"
+              className="ml-auto bg-background border-input text-foreground hover:bg-secondary"
             >
               Columns <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
@@ -451,17 +436,21 @@ export function TransactionTable({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border border-white/10 overflow-hidden">
+
+      <div className="rounded-md border border-border/50 overflow-hidden relative min-h-[300px]">
         <Table>
-          <TableHeader className="bg-white/5">
+          <TableHeader className="bg-secondary/20">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
-                className="border-white/10 hover:bg-white/5"
+                className="border-border/50 hover:bg-secondary/40"
               >
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} className="text-white/60">
+                    <TableHead
+                      key={header.id}
+                      className="text-muted-foreground"
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -475,66 +464,82 @@ export function TransactionTable({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className="border-white/10 hover:bg-white/5"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                  <TableCell>
-                    <Link
-                      href={`/dashboard/${farewellId}/contributions/receipt/${row.original.id}`}
-                    >
-                      <Button variant="ghost" size="sm">
-                        <FileText className="w-4 h-4" />
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
+            {isLoading ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + 1}
-                  className="h-24 text-center text-white/40"
+                  colSpan={columns.length}
+                  className="h-64 text-center"
                 >
-                  No results.
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
                 </TableCell>
               </TableRow>
+            ) : (
+              <>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      className="border-border/50 hover:bg-secondary/40"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <Link
+                          href={`/dashboard/${farewellId}/contributions/receipt/${row.original.id}`}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length + 1}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No results found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
             )}
           </TableBody>
         </Table>
       </div>
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          Page {page} of {Math.ceil(total / limit) || 1}
         </div>
         <div className="space-x-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="bg-white/5 border-white/10"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1 || isLoading}
+            className="bg-background border-input text-foreground hover:bg-secondary"
           >
             Previous
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="bg-white/5 border-white/10"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= Math.ceil(total / limit) || isLoading}
+            className="bg-background border-input text-foreground hover:bg-secondary"
           >
             Next
           </Button>

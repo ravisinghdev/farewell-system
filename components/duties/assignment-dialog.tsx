@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getFarewellMembers } from "@/actions/people";
-import { assignDutyAction } from "@/actions/duties";
+import { assignDutiesAction } from "@/app/actions/duty-actions";
 import { toast } from "sonner";
 import { Loader2, Search } from "lucide-react";
 
@@ -24,6 +24,7 @@ interface AssignmentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  currentAssignees?: string[];
 }
 
 export function AssignmentDialog({
@@ -63,7 +64,7 @@ export function AssignmentDialog({
     if (selectedIds.length === 0) return;
     setSubmitting(true);
     try {
-      await assignDutyAction(dutyId, selectedIds);
+      await assignDutiesAction(farewellId, dutyId, selectedIds);
       toast.success("Duty assigned successfully");
       onSuccess();
       onOpenChange(false);

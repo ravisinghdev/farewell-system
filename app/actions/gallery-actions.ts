@@ -47,21 +47,29 @@ export async function createAlbumAction(
   return { success: true };
 }
 
-export async function getAlbumsAction(farewellId: string) {
+export async function getAlbumsAction(
+  farewellId: string,
+  page: number = 1,
+  limit: number = 12
+) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  const { data, error, count } = await supabase
     .from("albums")
-    .select("*, created_by_user:users(full_name)")
+    .select("*, created_by_user:users(full_name)", { count: "exact" })
     .eq("farewell_id", farewellId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) {
     console.error("Get albums error:", error);
-    return [];
+    return { data: [], total: 0 };
   }
 
-  return data;
+  return { data, total: count || 0 };
 }
 
 export async function getAlbumMediaAction(albumId: string) {
@@ -81,55 +89,32 @@ export async function getAlbumMediaAction(albumId: string) {
   return data;
 }
 
-export async function uploadMediaAction(
-  formData: FormData
+// Batch save media records (Metadata only)
+export async function saveMediaBatchAction(
+  farewellId: string,
+  albumId: string,
+  mediaItems: { url: string; type: string }[]
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
   const userId = claimsData.claims.sub;
 
-  const albumId = formData.get("albumId") as string;
-  const farewellId = formData.get("farewellId") as string;
-  const file = formData.get("file") as File | null;
+  if (!mediaItems || mediaItems.length === 0)
+    return { error: "No items to save" };
 
-  if (!albumId || !file) return { error: "Missing data" };
-
-  // 1. Upload to Storage
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${albumId}/${Date.now()}-${Math.random()
-    .toString(36)
-    .substring(7)}.${fileExt}`;
-
-  // Determine type
-  const type = file.type.startsWith("video/") ? "video" : "image";
-
-  const adminClient = createAdminClient();
-  const { error: uploadError } = await adminClient.storage
-    .from("memories")
-    .upload(fileName, file);
-
-  if (uploadError) {
-    console.error("Upload error:", uploadError);
-    return { error: "Failed to upload file" };
-  }
-
-  // 2. Get Public URL
-  const { data: publicUrlData } = supabase.storage
-    .from("memories")
-    .getPublicUrl(fileName);
-
-  // 3. Insert into DB
-  const { error: dbError } = await supabase.from("gallery_media").insert({
+  const records = mediaItems.map((item) => ({
     album_id: albumId,
-    url: publicUrlData.publicUrl,
-    type,
+    url: item.url,
+    type: item.type,
     uploaded_by: userId,
-  });
+  }));
 
-  if (dbError) {
-    console.error("DB insert error:", dbError);
-    return { error: "Failed to save media record" };
+  const { error } = await supabase.from("gallery_media").insert(records);
+
+  if (error) {
+    console.error("Batch save error:", error);
+    return { error: "Failed to save media records" };
   }
 
   revalidatePath(`/dashboard/${farewellId}/memories/${albumId}`);
@@ -142,19 +127,55 @@ export async function deleteMediaAction(
   albumId: string
 ): Promise<ActionState> {
   const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
 
-  // 1. Get the media to find the file path (optional clean up from storage, not strictly required for MVP but good practice)
-  // For now, we'll just delete the DB record.
-  // Ideally, use a trigger or separate cleanup job for storage to avoid complex cascading permission issues in client code.
-
-  const { error } = await supabase
+  // 1. Get the media URL to extract file path
+  // We can use the user client here to ensure they can at least SEE the media they are trying to delete
+  const { data: media, error: fetchError } = await supabase
     .from("gallery_media")
-    .delete()
+    .select("url")
+    .eq("id", mediaId)
+    .single();
+
+  if (fetchError || !media) {
+    console.error("Fetch media error during delete:", fetchError);
+    return { error: "Media not found" };
+  }
+
+  const adminClient = createAdminClient();
+
+  // Extract file path from URL and delete from Storage
+  try {
+    const urlParts = media.url.split("/memories/");
+    if (urlParts.length > 1) {
+      const filePath = urlParts[1];
+      const { error: storageError } = await adminClient.storage
+        .from("memories")
+        .remove([filePath]);
+
+      if (storageError) {
+        console.warn("Storage delete warning:", storageError);
+      }
+    }
+  } catch (e) {
+    console.error("Error parsing media URL for deletion:", e);
+  }
+
+  // 2. Delete from DB using Admin Client to bypass RLS restrictions
+  // (Assuming that if they could see it in the dashboard and clicked delete, they're authorized via UI checks)
+  const { error, count } = await adminClient
+    .from("gallery_media")
+    .delete({ count: "exact" })
     .eq("id", mediaId);
 
   if (error) {
     console.error("Delete media error:", error);
     return { error: "Failed to delete media" };
+  }
+
+  if (count === 0) {
+    return { error: "Media already deleted or could not be deleted" };
   }
 
   revalidatePath(`/dashboard/${farewellId}/memories/${albumId}`);

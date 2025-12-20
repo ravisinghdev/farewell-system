@@ -1,41 +1,31 @@
-import { Metadata } from "next";
-import Image from "next/image";
-
+import { ReactNode } from "react";
+import { SettingsNav } from "@/components/settings/ui/SettingsNav";
 import { Separator } from "@/components/ui/separator";
-import { SettingsSidebar } from "@/components/settings/settings-sidebar";
-
-export const metadata: Metadata = {
-  title: "Settings",
-  description: "Manage your account settings and preferences.",
-};
-
-interface SettingsLayoutProps {
-  children: React.ReactNode;
-  params: Promise<{
-    id: string;
-  }>;
-}
 
 export default async function SettingsLayout({
   children,
   params,
-}: SettingsLayoutProps) {
+}: {
+  children: ReactNode;
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   return (
-    <div className="space-y-6 p-4 pb-16 md:p-10 md:pb-16 md:block">
-      <div className="space-y-0.5">
-        <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">
-          Manage your account settings and set e-mail preferences.
-        </p>
-      </div>
-      <Separator className="my-6" />
-      <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
-        <aside className="lg:w-1/5">
-          <SettingsSidebar farewellId={id} />
-        </aside>
-        <div className="flex-1 lg:max-w-2xl">{children}</div>
+    <div className="min-h-screen pb-24">
+      {/* Bottom Floating Nav */}
+      <SettingsNav farewellId={id} />
+
+      <div className="flex flex-col space-y-6 p-4 md:p-8 max-w-4xl mx-auto">
+        <div className="space-y-0.5">
+          <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
+          <p className="text-muted-foreground">
+            Manage your farewell configuration, roles, and preferences.
+          </p>
+        </div>
+        <Separator className="my-6" />
+
+        <div className="w-full">{children}</div>
       </div>
     </div>
   );

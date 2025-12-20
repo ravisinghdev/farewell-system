@@ -1,6 +1,6 @@
 import { PageScaffold } from "@/components/dashboard/page-scaffold";
-import { AboutStats } from "@/components/community/about-stats";
-import { getAboutStatsAction } from "@/app/actions/community-actions";
+import { AboutPageRenderer } from "@/components/community/about-page-renderer";
+import { getAboutSectionsAction } from "@/app/actions/about-actions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -8,14 +8,14 @@ interface PageProps {
 
 export default async function AboutPage({ params }: PageProps) {
   const { id } = await params;
-  const stats = await getAboutStatsAction(id);
+  const sections = await getAboutSectionsAction(id);
 
   return (
     <PageScaffold
       title="About Farewell Project"
       description="The story behind this platform."
     >
-      <AboutStats stats={stats} />
+      <AboutPageRenderer sections={sections} farewellId={id} />
     </PageScaffold>
   );
 }

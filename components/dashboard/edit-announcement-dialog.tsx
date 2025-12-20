@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Switch } from "@/components/ui/switch";
 import { updateAnnouncementAction } from "@/app/actions/dashboard-actions";
 import { toast } from "sonner";
@@ -44,7 +45,10 @@ export function EditAnnouncementDialog({
   }, [announcement]);
 
   const handleSubmit = () => {
-    if (!title.trim() || !content.trim()) return;
+    // Basic check - strip HTML to see if empty
+    const strippedContent = content.replace(/<[^>]*>?/gm, "").trim();
+
+    if (!title.trim() || !strippedContent) return;
 
     startTransition(async () => {
       const res = await updateAnnouncementAction(
@@ -66,14 +70,14 @@ export function EditAnnouncementDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Edit Announcement</DialogTitle>
           <DialogDescription>
             Update the announcement details below.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="flex-1 overflow-y-auto py-4 space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="edit-title">Title</Label>
             <Input
@@ -84,13 +88,11 @@ export function EditAnnouncementDialog({
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="edit-content">Content</Label>
-            <Textarea
-              id="edit-content"
-              placeholder="Details about the announcement..."
-              className="h-32"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+            <Label>Content</Label>
+            <RichTextEditor
+              content={content}
+              onChange={setContent}
+              className="min-h-[200px]"
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -106,10 +108,7 @@ export function EditAnnouncementDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isPending || !title.trim() || !content.trim()}
-          >
+          <Button onClick={handleSubmit} disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Update
           </Button>

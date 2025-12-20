@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Switch } from "@/components/ui/switch";
 import { createAnnouncementAction } from "@/app/actions/dashboard-actions";
 import { toast } from "sonner";
@@ -33,7 +34,13 @@ export function CreateAnnouncementDialog({
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = () => {
-    if (!title.trim() || !content.trim()) return;
+    // Basic check - strip HTML to see if empty
+    const strippedContent = content.replace(/<[^>]*>?/gm, "").trim();
+
+    if (!title.trim() || !strippedContent) {
+      toast.error("Please fill in all fields");
+      return;
+    }
 
     startTransition(async () => {
       const res = await createAnnouncementAction(
@@ -63,14 +70,14 @@ export function CreateAnnouncementDialog({
           New Announcement
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>New Announcement</DialogTitle>
           <DialogDescription>
             Share important updates with everyone in the farewell.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="flex-1 overflow-y-auto py-4 space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -81,13 +88,11 @@ export function CreateAnnouncementDialog({
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="content">Content</Label>
-            <Textarea
-              id="content"
-              placeholder="Details about the announcement..."
-              className="h-32"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+            <Label>Content</Label>
+            <RichTextEditor
+              content={content}
+              onChange={setContent}
+              className="min-h-[200px]"
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -103,10 +108,7 @@ export function CreateAnnouncementDialog({
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isPending || !title.trim() || !content.trim()}
-          >
+          <Button onClick={handleSubmit} disabled={isPending}>
             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Post
           </Button>

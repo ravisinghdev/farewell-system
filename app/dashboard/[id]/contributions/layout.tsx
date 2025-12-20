@@ -11,7 +11,7 @@ export default async function ContributionsLayout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const user = await getCurrentUserWithRole();
+  const user = await getCurrentUserWithRole(id);
 
   if (!user) redirect("/auth");
 
@@ -19,6 +19,7 @@ export default async function ContributionsLayout({
 
   return (
     <div className="min-h-screen font-sans">
+      <ContributionsNav farewellId={id} isAdmin={isAdmin} />
       <main className="w-full h-full">{children}</main>
     </div>
   );

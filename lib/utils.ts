@@ -91,3 +91,10 @@ function createImage(url: string): Promise<HTMLImageElement> {
     image.src = url;
   });
 }
+
+export function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+  }).format(amount);
+}

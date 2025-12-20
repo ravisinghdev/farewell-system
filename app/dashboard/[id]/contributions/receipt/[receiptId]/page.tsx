@@ -146,7 +146,7 @@ export default function ReceiptDetailsPage() {
       <div className="flex items-center justify-between">
         <Link
           href={`/dashboard/${farewellId}/contributions/receipt`}
-          className="text-white/60 hover:text-white flex items-center gap-2 transition-colors"
+          className="text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to List
         </Link>
@@ -154,20 +154,20 @@ export default function ReceiptDetailsPage() {
           <Button
             onClick={handleDownload}
             variant="outline"
-            className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+            className="bg-background border-input text-foreground hover:bg-secondary"
           >
             <Download className="w-4 h-4 mr-2" /> Download PDF
           </Button>
           <Button
             onClick={() => handlePrint()}
-            className="bg-white text-black hover:bg-white/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Printer className="w-4 h-4 mr-2" /> Print Receipt
           </Button>
         </div>
       </div>
 
-      <div className="bg-zinc-900/50 p-4 md:p-8 rounded-xl border border-white/10 flex justify-center overflow-hidden">
+      <div className="bg-secondary/20 p-4 md:p-8 rounded-xl border border-border/50 flex justify-center overflow-hidden">
         <div className="origin-top transform scale-[0.4] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.85] xl:scale-100 transition-transform duration-300 ease-in-out h-[120mm] sm:h-[150mm] md:h-[210mm] lg:h-[260mm] xl:h-[297mm]">
           <ReceiptView
             ref={componentRef}

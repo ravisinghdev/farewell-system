@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { PageScaffold } from "@/components/dashboard/page-scaffold";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Calendar, Clock, MapPin } from "lucide-react";
+import { Plus, Calendar } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -16,16 +16,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   getRehearsalsAction,
   createRehearsalAction,
   deleteRehearsalAction,
-} from "@/app/actions/event-actions";
-import { format } from "date-fns";
+  duplicateRehearsalAction,
+} from "@/app/actions/rehearsal-actions";
+// Note: We switched to rehearsal-actions.ts
 import { useFarewell } from "@/components/providers/farewell-provider";
 import { checkIsAdmin } from "@/lib/auth/roles";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RehearsalCard } from "@/components/rehearsals/rehearsal-card";
 
 export default function RehearsalsPage() {
   const params = useParams();
@@ -43,7 +51,8 @@ export default function RehearsalsPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [venue, setVenue] = useState("");
-  const [notes, setNotes] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState("general");
 
   useEffect(() => {
     fetchRehearsals();
@@ -64,6 +73,7 @@ export default function RehearsalsPage() {
       return;
     }
 
+    // Combine date and time
     const startDateTime = new Date(`${date}T${startTime}`);
     const endDateTime = new Date(`${date}T${endTime}`);
 
@@ -72,7 +82,8 @@ export default function RehearsalsPage() {
       start_time: startDateTime.toISOString(),
       end_time: endDateTime.toISOString(),
       venue,
-      notes,
+      description,
+      rehearsal_type: type,
     });
 
     if (result.error) {
@@ -104,13 +115,32 @@ export default function RehearsalsPage() {
     }
   }
 
+  async function handleDuplicate(id: string) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateStr = tomorrow.toISOString().split("T")[0];
+
+    toast.info("Duplicating rehearsal...");
+    const result = await duplicateRehearsalAction(id, farewellId, dateStr);
+
+    if (result.error) {
+      toast.error("Error duplicating", { description: result.error });
+    } else {
+      toast.success("Rehearsal duplicated successfully", {
+        description: "You can now edit the new rehearsal.",
+      });
+      fetchRehearsals();
+    }
+  }
+
   function resetForm() {
     setTitle("");
     setDate("");
     setStartTime("");
     setEndTime("");
     setVenue("");
-    setNotes("");
+    setDescription("");
+    setType("general");
   }
 
   return (
@@ -125,37 +155,48 @@ export default function RehearsalsPage() {
                 <Plus className="w-4 h-4 mr-2" /> Schedule Rehearsal
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Schedule New Rehearsal</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Title / Activity</Label>
+              <div className="space-y-4 py-2">
+                <div className="grid grid-cols-4 gap-4 items-center">
+                  <Label className="col-span-1">Activity</Label>
                   <Input
-                    placeholder="e.g. Dance Practice - Group A"
+                    className="col-span-3"
+                    placeholder="e.g. Final Dance Practice"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Date</Label>
-                    <Input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Venue</Label>
-                    <Input
-                      placeholder="e.g. Auditorium"
-                      value={venue}
-                      onChange={(e) => setVenue(e.target.value)}
-                    />
-                  </div>
+
+                <div className="grid grid-cols-4 gap-4 items-center">
+                  <Label className="col-span-1">Type</Label>
+                  <Select value={type} onValueChange={setType}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="dance">Dance Practice</SelectItem>
+                      <SelectItem value="music">Music/Choir</SelectItem>
+                      <SelectItem value="skit">Skit/Drama</SelectItem>
+                      <SelectItem value="anchor">Anchoring</SelectItem>
+                      <SelectItem value="technical">Technical Check</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                <div className="grid grid-cols-4 gap-4 items-center">
+                  <Label className="col-span-1">Date</Label>
+                  <Input
+                    type="date"
+                    className="col-span-3"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Start Time</Label>
@@ -174,12 +215,22 @@ export default function RehearsalsPage() {
                     />
                   </div>
                 </div>
+
                 <div className="space-y-2">
-                  <Label>Notes</Label>
+                  <Label>Venue</Label>
+                  <Input
+                    placeholder="e.g. School Auditorium"
+                    value={venue}
+                    onChange={(e) => setVenue(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Notes / Description</Label>
                   <Textarea
-                    placeholder="Additional instructions..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Instructions for participants..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
               </div>
@@ -210,50 +261,14 @@ export default function RehearsalsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {rehearsals.map((rehearsal) => (
-            <Card key={rehearsal.id} className="relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{rehearsal.title}</CardTitle>
-                  {isAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleDelete(rehearsal.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>
-                    {format(new Date(rehearsal.start_time), "EEE, MMM d, yyyy")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    {format(new Date(rehearsal.start_time), "h:mm a")} -{" "}
-                    {format(new Date(rehearsal.end_time), "h:mm a")}
-                  </span>
-                </div>
-                {rehearsal.venue && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{rehearsal.venue}</span>
-                  </div>
-                )}
-                {rehearsal.notes && (
-                  <div className="mt-2 p-2 bg-muted/30 rounded text-xs">
-                    {rehearsal.notes}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <RehearsalCard
+              key={rehearsal.id}
+              rehearsal={rehearsal}
+              farewellId={farewellId}
+              isAdmin={isAdmin}
+              onDelete={handleDelete}
+              onDuplicate={handleDuplicate}
+            />
           ))}
         </div>
       )}

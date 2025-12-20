@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash, Upload, Loader2, X, Edit2 } from "lucide-react";
-import { submitDutyExpenseAction } from "@/actions/duties";
+import { uploadDutyReceiptAction } from "@/app/actions/duty-actions";
+import { useFarewell } from "@/components/providers/farewell-provider";
 import { toast } from "sonner";
-import { createClient } from "@/utils/supabase/client";
 import { ImageEditor } from "@/components/ui/image-editor";
 
 interface ExpenseSubmissionFormProps {
@@ -20,6 +20,7 @@ export function ExpenseSubmissionForm({
   dutyId,
   onSuccess,
 }: ExpenseSubmissionFormProps) {
+  const { farewell } = useFarewell();
   const [items, setItems] = useState<{ description: string; amount: string }[]>(
     [{ description: "", amount: "" }]
   );
@@ -125,37 +126,36 @@ export function ExpenseSubmissionForm({
 
     setSubmitting(true);
     try {
-      const supabase = createClient();
-      const uploadedUrls: string[] = [];
+      const formData = new FormData();
+      formData.append("dutyId", dutyId);
+      formData.append("amount", totalAmount.toString());
+      formData.append("notes", notes);
+      formData.append("items", JSON.stringify(items));
 
-      // Upload files
-      for (const file of files) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `receipts/${dutyId}/${fileName}`;
+      files.forEach((f) => {
+        formData.append("files", f);
+      });
 
-        const { error: uploadError } = await supabase.storage
-          .from("receipts") // Ensure bucket exists
-          .upload(filePath, file);
+      // Import from duty-actions needed
+      const result = await uploadDutyReceiptAction(farewell.id, formData); // Wait, first arg farewellId?
+      // In duty-actions.ts Step 62: `export async function uploadDutyReceiptAction(farewellId: string, formData: FormData)`
+      // We need farewellId. `ExpenseSubmissionForm` props only has `dutyId`.
+      // We need to fetch farewellId or pass it.
+      // Assuming we can't easily change props everywhere, we might need to fetch it?
+      // Or looking at imports: `import { useFarewell } ...`? It's not imported.
+      // I should add `useFarewell` hook usage.
 
-        if (uploadError) throw uploadError;
+      // Let's rely on update step to fix imports too.
+      // I'll add useFarewell to top of component in next step?
+      // Or assuming I can fix imports in this file.
+      // Wait, `ExpenseSubmissionForm` is client component. I can use `useFarewell`.
 
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("receipts").getPublicUrl(filePath);
-        uploadedUrls.push(publicUrl);
+      if (result?.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Expense submitted successfully");
+        onSuccess();
       }
-
-      await submitDutyExpenseAction(
-        dutyId,
-        totalAmount,
-        items.map((i) => ({ ...i, amount: parseFloat(i.amount) })),
-        uploadedUrls,
-        notes
-      );
-
-      toast.success("Expense submitted successfully");
-      onSuccess();
     } catch (error) {
       console.error(error);
       toast.error("Failed to submit expense");

@@ -1,0 +1,1 @@
+﻿components/dashboard/timeline-event-dialog.tsx(66,18): error TS2353: Object literal may only specify known properties, and 'required_error' does not exist in type '{ error?: string | $ZodErrorMap<$ZodIssueInvalidType<unknown>> | undefined; message?: string | undefined; }'.

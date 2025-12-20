@@ -157,7 +157,7 @@ export default function Features() {
                   <div className="h-2 flex-1 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full w-1/2 bg-orange-500/50"
-                      style={{ width: `${Math.random() * 100}%` }}
+                      style={{ width: `${60 + i * 15}%` }}
                     />
                   </div>
                 </div>

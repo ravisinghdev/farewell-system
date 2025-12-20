@@ -80,13 +80,10 @@ export default function AnnouncementsClient({
       </div>
 
       {/* Content */}
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         <RealtimeAnnouncements
           initialAnnouncements={announcements}
-          farewellId={farewellId}
           filter={filter}
-          isAdmin={isAdmin}
-          userId={userId}
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { PageScaffold } from "@/components/dashboard/page-scaffold";
-import { DownloadsList } from "@/components/resources/downloads-list";
-import { getDownloadsAction } from "@/app/actions/resource-actions";
+import { ResourceFeed } from "@/components/resources/resource-feed";
+import { getResourcesAction } from "@/app/actions/resource-actions";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -8,14 +8,18 @@ interface PageProps {
 
 export default async function DownloadsPage({ params }: PageProps) {
   const { id } = await params;
-  const downloads = await getDownloadsAction(id);
+  const downloads = await getResourcesAction(id, "download");
 
   return (
     <PageScaffold
       title="Downloads"
       description="Important documents and files."
     >
-      <DownloadsList farewellId={id} initialDownloads={downloads} />
+      <ResourceFeed
+        farewellId={id}
+        type="download"
+        initialResources={downloads as any}
+      />
     </PageScaffold>
   );
 }

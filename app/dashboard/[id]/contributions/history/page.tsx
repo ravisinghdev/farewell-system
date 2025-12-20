@@ -1,6 +1,6 @@
 import {
-  getAllContributionsAction,
-  getContributionsAction,
+  getUserContributionsPaginatedAction,
+  getUserStatsAction,
 } from "@/app/actions/contribution-actions";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
@@ -24,10 +24,21 @@ export default async function HistoryPage({
 
   const isAdmin = checkIsAdmin(user.role);
 
-  // Fetch data based on role
-  const transactions = isAdmin
-    ? await getAllContributionsAction(id)
-    : await getContributionsAction(id);
+  let initialTransactions: any[] = [];
+  let userStats = { totalContribution: 0 };
+  let initialTotal = 0;
+
+  if (!isAdmin) {
+    // User: Fetch first page + Stats
+    const [txRes, statsRes] = await Promise.all([
+      getUserContributionsPaginatedAction(id, 1, 10),
+      getUserStatsAction(id),
+    ]);
+    initialTransactions = txRes.data;
+    initialTotal = txRes.total;
+    userStats = statsRes;
+  }
+  // Admin: TransactionTable handles fetching
 
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-700 p-4 md:p-8">
@@ -39,15 +50,12 @@ export default async function HistoryPage({
             : "Track your contributions and download receipts."
         }
         farewellId={id}
+        minimal={isAdmin}
       />
 
       {isAdmin ? (
         <GlassCard className="p-6">
-          <TransactionTable
-            data={transactions as any}
-            farewellId={id}
-            isAdmin={isAdmin}
-          />
+          <TransactionTable farewellId={id} isAdmin={isAdmin} />
         </GlassCard>
       ) : (
         <div className="space-y-6">
@@ -59,10 +67,7 @@ export default async function HistoryPage({
                   Total Contributed
                 </p>
                 <p className="text-3xl font-bold text-white">
-                  ₹
-                  {transactions
-                    .reduce((acc, curr) => acc + Number(curr.amount), 0)
-                    .toLocaleString()}
+                  ₹{userStats.totalContribution.toLocaleString()}
                 </p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20">
@@ -76,9 +81,9 @@ export default async function HistoryPage({
                   Latest Contribution
                 </p>
                 <p className="text-xl font-bold text-white">
-                  {transactions.length > 0
+                  {initialTransactions.length > 0
                     ? format(
-                        new Date(transactions[0].created_at),
+                        new Date(initialTransactions[0].created_at),
                         "MMM d, yyyy"
                       )
                     : "N/A"}
@@ -92,8 +97,9 @@ export default async function HistoryPage({
 
           <h3 className="text-lg font-bold text-white px-1">Recent Activity</h3>
           <ContributionHistoryList
-            transactions={transactions as any}
+            initialTransactions={initialTransactions}
             farewellId={id}
+            initialTotal={initialTotal}
           />
         </div>
       )}
