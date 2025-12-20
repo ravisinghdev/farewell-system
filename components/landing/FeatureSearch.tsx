@@ -14,7 +14,7 @@ export default function FeatureSearch({
 }) {
   const features = [
     "Real-time Chat System (Instagram-style DMs, Groups, Class-Year Auto Join)",
-    "Advanced Contributions Engine (UPI, Stripe, Offline Requests)",
+    "Advanced Contributions Engine (UPI, Razorpay, Offline Requests)",
     "Event Management with Milestones & Tasks",
     "Gallery & Media Library with Uploads and Highlights",
     "Announcements with Scheduling and Read Receipts",

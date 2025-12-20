@@ -24860,7 +24860,7 @@ CREATE TABLE IF NOT EXISTS public.contributions (
   farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE,
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
   amount NUMERIC NOT NULL,
-  method TEXT NOT NULL CHECK (method IN ('upi', 'cash', 'bank_transfer', 'stripe', 'razorpay')),
+  method TEXT NOT NULL CHECK (method IN ('upi', 'cash', 'bank_transfer', 'razorpay')),
   transaction_id TEXT,
   screenshot_url TEXT,
   status contribution_status DEFAULT 'pending',

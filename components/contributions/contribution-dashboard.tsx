@@ -39,7 +39,7 @@ import { getContributionRankAction } from "@/app/actions/contribution-actions";
 interface Contribution {
   id: string;
   amount: number;
-  method: "upi" | "cash" | "bank_transfer" | "stripe" | "razorpay";
+  method: "upi" | "cash" | "bank_transfer" | "razorpay";
   status:
     | "pending"
     | "verified"

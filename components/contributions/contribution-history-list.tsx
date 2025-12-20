@@ -121,7 +121,6 @@ export function ContributionHistoryList({
         return <Smartphone className="w-5 h-5 text-purple-400" />;
       case "card":
       case "razorpay":
-      case "stripe":
         return <CreditCard className="w-5 h-5 text-blue-400" />;
       case "cash":
         return <Wallet className="w-5 h-5 text-green-500" />;
