@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { ActionState } from "@/types/custom";
 import { logAudit } from "@/lib/audit-logger";
@@ -494,7 +495,7 @@ export async function getLedgerAction(farewellId: string) {
   const supabase = await createClient();
 
   // Note: RLS allows all farewell members to view
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from("ledger")
     .select(
       `

@@ -333,13 +333,13 @@ export async function getUnifiedTransactionsAction(
   if (!claimsData || !claimsData.claims) return [];
 
   // Fetch contributions (credits)
-  const { data: contributions, error: contribError } = await supabaseAdmin
+  const { data: contributions, error: contribError } = await supabase
     .from("contributions")
     .select(
       "id, amount, created_at, status, method, transaction_id, user_id, users:user_id(full_name, avatar_url)"
     )
     .eq("farewell_id", farewellId)
-    .in("status", ["verified", "approved"])
+    .in("status", ["verified", "approved", "pending"])
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -347,18 +347,27 @@ export async function getUnifiedTransactionsAction(
     console.error("Fetch contributions error:", contribError);
   }
 
-  // Fetch ledger entries (debits/credits)
-  const { data: ledgerEntries, error: ledgerError } = await supabaseAdmin
-    .from("ledger")
-    .select(
-      "id, amount, created_at, type, category, description, reference_id, created_by, users:created_by(full_name, avatar_url)"
-    )
-    .eq("farewell_id", farewellId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  // Fetch ledger entries (debits/credits) - Non-blocking
+  let ledgerEntries: any[] = [];
+  try {
+    const { data, error } = await supabase
+      .from("ledger")
+      .select(
+        "id, amount, created_at, type, category, description, reference_id, created_by, users:created_by(full_name, avatar_url)"
+      )
+      .eq("farewell_id", farewellId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-  if (ledgerError) {
-    console.error("Fetch ledger error:", ledgerError);
+    if (error) {
+      console.error("Fetch ledger error:", error);
+      // Don't throw, just continue without ledger data
+    } else {
+      ledgerEntries = data || [];
+    }
+  } catch (err) {
+    console.error("Ledger fetch exception:", err);
+    // Continue without ledger data
   }
 
   // Merge and format as unified transaction list
@@ -377,7 +386,7 @@ export async function getUnifiedTransactionsAction(
       reference_id: null,
       created_at: c.created_at,
     })),
-    ...(ledgerEntries || []).map((l: any) => ({
+    ...ledgerEntries.map((l: any) => ({
       id: l.id,
       transaction_type: "expense" as const,
       entry_type: l.type as "debit" | "credit",
@@ -567,7 +576,7 @@ export async function getFinancialStatsAction(farewellId: string) {
       .eq("status", "pending");
 
     // 3. Calculate Ledger Expenses (Debits)
-    const { data: ledgerDebits } = await supabase
+    const { data: ledgerDebits } = await supabaseAdmin
       .from("ledger")
       .select("amount")
       .eq("farewell_id", farewellId)

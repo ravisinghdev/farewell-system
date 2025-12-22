@@ -1,16 +1,16 @@
-import { ContributionHeader } from "@/components/contributions/contribution-header";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { checkIsAdmin } from "@/lib/auth/roles";
 import { redirect } from "next/navigation";
 import { GlassCard } from "@/components/ui/glass-card";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, BarChart3, List, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  getFinancialStatsAction,
-  getFarewellSettingsAction,
-} from "@/app/actions/contribution-actions";
-import { ContributionControlCenter } from "@/components/admin/contribution-control-center";
+import { ContributionHeader } from "@/components/contributions/contribution-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { VerificationQueue } from "@/components/admin/finance/verification-queue";
+import { TransactionFeed } from "@/components/admin/finance/transaction-feed";
+import { FinanceStats } from "@/components/admin/finance/finance-stats";
+import { FinanceProvider } from "@/components/admin/finance/finance-context";
 
 interface ManageContributionsPageProps {
   params: Promise<{
@@ -58,23 +58,78 @@ export default async function ManageContributionsPage({
     );
   }
 
-  const stats = await getFinancialStatsAction(id);
-  const settings = await getFarewellSettingsAction(id);
-
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-8 animate-in fade-in duration-500">
-      <ContributionHeader
-        title="Contribution Command Center"
-        description="Advanced controls for financial management and auditing."
-        farewellId={id}
-        minimal={true}
-      />
+    <FinanceProvider farewellId={id}>
+      <div className="space-y-8 max-w-[1600px] mx-auto p-4 md:p-8 animate-in fade-in duration-500">
+        <ContributionHeader
+          title="Finance Command Center"
+          description="Verify payments, track expenses, and manage the farewell ledger."
+          farewellId={id}
+          minimal={true}
+        />
 
-      <ContributionControlCenter
-        farewellId={id}
-        initialStats={stats}
-        initialSettings={settings}
-      />
-    </div>
+        <div className="space-y-8">
+          {/* Live Pulse Stats */}
+          <section>
+            <FinanceStats farewellId={id} />
+          </section>
+
+          {/* Action Center */}
+          <Tabs defaultValue="verification" className="space-y-6">
+            <TabsList className="bg-secondary/20 p-1 border border-border/50 h-auto">
+              <TabsTrigger value="verification" className="gap-2 px-4 py-2">
+                <CheckCircle2 className="w-4 h-4" />
+                Verification Queue
+              </TabsTrigger>
+              <TabsTrigger value="transactions" className="gap-2 px-4 py-2">
+                <List className="w-4 h-4" />
+                All Transactions
+              </TabsTrigger>
+              {/* Future placeholder for detailed analytics/charts */}
+              <TabsTrigger
+                value="analytics"
+                disabled
+                className="gap-2 px-4 py-2 opacity-50"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Analytics (Coming Soon)
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent
+              value="verification"
+              className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold tracking-tight">
+                    Pending Actions
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Review and verify incoming payments.
+                  </p>
+                </div>
+              </div>
+              <VerificationQueue farewellId={id} />
+            </TabsContent>
+
+            <TabsContent
+              value="transactions"
+              className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500"
+            >
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight">
+                  Unified Ledger
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Complete history of all contributions and expenses.
+                </p>
+              </div>
+              <TransactionFeed farewellId={id} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </FinanceProvider>
   );
 }

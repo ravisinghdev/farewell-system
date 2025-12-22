@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -23,29 +24,24 @@ import { toast } from "sonner";
 import {
   getPerformancesAction,
   createPerformanceAction,
-  updatePerformanceStatusAction,
   deletePerformanceAction,
-  voteForPerformanceAction,
-  removeVoteForPerformanceAction,
 } from "@/app/actions/event-actions";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  Clock,
-  Music,
-  Users,
   Plus,
-  Trash2,
-  CheckCircle,
-  XCircle,
-  Video,
-  ThumbsUp,
+  LayoutGrid,
+  List as ListIcon,
+  BarChart3,
+  Settings2,
+  Activity,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
 import { useFarewell } from "@/components/providers/farewell-provider";
 import { checkIsAdmin } from "@/lib/auth/roles";
-import { createClient } from "@/utils/supabase/client";
+import { PerformanceCard } from "@/components/performances/performance-card";
+import { Performance } from "@/types/performance";
 
 export default function PerformancesPage() {
   const params = useParams();
@@ -53,17 +49,17 @@ export default function PerformancesPage() {
   const { farewell } = useFarewell();
   const isAdmin = checkIsAdmin(farewell.role);
 
-  const [performances, setPerformances] = useState<any[]>([]);
+  const [performances, setPerformances] = useState<Performance[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Form states
   const [title, setTitle] = useState("");
   const [type, setType] = useState("");
-  const [performers, setPerformers] = useState("");
-  const [duration, setDuration] = useState("");
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [risk, setRisk] = useState("low");
+  const [duration, setDuration] = useState("300"); // 5 mins in seconds
+  const [performerNames, setPerformerNames] = useState("");
 
   useEffect(() => {
     fetchPerformances();
@@ -72,327 +68,260 @@ export default function PerformancesPage() {
   async function fetchPerformances() {
     const result = await getPerformancesAction(farewellId);
     if (result.data) {
-      setPerformances(result.data);
+      setPerformances(result.data as unknown as Performance[]);
     }
     setLoading(false);
   }
 
-  function resetForm() {
-    setTitle("");
-    setType("");
-    setPerformers("");
-    setDuration("");
-    setVideoFile(null);
-  }
-
   async function handleCreate() {
-    if (!title || !type || !performers) {
-      toast.error("Error", {
-        description: "Please fill in all required fields",
-      });
+    if (!title || !type) {
+      toast.error("Error", { description: "Title and Type are required" });
       return;
     }
 
-    let videoUrl = "";
-
-    if (videoFile) {
-      setUploading(true);
-      const supabase = createClient();
-      const fileExt = videoFile.name.split(".").pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${farewellId}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("performance_videos")
-        .upload(filePath, videoFile);
-
-      if (uploadError) {
-        toast.error("Upload Error", {
-          description: uploadError.message,
-        });
-        setUploading(false);
-        return;
-      }
-
-      const { data } = supabase.storage
-        .from("performance_videos")
-        .getPublicUrl(filePath);
-      videoUrl = data.publicUrl;
-      setUploading(false);
-    }
-
-    const performersList = performers.split(",").map((p) => p.trim());
+    const performersList = performerNames
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
 
     const result = await createPerformanceAction(farewellId, {
       title,
       type,
       performers: performersList,
-      duration,
-      video_url: videoUrl,
+      risk_level: risk,
+      duration_seconds: parseInt(duration) || 300,
     });
 
     if (result.error) {
-      toast.error("Error", {
-        description: result.error,
-      });
+      toast.error("Error", { description: result.error });
     } else {
-      toast.success("Success", {
-        description: "Performance proposed successfully",
-      });
+      toast.success("Success", { description: "Performance Draft Created" });
       setIsDialogOpen(false);
       resetForm();
       fetchPerformances();
     }
   }
 
-  async function handleStatusUpdate(id: string, status: string) {
-    const result = await updatePerformanceStatusAction(id, farewellId, status);
-    if (result.error) {
-      toast.error("Error", {
-        description: result.error,
-      });
-    } else {
-      toast.success("Success", {
-        description: `Performance ${status}`,
-      });
-      fetchPerformances();
-    }
+  function resetForm() {
+    setTitle("");
+    setType("");
+    setRisk("low");
+    setDuration("300");
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this performance?")) return;
+    if (!confirm("Delete this performance? Use with caution.")) return;
     const result = await deletePerformanceAction(id, farewellId);
-    if (result.error) {
-      toast.error("Error", {
-        description: result.error,
-      });
-    } else {
-      toast.success("Success", {
-        description: "Performance deleted",
-      });
+    if (!result.error) {
+      toast.success("Deleted", { description: "Performance removed." });
       fetchPerformances();
     }
   }
 
-  async function handleVote(id: string, hasVoted: boolean) {
-    // Optimistic update
-    setPerformances((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          return {
-            ...p,
-            vote_count: hasVoted ? p.vote_count - 1 : p.vote_count + 1,
-            has_voted: !hasVoted,
-          };
-        }
-        return p;
-      })
-    );
-
-    const result = hasVoted
-      ? await removeVoteForPerformanceAction(id)
-      : await voteForPerformanceAction(id);
-
-    if (result.error) {
-      toast.error("Error", {
-        description: result.error,
-      });
-      // Revert optimistic update
-      fetchPerformances();
-    }
+  async function handleToggleLock(id: string, current: boolean) {
+    toast.info("Lock toggling coming next update!");
   }
+
+  // Calculate Health Stats
+  const avgHealth =
+    performances.length > 0
+      ? Math.round(
+          performances.reduce((acc, p) => acc + (p.health_score || 0), 0) /
+            performances.length
+        )
+      : 0;
+
+  const highRiskCount = performances.filter(
+    (p) => p.risk_level === "high"
+  ).length;
 
   return (
     <PageScaffold
-      title="Performances & Acts"
-      description="Manage and schedule performances for the event."
+      title="Performance Registry"
+      description="The official source of truth for all farewell acts."
       action={
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="shadow-lg shadow-primary/20">
               <Plus className="mr-2 h-4 w-4" />
-              Propose Performance
+              Add Performance
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Propose a Performance</DialogTitle>
+              <DialogTitle>Register New Act</DialogTitle>
               <DialogDescription>
-                Submit a performance idea for approval.
+                Initialize a structured performance object.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Title</Label>
+                <Label>Performance Title</Label>
                 <Input
-                  placeholder="e.g. Group Dance"
+                  placeholder="e.g. The Final Flash Mob"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select value={type} onValueChange={setType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Dance">Dance</SelectItem>
-                    <SelectItem value="Song">Song</SelectItem>
-                    <SelectItem value="Skit">Skit</SelectItem>
-                    <SelectItem value="Speech">Speech</SelectItem>
-                    <SelectItem value="Instrumental">Instrumental</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Type</Label>
+                  <Select value={type} onValueChange={setType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dance">Dance</SelectItem>
+                      <SelectItem value="couple">Pair / Duo</SelectItem>
+                      <SelectItem value="group">Group Act</SelectItem>
+                      <SelectItem value="skit">Skit</SelectItem>
+                      <SelectItem value="band">Band/Music</SelectItem>
+                      <SelectItem value="solo">Solo</SelectItem>
+                      <SelectItem value="special_act">Special Act</SelectItem>
+                      <SelectItem value="anchor_segment">
+                        Anchor Segment
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Initial Risk Assessment</Label>
+                  <Select value={risk} onValueChange={setRisk}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Risk Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low (Simple)</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High (Complex/Risky)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Performers (comma separated)</Label>
+                <Label>Est. Duration (Seconds)</Label>
                 <Input
-                  placeholder="John, Jane, Mike"
-                  value={performers}
-                  onChange={(e) => setPerformers(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Duration (approx)</Label>
-                <Input
-                  placeholder="e.g. 5 mins"
+                  type="number"
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Upload Video (Optional)</Label>
-                <Input
-                  type="file"
-                  accept="video/*"
-                  onChange={(e) =>
-                    setVideoFile(e.target.files ? e.target.files[0] : null)
-                  }
-                />
-              </div>
-              <Button
-                onClick={handleCreate}
-                className="w-full"
-                disabled={uploading}
-              >
-                {uploading ? "Uploading..." : "Submit Proposal"}
+
+              <Button onClick={handleCreate} className="w-full">
+                Initialize Act
               </Button>
             </div>
           </DialogContent>
         </Dialog>
       }
     >
+      {/* Health Dashboard Header */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-card border rounded-xl p-4 flex items-center gap-4 shadow-sm">
+          <div className="p-3 bg-primary/10 rounded-full">
+            <BarChart3 className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Total Acts</p>
+            <h3 className="text-2xl font-bold">{performances.length}</h3>
+          </div>
+        </div>
+        <div className="bg-card border rounded-xl p-4 flex items-center gap-4 shadow-sm">
+          <div className="p-3 bg-green-500/10 rounded-full">
+            <Activity className="w-6 h-6 text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Avg. Readiness</p>
+            <h3 className="text-2xl font-bold">{avgHealth}%</h3>
+          </div>
+        </div>
+        <div className="bg-card border rounded-xl p-4 flex items-center gap-4 shadow-sm">
+          <div className="p-3 bg-red-500/10 rounded-full">
+            <AlertTriangle className="w-6 h-6 text-red-600" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">High Risk Acts</p>
+            <h3 className="text-2xl font-bold">{highRiskCount}</h3>
+          </div>
+        </div>
+        <div className="bg-card border rounded-xl p-4 flex items-center gap-4 shadow-sm">
+          <div className="p-3 bg-blue-500/10 rounded-full">
+            <Clock className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Total Duration</p>
+            <h3 className="text-2xl font-bold">
+              {Math.floor(
+                performances.reduce(
+                  (acc, s) => acc + (s.duration_seconds || 0),
+                  0
+                ) / 60
+              )}
+              m
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-4">
+        <Tabs defaultValue="all" className="w-[400px]">
+          <TabsList>
+            <TabsTrigger value="all">All Acts</TabsTrigger>
+            <TabsTrigger value="risk">High Risk</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === "grid" ? "secondary" : "ghost"}
+            size="icon"
+            onClick={() => setViewMode("grid")}
+          >
+            <LayoutGrid className="w-4 h-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "secondary" : "ghost"}
+            size="icon"
+            onClick={() => setViewMode("list")}
+          >
+            <ListIcon className="w-4 h-4" />
+          </Button>
+          <Button variant="outline" size="icon">
+            <Settings2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
       {loading ? (
-        <div>Loading...</div>
+        <div className="py-20 text-center">Loading registry...</div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+              : "space-y-4"
+          }
+        >
           {performances.map((performance) => (
-            <Card key={performance.id}>
-              <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                <div className="space-y-1">
-                  <CardTitle className="text-base font-semibold">
-                    {performance.title}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{performance.type}</Badge>
-                    <Badge
-                      variant={
-                        performance.status === "approved"
-                          ? "default"
-                          : performance.status === "rejected"
-                          ? "destructive"
-                          : "outline"
-                      }
-                    >
-                      {performance.status}
-                    </Badge>
-                  </div>
-                </div>
-                {isAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDelete(performance.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {performance.video_url && (
-                    <div className="rounded-md overflow-hidden bg-black aspect-video">
-                      <video
-                        src={performance.video_url}
-                        controls
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {performance.performers &&
-                          performance.performers.join(", ")}
-                      </span>
-                    </div>
-                    {performance.duration && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>{performance.duration}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <Button
-                      variant={performance.has_voted ? "default" : "outline"}
-                      size="sm"
-                      onClick={() =>
-                        handleVote(performance.id, performance.has_voted)
-                      }
-                      className="gap-2"
-                    >
-                      <ThumbsUp className="h-4 w-4" />
-                      {performance.vote_count || 0}
-                    </Button>
-
-                    {isAdmin && performance.status === "proposed" && (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={() =>
-                            handleStatusUpdate(performance.id, "approved")
-                          }
-                        >
-                          <CheckCircle className="mr-1 h-4 w-4" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() =>
-                            handleStatusUpdate(performance.id, "rejected")
-                          }
-                        >
-                          <XCircle className="mr-1 h-4 w-4" />
-                          Reject
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <PerformanceCard
+              key={performance.id}
+              performance={performance}
+              isAdmin={isAdmin}
+              onEdit={() => {}} // TODO: Open Edit Dialog
+              onDelete={handleDelete}
+              onToggleLock={handleToggleLock}
+            />
           ))}
+          {performances.length === 0 && (
+            <div className="col-span-full py-12 text-center border-2 border-dashed rounded-xl">
+              <h3 className="text-xl font-medium text-muted-foreground">
+                Registry Empty
+              </h3>
+              <p className="text-sm text-muted-foreground mt-2">
+                Initialize the first performance to begin planning.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </PageScaffold>

@@ -31,6 +31,9 @@ export function CreateAnnouncementDialog({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isPinned, setIsPinned] = useState(false);
+  const [ctaLabel, setCtaLabel] = useState("");
+  const [ctaLink, setCtaLink] = useState("");
+  const [ctaType, setCtaType] = useState("primary");
   const [isPending, startTransition] = useTransition();
 
   const handleSubmit = () => {
@@ -47,7 +50,10 @@ export function CreateAnnouncementDialog({
         farewellId,
         title,
         content,
-        isPinned
+        isPinned,
+        ctaLabel,
+        ctaLink,
+        ctaType
       );
 
       if (res.error) {
@@ -58,6 +64,9 @@ export function CreateAnnouncementDialog({
         setTitle("");
         setContent("");
         setIsPinned(false);
+        setCtaLabel("");
+        setCtaLink("");
+        setCtaType("primary");
       }
     });
   };
@@ -65,9 +74,10 @@ export function CreateAnnouncementDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2 px-3 sm:px-4">
           <Plus className="h-4 w-4" />
-          New Announcement
+          <span className="hidden sm:inline">New Announcement</span>
+          <span className="sm:hidden">New</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col">
@@ -95,13 +105,66 @@ export function CreateAnnouncementDialog({
               className="min-h-[200px]"
             />
           </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="pinned"
-              checked={isPinned}
-              onCheckedChange={setIsPinned}
-            />
-            <Label htmlFor="pinned">Pin to top</Label>
+
+          <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="pinned"
+                checked={isPinned}
+                onCheckedChange={setIsPinned}
+              />
+              <Label htmlFor="pinned" className="font-medium">
+                Pin to top
+              </Label>
+            </div>
+
+            <div className="space-y-3 pt-2 border-t border-border/50">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Call to Action (Optional)
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="cta-label" className="text-xs">
+                    Button Label
+                  </Label>
+                  <Input
+                    id="cta-label"
+                    placeholder="e.g. Register"
+                    value={ctaLabel}
+                    onChange={(e) => setCtaLabel(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="cta-type" className="text-xs">
+                    Type
+                  </Label>
+                  <select
+                    id="cta-type"
+                    className="flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={ctaType}
+                    onChange={(e) => setCtaType(e.target.value)}
+                  >
+                    <option value="primary">Primary (Filled)</option>
+                    <option value="secondary">Secondary (Gray)</option>
+                    <option value="outline">Outline</option>
+                    <option value="destructive">Destructive (Red)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="cta-link" className="text-xs">
+                  Action URL
+                </Label>
+                <Input
+                  id="cta-link"
+                  placeholder="https://..."
+                  value={ctaLink}
+                  onChange={(e) => setCtaLink(e.target.value)}
+                  className="h-8"
+                />
+              </div>
+            </div>
           </div>
         </div>
         <DialogFooter>

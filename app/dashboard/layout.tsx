@@ -20,6 +20,7 @@ import { redirect } from "next/navigation";
 import { AppearanceProvider } from "@/components/settings/appearance-provider";
 import { FarewellProvider } from "@/components/providers/farewell-provider";
 import { AdminNotifications } from "@/components/admin/admin-notifications";
+import { UnifiedBottomNav } from "@/components/dashboard/unified-bottom-nav";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
 
 // Metadata for dashboard pages
@@ -163,6 +164,8 @@ export default async function DashboardLayout({
                     {children}
                   </div>
                 </div>
+
+                <UnifiedBottomNav />
               </SidebarInset>
 
               <AdminNotifications userId={userId} role={role} />

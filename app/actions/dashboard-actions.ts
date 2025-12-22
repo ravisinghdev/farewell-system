@@ -17,6 +17,9 @@ export interface Announcement {
     avatar_url: string | null;
   };
   is_read?: boolean; // Virtual field
+  call_to_action_label?: string | null;
+  call_to_action_link?: string | null;
+  call_to_action_type?: string | null;
 }
 
 export async function getAnnouncementsAction(farewellId: string) {
@@ -85,7 +88,10 @@ export async function createAnnouncementAction(
   farewellId: string,
   title: string,
   content: string,
-  isPinned: boolean
+  isPinned: boolean,
+  ctaLabel?: string,
+  ctaLink?: string,
+  ctaType?: string
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
@@ -98,6 +104,9 @@ export async function createAnnouncementAction(
     content,
     is_pinned: isPinned,
     created_by: userId,
+    call_to_action_label: ctaLabel,
+    call_to_action_link: ctaLink,
+    call_to_action_type: ctaType || "primary",
   });
 
   if (error) return { error: error.message };
@@ -123,7 +132,10 @@ export async function updateAnnouncementAction(
   farewellId: string,
   title: string,
   content: string,
-  isPinned: boolean
+  isPinned: boolean,
+  ctaLabel?: string,
+  ctaLink?: string,
+  ctaType?: string
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
@@ -137,6 +149,9 @@ export async function updateAnnouncementAction(
       content,
       is_pinned: isPinned,
       updated_at: new Date().toISOString(),
+      call_to_action_label: ctaLabel,
+      call_to_action_link: ctaLink,
+      call_to_action_type: ctaType || "primary",
     })
     .eq("id", id);
 

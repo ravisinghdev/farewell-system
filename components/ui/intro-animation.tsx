@@ -6,22 +6,24 @@ import { GraduationCap } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 
 export default function IntroAnimation() {
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false); // Default to false to prevent hydration mismatch
 
   useEffect(() => {
     // Check if running on native platform (app)
     const isApp = Capacitor.isNativePlatform();
     if (!isApp) {
-      setShow(false);
       return;
     }
 
     // Check if intro has already shown this session
+    // Safe to access sessionStorage here inside useEffect (client-only)
     const hasShown = sessionStorage.getItem("introShown");
     if (hasShown) {
-      setShow(false);
       return;
     }
+
+    // If we get here, we should show the animation
+    setShow(true);
 
     // Set flag and hide after animation duration
     sessionStorage.setItem("introShown", "true");

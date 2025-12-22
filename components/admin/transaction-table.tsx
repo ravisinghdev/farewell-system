@@ -51,6 +51,7 @@ import {
   getContributionsPaginatedAction,
   getUnifiedTransactionsAction,
 } from "@/app/actions/contribution-actions";
+import { getUnifiedTransactions } from "@/app/actions/finance-actions";
 
 export type Transaction = {
   id: string;
@@ -106,9 +107,26 @@ export function TransactionTable({
       // For admin, show unified view (contributions + expenses)
       // For regular users, show only contributions
       if (isAdmin) {
-        const unified = await getUnifiedTransactionsAction(farewellId, 100);
-        setData(unified as any);
-        setTotal(unified.length);
+        // Use the new, robust action
+        const { getUnifiedTransactions } = await import(
+          "@/app/actions/finance-actions"
+        );
+
+        // Load all data (pass large limit or implement server-pagination properly later)
+        // Current implementation fetches limit+offset
+        const res = await getUnifiedTransactions(
+          farewellId,
+          100,
+          (page - 1) * 10
+        );
+
+        if (res.success && res.data) {
+          setData(res.data as any);
+          // Total is tricky without count, setting dummy or fetched total if API supported
+          setTotal(100); // Placeholder to enable pagination buttons for now
+        } else {
+          toast.error(res.error || "Failed to load transactions");
+        }
       } else {
         const res = await getContributionsPaginatedAction(
           farewellId,
@@ -143,7 +161,10 @@ export function TransactionTable({
   const handleApprove = async (id: string) => {
     setIsProcessing(true);
     try {
-      const result = await approveContributionAction(id);
+      const { approveContribution } = await import(
+        "@/app/actions/finance-actions"
+      );
+      const result = await approveContribution(farewellId, id);
       if (result.success) {
         toast.success("Contribution approved successfully");
         fetchData(); // Refresh list
@@ -160,7 +181,10 @@ export function TransactionTable({
   const handleReject = async (id: string) => {
     setIsProcessing(true);
     try {
-      const result = await rejectContributionAction(id);
+      const { rejectContribution } = await import(
+        "@/app/actions/finance-actions"
+      );
+      const result = await rejectContribution(farewellId, id);
       if (result.success) {
         toast.success("Contribution rejected");
         fetchData(); // Refresh list

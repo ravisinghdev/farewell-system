@@ -3,480 +3,379 @@
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Heart, UserPlus, Users, X } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  getFarewellMembersAction,
+  updateRehearsalMetadataAction,
+} from "@/app/actions/rehearsal-actions";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { getInitials } from "@/lib/utils";
-import {
-  Check,
-  X,
-  UserPlus,
-  MoreVertical,
-  Search,
-  Clock,
-  Loader2,
-} from "lucide-react";
-import {
-  addParticipantsAction,
-  removeParticipantAction,
-  markAttendanceAction,
-  searchParticipantsAction,
-} from "@/app/actions/rehearsal-participant-actions";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
 
 interface ParticipantManagerProps {
   rehearsalId: string;
   farewellId: string;
-  participants: any[];
+  participants: any[]; // Current participants list
+  metadata: any; // Contains couples info
   isAdmin: boolean;
+  performanceType?: string;
 }
 
 export function ParticipantManager({
   rehearsalId,
   farewellId,
-  participants,
+  participants: initialParticipants,
+  metadata,
   isAdmin,
+  performanceType,
 }: ParticipantManagerProps) {
-  const router = useRouter();
+  const [allMembers, setAllMembers] = useState<any[]>([]);
+  const [participants, setParticipants] = useState<any[]>(
+    initialParticipants || []
+  );
+  const [couples, setCouples] = useState<any[]>(metadata?.couples || []);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  // Search State
-  const [query, setQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isPairingMode, setIsPairingMode] = useState(false);
+
+  // Coupling State
+  const [selectedForCouple, setSelectedForCouple] = useState<string | null>(
+    null
+  );
+
+  // View Mode State
+  const initialIsCouple =
+    performanceType === "couple" ||
+    performanceType === "duet" ||
+    performanceType === "pair";
+
+  const [viewMode, setViewMode] = useState<"group" | "pair">(
+    initialIsCouple ? "pair" : "group"
+  );
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (query.length >= 2) {
-        setIsSearching(true);
-        const results = await searchParticipantsAction(farewellId, query);
-        setSearchResults(results);
-        setIsSearching(false);
-      } else {
-        setSearchResults([]);
+    if (initialIsCouple) setViewMode("pair");
+  }, [performanceType]);
+
+  const isCoupleView = viewMode === "pair";
+
+  useEffect(() => {
+    loadMembers();
+  }, []);
+
+  async function loadMembers() {
+    const members = await getFarewellMembersAction(farewellId);
+    setAllMembers(members);
+  }
+
+  async function handleAddParticipant(user: any) {
+    if (participants.some((p) => p.id === user.id)) return;
+
+    const newParticipants = [...participants, user];
+    await saveChanges(newParticipants, couples);
+    toast.success(`${user.full_name} added to cast`);
+  }
+
+  async function handleRemoveParticipant(userId: string) {
+    const newParticipants = participants.filter((p) => p.id !== userId);
+    // Also remove from couples if present
+    const newCouples = couples.filter(
+      (c) => c.partner1.id !== userId && c.partner2.id !== userId
+    );
+
+    await saveChanges(newParticipants, newCouples);
+    toast.success("Removed from cast");
+  }
+
+  async function handleCoupleClick(user: any) {
+    if (!isAdmin) return;
+
+    if (!isPairingMode) {
+      if (isCoupleView) toast.info("Enable 'Pairing Mode' to link couples.");
+      return;
+    }
+
+    if (!selectedForCouple) {
+      // Select first partner
+      setSelectedForCouple(user.id);
+      toast.info(`Select partner for ${user.full_name}`);
+    } else {
+      if (selectedForCouple === user.id) {
+        setSelectedForCouple(null); // Deselect
+        return;
       }
-    }, 300);
 
-    return () => clearTimeout(timer);
-  }, [query, farewellId]);
+      // Select second partner & Create Couple
+      const partner1 = participants.find((p) => p.id === selectedForCouple);
+      const partner2 = user;
 
-  async function handleAttendance(
-    userId: string,
-    status: "present" | "absent" | "late"
-  ) {
-    const result = await markAttendanceAction(
-      rehearsalId,
-      farewellId,
-      userId,
-      status
-    );
-    if (result.error) {
-      toast.error("Error", { description: result.error });
-    } else {
-      router.refresh();
+      const newCouple = {
+        id: crypto.randomUUID(),
+        partner1,
+        partner2,
+      };
+
+      const newCouples = [...couples, newCouple];
+      await saveChanges(participants, newCouples);
+
+      setSelectedForCouple(null);
+      toast.success("❤️ Couple Paired!");
     }
   }
 
-  async function handleAddParticipant(userId: string) {
-    const result = await addParticipantsAction(rehearsalId, farewellId, [
-      userId,
-    ]);
-    if (result.error) {
-      toast.error("Error", { description: result.error });
-    } else {
-      toast.success("Participant Added");
-      setIsAddDialogOpen(false);
-      setQuery("");
-      setSearchResults([]);
-      router.refresh();
-    }
+  async function handleBreakUp(coupleId: string) {
+    const newCouples = couples.filter((c) => c.id !== coupleId);
+    await saveChanges(participants, newCouples);
+    toast.success("Couple un-paired");
   }
 
-  async function handleRemove(userId: string) {
-    if (!confirm("Remove this participant?")) return;
-    const result = await removeParticipantAction(
-      rehearsalId,
-      farewellId,
-      userId
-    );
-    if (result.error) {
-      toast.error("Error", { description: result.error });
-    } else {
-      toast.success("Participant Removed");
-      router.refresh();
-    }
+  async function saveChanges(newParticipants: any[], newCouples: any[]) {
+    // Optimistic Update
+    setParticipants(newParticipants);
+    setCouples(newCouples);
+
+    // Save to metadata (we are storing everything in metadata for now as requested)
+    // AND participants might be stored in the 'participants' snapshot or we sync them.
+    // For this implementation, we treat 'metadata' as the source of truth for UI state.
+    const newMetadata = {
+      ...metadata,
+      participants: newParticipants, // Sync list to metadata
+      couples: newCouples,
+    };
+
+    await updateRehearsalMetadataAction(rehearsalId, farewellId, newMetadata);
   }
 
-  // Highlight helper
-  const HighlightText = ({
-    text,
-    highlight,
-  }: {
-    text: string;
-    highlight: string;
-  }) => {
-    if (!highlight.trim() || !text) return <span>{text}</span>;
-
-    const parts = text.split(new RegExp(`(${highlight})`, "gi"));
-    return (
-      <span>
-        {parts.map((part, i) =>
-          part.toLowerCase() === highlight.toLowerCase() ? (
-            <span
-              key={i}
-              className="bg-yellow-200 dark:bg-yellow-900 font-semibold"
-            >
-              {part}
-            </span>
-          ) : (
-            <span key={i}>{part}</span>
-          )
-        )}
-      </span>
-    );
-  };
-
-  // Stats
-  const presentCount = participants.filter(
-    (p) => p.attendance_status === "present" || p.attendance_status === "late"
-  ).length;
-  const totalCount = participants.length;
-  const attendancePercentage =
-    totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+  // Filter out already added people
+  const availableMembers = allMembers.filter(
+    (m) => !participants.some((p) => p.id === m.id)
+  );
 
   return (
-    <TooltipProvider>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold">
-              Participants ({totalCount})
-            </h3>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Attendance: {attendancePercentage}%</span>
-              <div className="h-2 w-24 bg-secondary rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500"
-                  style={{ width: `${attendancePercentage}%` }}
-                />
-              </div>
+    <div className="space-y-8">
+      {/* Control Bar */}
+      {/* Admin Controls Header */}
+      {isAdmin && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between bg-muted/40 p-3 rounded-lg border mb-4">
+          {/* Format Toggle */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground mr-2">
+              Format:
+            </span>
+            <div className="flex p-1 bg-background border rounded-md">
+              <button
+                onClick={() => setViewMode("group")}
+                className={`px-3 py-1 text-xs font-medium rounded-sm transition-all ${
+                  viewMode === "group"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "hover:bg-muted"
+                }`}
+              >
+                Group / Solo
+              </button>
+              <button
+                onClick={() => setViewMode("pair")}
+                className={`px-3 py-1 text-xs font-medium rounded-sm transition-all ${
+                  viewMode === "pair"
+                    ? "bg-pink-500 text-white shadow-sm"
+                    : "hover:bg-muted"
+                }`}
+              >
+                Couples
+              </button>
             </div>
           </div>
+
+          {/* Pairing Mode Switch (Only in Pair View) */}
+          {isCoupleView && (
+            <div className="flex items-center space-x-2 sm:border-l sm:pl-4">
+              <Switch
+                id="pairing-mode"
+                checked={isPairingMode}
+                onCheckedChange={(checked) => {
+                  setIsPairingMode(checked);
+                  setSelectedForCouple(null);
+                }}
+              />
+              <Label htmlFor="pairing-mode" className="cursor-pointer">
+                <span className="font-medium">Pairing Mode</span>
+              </Label>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 1. Couples Section (Conditional) */}
+      {isCoupleView ? (
+        <section>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Heart className="w-5 h-5 text-pink-500" />
+            Couples & Pairs
+          </h3>
+
+          {couples.length === 0 && (
+            <div className="text-sm text-muted-foreground italic mb-4">
+              No couples paired yet. Click users below to pair them.
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {couples.map((couple) => (
+              <Card
+                key={couple.id}
+                className="p-3 flex items-center justify-between bg-pink-500/5 border-pink-500/20"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex -space-x-2">
+                    <Avatar className="border-2 border-background w-10 h-10">
+                      <AvatarImage src={couple.partner1.avatar_url} />
+                      <AvatarFallback>
+                        {couple.partner1.full_name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Avatar className="border-2 border-background w-10 h-10">
+                      <AvatarImage src={couple.partner2.avatar_url} />
+                      <AvatarFallback>
+                        {couple.partner2.full_name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="text-sm font-medium">
+                    {couple.partner1.full_name} & {couple.partner2.full_name}
+                  </div>
+                </div>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() => handleBreakUp(couple.id)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </Card>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="mb-8">
+          <div className="p-4 border border-dashed rounded-lg bg-muted/20 text-muted-foreground text-sm flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+            Standard Group / Solo Format. (No Pairing Required)
+          </div>
+        </section>
+      )}
+
+      {/* 2. Cast Management */}
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            Cast ({participants.length})
+          </h3>
           {isAdmin && (
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <UserPlus className="w-4 h-4 mr-2" /> Add
+                <Button size="sm">
+                  <UserPlus className="w-4 h-4 mr-2" /> Add Members
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add Participant</DialogTitle>
+                  <DialogTitle>Add to Cast</DialogTitle>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search by name or email..."
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      className="pl-8"
-                    />
-                    {isSearching && (
-                      <div className="absolute right-2 top-2.5">
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <ScrollArea className="h-[300px] pr-4">
+                  <div className="space-y-2">
+                    {availableMembers.map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between p-2 rounded hover:bg-muted"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={user.avatar_url} />
+                            <AvatarFallback>{user.full_name[0]}</AvatarFallback>
+                          </Avatar>
+                          <span>{user.full_name}</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleAddParticipant(user)}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    ))}
+                    {availableMembers.length === 0 && (
+                      <div className="text-center text-muted-foreground py-8">
+                        No more members to add.
                       </div>
                     )}
                   </div>
-
-                  {searchResults.length > 0 && (
-                    <div className="border rounded-md max-h-[200px] overflow-y-auto">
-                      {searchResults.map((user) => {
-                        const isAlreadyAdded = participants.some(
-                          (p) => p.user_id === user.id
-                        );
-                        return (
-                          <div
-                            key={user.id}
-                            className={`flex items-center gap-3 p-3 hover:bg-accent cursor-pointer transition-colors ${
-                              isAlreadyAdded
-                                ? "opacity-50 pointer-events-none"
-                                : ""
-                            }`}
-                            onClick={() =>
-                              !isAlreadyAdded && handleAddParticipant(user.id)
-                            }
-                          >
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.avatar_url} />
-                              <AvatarFallback>
-                                {getInitials(user.full_name || "?")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col text-sm">
-                              <span className="font-medium">
-                                <HighlightText
-                                  text={user.full_name}
-                                  highlight={query}
-                                />
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                <HighlightText
-                                  text={user.email}
-                                  highlight={query}
-                                />
-                              </span>
-                            </div>
-                            {isAlreadyAdded && (
-                              <span className="ml-auto text-xs text-green-600 flex items-center">
-                                <Check className="w-3 h-3 mr-1" /> Added
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {query.length >= 2 &&
-                    !isSearching &&
-                    searchResults.length === 0 && (
-                      <div className="text-center text-sm text-muted-foreground py-4">
-                        No members found.
-                      </div>
-                    )}
-                </div>
+                </ScrollArea>
               </DialogContent>
             </Dialog>
           )}
         </div>
 
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Readiness</TableHead>
-                <TableHead>Attendance</TableHead>
-                {isAdmin && <TableHead className="w-[50px]"></TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {participants.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    No participants added yet.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                participants.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={p.user?.avatar_url} />
-                          <AvatarFallback>
-                            {getInitials(p.user?.full_name || "?")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {p.user?.full_name}
-                          </span>
-                          <span className="text-xs text-muted-foreground hidden sm:inline-block">
-                            {p.user?.email}
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className="capitalize font-normal"
-                      >
-                        {p.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {p.readiness_status?.costume && (
-                          <Badge
-                            className="text-[10px] px-1 h-5"
-                            variant="secondary"
-                          >
-                            Costume
-                          </Badge>
-                        )}
-                        {p.readiness_status?.props && (
-                          <Badge
-                            className="text-[10px] px-1 h-5"
-                            variant="secondary"
-                          >
-                            Props
-                          </Badge>
-                        )}
-                        {!p.readiness_status?.costume &&
-                          !p.readiness_status?.props && (
-                            <span className="text-xs text-muted-foreground">
-                              -
-                            </span>
-                          )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {isAdmin ? (
-                        <div className="flex items-center gap-1">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant={
-                                  p.attendance_status === "present"
-                                    ? "default"
-                                    : "ghost"
-                                }
-                                className={`h-7 w-7 ${
-                                  p.attendance_status === "present"
-                                    ? "bg-green-600 hover:bg-green-700"
-                                    : ""
-                                }`}
-                                onClick={() =>
-                                  handleAttendance(p.user_id, "present")
-                                }
-                              >
-                                <Check className="w-3 h-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Mark Present</TooltipContent>
-                          </Tooltip>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {participants.map((user) => (
+            <Card
+              key={user.id}
+              className={`p-3 relative group transition-all cursor-pointer ${
+                selectedForCouple === user.id
+                  ? "ring-2 ring-pink-500 bg-pink-500/10"
+                  : "hover:bg-muted/50"
+              }`}
+              onClick={() => handleCoupleClick(user)}
+            >
+              <div className="flex items-center gap-3">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={user.avatar_url} />
+                  <AvatarFallback>{user.full_name[0]}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {user.full_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Performer</p>
+                </div>
+              </div>
 
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant={
-                                  p.attendance_status === "late"
-                                    ? "default"
-                                    : "ghost"
-                                }
-                                className={`h-7 w-7 ${
-                                  p.attendance_status === "late"
-                                    ? "bg-yellow-600 hover:bg-yellow-700"
-                                    : ""
-                                }`}
-                                onClick={() =>
-                                  handleAttendance(p.user_id, "late")
-                                }
-                              >
-                                <Clock className="w-3 h-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Mark Late</TooltipContent>
-                          </Tooltip>
-
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant={
-                                  p.attendance_status === "absent"
-                                    ? "default"
-                                    : "ghost"
-                                }
-                                className={`h-7 w-7 ${
-                                  p.attendance_status === "absent"
-                                    ? "bg-red-600 hover:bg-red-700"
-                                    : ""
-                                }`}
-                                onClick={() =>
-                                  handleAttendance(p.user_id, "absent")
-                                }
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Mark Absent</TooltipContent>
-                          </Tooltip>
-                        </div>
-                      ) : (
-                        <Badge
-                          variant={
-                            p.attendance_status === "present"
-                              ? "default"
-                              : p.attendance_status === "late"
-                              ? "secondary"
-                              : p.attendance_status === "absent"
-                              ? "destructive"
-                              : "outline"
-                          }
-                          className="capitalize"
-                        >
-                          {p.attendance_status}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    {isAdmin && (
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => handleRemove(p.user_id)}
-                              className="text-destructive"
-                            >
-                              Remove
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
+              {isAdmin && (
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveParticipant(user.id);
+                  }}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
               )}
-            </TableBody>
-          </Table>
+            </Card>
+          ))}
+          {participants.length === 0 && (
+            <div className="col-span-full text-center py-8 border border-dashed rounded-lg text-muted-foreground">
+              Cast list empty. Add members to start pairing.
+            </div>
+          )}
         </div>
-      </div>
-    </TooltipProvider>
+      </section>
+    </div>
   );
 }

@@ -187,7 +187,10 @@ export function ModernDashboard({
       >
         {/* ---------------- Spotlight ---------------- */}
         <div className="col-span-1 sm:col-span-2 lg:row-span-2">
-          <GlassCard className="relative h-full p-0 overflow-hidden">
+          <GlassCard
+            className="relative h-full overflow-hidden"
+            contentClassName="p-0 h-full"
+          >
             {spotlightItem?.image_url ? (
               <>
                 <img
@@ -196,17 +199,17 @@ export function ModernDashboard({
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                <div className="relative z-10 p-6 mt-auto">
-                  <h3 className="text-2xl font-bold text-white">
+                <div className="relative z-10 p-6 flex flex-col justify-end h-full">
+                  <h3 className="text-2xl font-bold text-white mb-2">
                     {spotlightItem.title}
                   </h3>
-                  <p className="text-sm text-gray-300">
+                  <p className="text-sm text-gray-300 line-clamp-2">
                     {spotlightItem.description}
                   </p>
                 </div>
               </>
             ) : (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-muted-foreground p-6">
                 No highlights yet
               </div>
             )}

@@ -109,7 +109,7 @@ export function TimelineView({
   const sortedDates = Object.keys(groupedEvents).sort();
 
   return (
-    <div className="relative space-y-8 sm:space-y-12 pl-4 sm:pl-0 pb-20">
+    <div className="relative space-y-8 sm:space-y-12 pl-4 pr-4 sm:pl-0 sm:pr-0 pb-20">
       <AlertDialog
         open={!!deletingId}
         onOpenChange={(open) => !open && setDeletingId(null)}
@@ -211,9 +211,8 @@ export function TimelineView({
                       </>
                     )}
                   </div>
-
                   {/* 2. Timeline Node */}
-                  <div className="absolute left-6 sm:left-32 -translate-x-1/2 flex items-center justify-center z-10 pt-1">
+                  <div className="absolute left-2 sm:left-32 -translate-x-1/2 flex items-center justify-center z-10 pt-1">
                     <div
                       className={cn(
                         "w-4 h-4 rounded-full border-2 transition-all duration-300 group-hover:scale-125 bg-background",
@@ -227,9 +226,7 @@ export function TimelineView({
                       )}
                     </div>
                   </div>
-
-                  {/* 3. Card Content */}
-                  <div className="ml-12 sm:ml-8 w-full sm:max-w-xl lg:max-w-2xl">
+                  <div className="ml-12 sm:ml-8 w-auto sm:flex-1 sm:max-w-xl lg:max-w-2xl">
                     <div
                       className={cn(
                         "relative overflow-hidden rounded-2xl p-5 transition-all duration-300 border backdrop-blur-md group-hover:-translate-y-1 group-hover:shadow-lg",

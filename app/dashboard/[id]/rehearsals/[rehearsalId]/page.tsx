@@ -6,15 +6,15 @@ import { PageScaffold } from "@/components/dashboard/page-scaffold";
 import { useFarewell } from "@/components/providers/farewell-provider";
 import { checkIsAdmin } from "@/lib/auth/roles";
 import { getRehearsalByIdAction } from "@/app/actions/rehearsal-actions";
-import { RehearsalHeader } from "@/components/rehearsals/rehearsal-header";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Users, Clock, Calendar, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { AttendanceGrid } from "@/components/rehearsals/attendance-grid";
 import { ParticipantManager } from "@/components/rehearsals/participant-manager";
 import { SegmentManager } from "@/components/rehearsals/segment-manager";
-import { SelfCheckIn } from "@/components/rehearsals/self-check-in";
-import { ReadinessChecklist } from "@/components/rehearsals/readiness-checklist";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Separator } from "@/components/ui/separator";
 
 export default function RehearsalDetailPage() {
   const params = useParams();
@@ -24,223 +24,162 @@ export default function RehearsalDetailPage() {
   const isAdmin = checkIsAdmin(farewell.role);
 
   const [rehearsal, setRehearsal] = useState<any>(null);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  // Poll for updates (Fast & Simple Realtime)
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      const result = await getRehearsalByIdAction(rehearsalId);
-      console.log("Client Fetch Result:", result);
-
-      if (result) {
-        setRehearsal(result.rehearsal);
-        setCurrentUserId(result.currentUserId || "");
-        console.log("State set - CurrentUserID:", result.currentUserId);
-        console.log(
-          "State set - Participants:",
-          result.rehearsal?.participants
-        );
-      }
-      setLoading(false);
-    }
     fetchData();
+    const interval = setInterval(fetchData, 5000); // Poll every 5s for live status
+    return () => clearInterval(interval);
   }, [rehearsalId]);
 
-  // Realtime Subscription
-  useEffect(() => {
-    import("@/utils/supabase/client").then(({ createClient }) => {
-      const supabase = createClient();
+  async function fetchData() {
+    // setLoading(true); // Don't block UI on poll
+    const result = await getRehearsalByIdAction(rehearsalId);
+    if (result && result.rehearsal) {
+      setRehearsal(result.rehearsal);
+    }
+    setLoading(false);
+  }
 
-      const channel = supabase
-        .channel(`rehearsal-room-${rehearsalId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "rehearsal_participants",
-            filter: `rehearsal_id=eq.${rehearsalId}`,
-          },
-          () => {
-            getRehearsalByIdAction(rehearsalId).then((data) =>
-              setRehearsal(data)
-            );
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "rehearsal_segments",
-            filter: `rehearsal_id=eq.${rehearsalId}`,
-          },
-          () => {
-            getRehearsalByIdAction(rehearsalId).then((result) => {
-              if (result) {
-                setRehearsal(result.rehearsal);
-                setCurrentUserId(result.currentUserId || "");
-              }
-            });
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "rehearsals",
-            filter: `id=eq.${rehearsalId}`,
-          },
-          () => {
-            getRehearsalByIdAction(rehearsalId).then((result) => {
-              if (result) {
-                setRehearsal(result.rehearsal);
-                setCurrentUserId(result.currentUserId || "");
-              }
-            });
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    });
-  }, [rehearsalId]);
-
-  if (loading) {
+  if (loading && !rehearsal) {
     return (
-      <PageScaffold title="Loading Rehearsal..." description="Please wait">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-8 w-8 bg-primary/20 rounded-full mb-4"></div>
+          <div className="h-4 w-32 bg-muted rounded"></div>
         </div>
-      </PageScaffold>
+      </div>
     );
   }
 
-  if (!rehearsal) {
-    return (
-      <PageScaffold
-        title="Rehearsal Not Found"
-        description="The requested rehearsal does not exist."
-      >
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <p className="text-muted-foreground">It may have been deleted.</p>
-          <Button asChild>
-            <Link href={`/dashboard/${farewellId}/rehearsals`}>
-              Back to List
-            </Link>
-          </Button>
-        </div>
-      </PageScaffold>
-    );
-  }
+  if (!rehearsal) return <div>Not found</div>;
+
+  // Calculate Stats
+  const attendanceRecord = rehearsal.attendance || {};
+  const presentCount = Object.values(attendanceRecord).filter(
+    (r: any) => r.status === "present"
+  ).length;
+
+  // NOTE: For now, we are showing 'participants' if they exist,
+  // or falling back to a dummy list if the migration hasn't populated generic users yet.
+  // Ideally this list comes from 'performance_performers' or 'farewell_members'
+  const participants = rehearsal.participants || [];
+  const totalCount = participants.length;
+  const attendanceRate =
+    totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      <div className="px-6 pt-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="mb-4 pl-0 hover:bg-transparent hover:underline text-muted-foreground"
-        >
-          <Link href={`/dashboard/${farewellId}/rehearsals`}>
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to All Rehearsals
-          </Link>
-        </Button>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {/* Top Navigation Bar */}
+      <header className="border-b px-6 py-4 flex items-center justify-between bg-card/50 backdrop-blur sticky top-0 z-10">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href={`/dashboard/${farewellId}/rehearsals`}>
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">
+              {rehearsal.title}
+            </h1>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {format(new Date(rehearsal.start_time), "MMM dd")}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {format(new Date(rehearsal.start_time), "HH:mm")} -{" "}
+                {format(new Date(rehearsal.end_time), "HH:mm")}
+              </span>
+              {rehearsal.venue && (
+                <span className="uppercase tracking-wider">
+                  | {rehearsal.venue}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
 
-        <RehearsalHeader
-          rehearsal={rehearsal}
-          farewellId={farewellId}
-          isAdmin={isAdmin}
-        />
-      </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <div className="text-sm font-medium">Attendance</div>
+            <div
+              className={
+                attendanceRate > 75 ? "text-green-500" : "text-amber-500"
+              }
+            >
+              {attendanceRate}% ({presentCount}/{totalCount})
+            </div>
+          </div>
+          <Badge
+            variant={rehearsal.status === "ongoing" ? "default" : "outline"}
+          >
+            {rehearsal.status === "ongoing" ? "LIVE" : rehearsal.status}
+          </Badge>
+        </div>
+      </header>
 
-      <div className="px-6">
-        {isAdmin ? (
-          <Tabs defaultValue="participants" className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="participants">Participants</TabsTrigger>
-              <TabsTrigger value="segments">Run of Show</TabsTrigger>
-            </TabsList>
+      <main className="flex-1 p-6 space-y-8 max-w-7xl mx-auto w-full">
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Col: Attendance & Participants */}
+          <div className="lg:col-span-2 space-y-6">
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Attendance
+                </h2>
+              </div>
 
-            <TabsContent value="participants">
+              {/* Reuse Grid but feed it participants from Metadata if available, else generic */}
+              <AttendanceGrid
+                rehearsalId={rehearsalId}
+                farewellId={farewellId}
+                participants={rehearsal.metadata?.participants || participants}
+                attendance={attendanceRecord}
+                isAdmin={isAdmin}
+              />
+            </section>
+
+            <Separator />
+
+            {/* Participant Manager (Collapsible or in Tab) */}
+            <section>
               <ParticipantManager
                 rehearsalId={rehearsalId}
                 farewellId={farewellId}
-                participants={rehearsal.participants || []}
+                participants={rehearsal.metadata?.participants || []}
+                metadata={rehearsal.metadata || {}}
                 isAdmin={isAdmin}
+                performanceType={rehearsal.performance?.type}
               />
-            </TabsContent>
-
-            <TabsContent value="segments">
-              <SegmentManager
-                rehearsalId={rehearsalId}
-                farewellId={farewellId}
-                segments={rehearsal.segments || []}
-                isAdmin={isAdmin}
-                isLive={rehearsal.status === "ongoing"}
-              />
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <div className="space-y-6">
-            {/* Participant Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {rehearsal.participants?.some(
-                (p: any) => p.user_id === currentUserId
-              ) ? (
-                <>
-                  <SelfCheckIn
-                    rehearsalId={rehearsalId}
-                    farewellId={farewellId}
-                    userId={currentUserId}
-                    currentStatus={
-                      rehearsal.participants?.find(
-                        (p: any) => p.user_id === currentUserId
-                      )?.attendance_status
-                    }
-                  />
-                  <ReadinessChecklist
-                    rehearsalId={rehearsalId}
-                    farewellId={farewellId}
-                    userId={currentUserId}
-                    initialReadiness={
-                      rehearsal.participants?.find(
-                        (p: any) => p.user_id === currentUserId
-                      )?.readiness_status
-                    }
-                  />
-                </>
-              ) : (
-                <div className="col-span-1 md:col-span-2 p-6 border rounded-lg bg-muted/20 text-center">
-                  <h3 className="text-lg font-medium text-muted-foreground">
-                    Viewer Mode
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    You are viewing this rehearsal as a non-participant.
-                  </p>
-                  {/* Optional: Add "Request to Join" button here later */}
-                </div>
-              )}
-            </div>
-
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-3">Live Run of Show</h3>
-              <SegmentManager
-                rehearsalId={rehearsalId}
-                farewellId={farewellId}
-                segments={rehearsal.segments || []}
-                isAdmin={isAdmin} // False
-                isLive={rehearsal.status === "ongoing"}
-              />
-            </div>
+            </section>
           </div>
-        )}
-      </div>
+
+          {/* Right Col: Run of Show */}
+          <div className="space-y-6">
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Run of Show
+                </h2>
+              </div>
+              <SegmentManager
+                rehearsalId={rehearsalId}
+                farewellId={farewellId}
+                segments={rehearsal.metadata?.segments || []}
+                metadata={rehearsal.metadata || {}}
+                isAdmin={isAdmin}
+                isLive={rehearsal.status === "ongoing"}
+              />
+            </section>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

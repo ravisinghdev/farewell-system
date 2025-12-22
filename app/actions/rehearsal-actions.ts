@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { ActionState } from "@/types/custom";
 
-// --- Rehearsals CRUD ---
+// --- Rehearsals CRUD (Adapted for Next-Gen Schema: rehearsal_sessions) ---
 
 export async function createRehearsalAction(
   farewellId: string,
@@ -14,28 +14,43 @@ export async function createRehearsalAction(
     start_time: string;
     end_time: string;
     venue?: string;
-    rehearsal_type: string; // 'dance', 'music', etc.
+    rehearsal_type: string;
+    performance_id?: string;
   }
 ): Promise<ActionState> {
   const supabase = await createClient();
 
+  // DEBUG: Verify Authentication
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    console.error("DEBUG: User not authenticated:", authError);
+    return { error: "User not authenticated. Please log in again." };
+  }
+  console.log("DEBUG: Authenticated User:", user.id, "Role:", user.role);
+
   try {
     const { data: rehearsal, error } = await supabase
-      .from("rehearsals")
+      .from("rehearsal_sessions")
       .insert({
         farewell_id: farewellId,
         title: data.title,
-        description: data.description,
+        goal: data.description,
         start_time: data.start_time,
         end_time: data.end_time,
         venue: data.venue,
-        rehearsal_type: data.rehearsal_type,
-        status: "scheduled",
+        performance_id: data.performance_id || null, // Ensure this column exists
+        is_mandatory: true,
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("DEBUG: Insert failed:", error);
+      throw error;
+    }
 
     revalidatePath(`/dashboard/${farewellId}/rehearsals`);
     return { success: true, data: rehearsal };
@@ -49,8 +64,13 @@ export async function getRehearsalsAction(farewellId: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("rehearsals")
-    .select("*")
+    .from("rehearsal_sessions")
+    .select(
+      `
+      *,
+      performance:performances(title, lead_coordinator_id)
+    `
+    )
     .eq("farewell_id", farewellId)
     .order("start_time", { ascending: true });
 
@@ -65,17 +85,13 @@ export async function getRehearsalsAction(farewellId: string) {
 export async function getRehearsalByIdAction(rehearsalId: string) {
   const supabase = await createClient();
 
-  // Fetch rehearsal with participants and segments
+  // Fetch rehearsal with linked performance
   const { data: rehearsal, error } = await supabase
-    .from("rehearsals")
+    .from("rehearsal_sessions")
     .select(
       `
         *,
-        participants:rehearsal_participants(
-            *,
-            user:users(id, full_name, avatar_url, email)
-        ),
-        segments:rehearsal_segments(*)
+        performance:performances(*)
       `
     )
     .eq("id", rehearsalId)
@@ -84,15 +100,6 @@ export async function getRehearsalByIdAction(rehearsalId: string) {
   if (error) {
     console.error("Error fetching rehearsal details:", error);
     return null;
-  }
-
-  console.log("Rehearsal Data Fetched:", rehearsal);
-
-  if (!rehearsal) return null;
-
-  // Sort segments by order_index
-  if (rehearsal.segments) {
-    rehearsal.segments.sort((a: any, b: any) => a.order_index - b.order_index);
   }
 
   const {
@@ -110,21 +117,61 @@ export async function updateRehearsalStatusAction(
   const supabase = await createClient();
 
   try {
-    const updateData: any = { status };
-
-    // If starting, maybe lock editing?
-    if (status === "ongoing") {
-      updateData.is_locked = true;
-    }
-
     const { error } = await supabase
-      .from("rehearsals")
-      .update(updateData)
+      .from("rehearsal_sessions")
+      .update({ status })
       .eq("id", rehearsalId);
 
     if (error) throw error;
 
     revalidatePath(`/dashboard/${farewellId}/rehearsals`);
+    revalidatePath(`/dashboard/${farewellId}/rehearsals/${rehearsalId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+// --- Metadata & Participants ---
+
+export async function getFarewellMembersAction(farewellId: string) {
+  const supabase = await createClient();
+
+  // Fetch all members of the farewell
+  const { data, error } = await supabase
+    .from("farewell_members")
+    .select(
+      `
+      user_id,
+      user:users(id, email, full_name, avatar_url)
+    `
+    )
+    .eq("farewell_id", farewellId);
+
+  if (error) {
+    console.error("Error fetching members:", error);
+    return [];
+  }
+
+  // Flatten and return unique users
+  return data.map((d: any) => d.user).filter((u) => u);
+}
+
+export async function updateRehearsalMetadataAction(
+  rehearsalId: string,
+  farewellId: string,
+  metadata: any
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("rehearsal_sessions")
+      .update({ metadata })
+      .eq("id", rehearsalId);
+
+    if (error) throw error;
+
     revalidatePath(`/dashboard/${farewellId}/rehearsals/${rehearsalId}`);
     return { success: true };
   } catch (error: any) {
@@ -138,7 +185,7 @@ export async function deleteRehearsalAction(
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { error } = await supabase
-    .from("rehearsals")
+    .from("rehearsal_sessions")
     .delete()
     .eq("id", rehearsalId);
 
@@ -148,78 +195,78 @@ export async function deleteRehearsalAction(
   return { success: true };
 }
 
-export async function duplicateRehearsalAction(
+// --- Attendance (JSONB) ---
+
+export async function updateAttendanceAction(
   rehearsalId: string,
   farewellId: string,
-  newDate: string // YYYY-MM-DD
+  userId: string,
+  status: "present" | "absent" | "late"
 ): Promise<ActionState> {
   const supabase = await createClient();
 
   try {
-    // 1. Fetch original rehearsal
-    const { data: original, error: fetchError } = await supabase
-      .from("rehearsals")
-      .select("*, participants:rehearsal_participants(user_id, role)")
+    // 1. Fetch current attendance
+    const { data: rehearsal, error: fetchError } = await supabase
+      .from("rehearsal_sessions")
+      .select("attendance")
       .eq("id", rehearsalId)
       .single();
 
-    if (fetchError || !original)
-      throw new Error("Original rehearsal not found");
+    if (fetchError) throw fetchError;
 
-    // 2. Calculate new start/end times based on newDate but keeping same time
-    const oldStart = new Date(original.start_time);
-    const oldEnd = new Date(original.end_time);
-    const targetDate = new Date(newDate);
+    // 2. Update JSON
+    const currentAttendance = rehearsal.attendance || {};
+    const updatedAttendance = {
+      ...currentAttendance,
+      [userId]: {
+        status,
+        timestamp: new Date().toISOString(),
+      },
+    };
 
-    // Set new start time
-    const newStart = new Date(targetDate);
-    newStart.setHours(oldStart.getHours(), oldStart.getMinutes(), 0, 0);
+    // 3. Save back
+    const { error: updateError } = await supabase
+      .from("rehearsal_sessions")
+      .update({ attendance: updatedAttendance })
+      .eq("id", rehearsalId);
 
-    // Set new end time (preserve duration)
-    const durationMs = oldEnd.getTime() - oldStart.getTime();
-    const newEnd = new Date(newStart.getTime() + durationMs);
+    if (updateError) throw updateError;
 
-    // 3. Create new Rehearsal
-    const { data: newRehearsal, error: createError } = await supabase
-      .from("rehearsals")
-      .insert({
-        farewell_id: farewellId,
-        title: `${original.title} (Copy)`,
-        description: original.description,
-        start_time: newStart.toISOString(),
-        end_time: newEnd.toISOString(),
-        venue: original.venue,
-        rehearsal_type: original.rehearsal_type,
-        status: "scheduled",
-      })
-      .select()
-      .single();
-
-    if (createError) throw createError;
-
-    // 4. Duplicate Participants
-    if (original.participants && original.participants.length > 0) {
-      const participantsToInsert = original.participants.map((p: any) => ({
-        rehearsal_id: newRehearsal.id,
-        user_id: p.user_id,
-        role: p.role,
-        attendance_status: "absent", // Reset attendance
-        farewell_id: farewellId,
-        readiness_status: {}, // Reset readiness
-      }));
-
-      const { error: partError } = await supabase
-        .from("rehearsal_participants")
-        .insert(participantsToInsert);
-
-      if (partError) {
-        console.error("Error duplicating participants", partError);
-      }
-    }
-
-    revalidatePath(`/dashboard/${farewellId}/rehearsals`);
+    revalidatePath(`/dashboard/${farewellId}/rehearsals/${rehearsalId}`);
     return { success: true };
   } catch (error: any) {
     return { error: error.message };
+  }
+}
+
+export async function duplicateRehearsalAction(
+  rehearsalId: string,
+  farewellId: string,
+  newDate: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+  try {
+    const { data: original } = await supabase
+      .from("rehearsal_sessions")
+      .select("*")
+      .eq("id", rehearsalId)
+      .single();
+    if (!original) throw new Error("Original not found");
+
+    const newStart = new Date(newDate);
+    const { error } = await supabase.from("rehearsal_sessions").insert({
+      ...original,
+      id: undefined,
+      created_at: undefined,
+      title: original.title + " (Copy)",
+      start_time: newStart.toISOString(),
+      status: "scheduled",
+    });
+    if (error) throw error;
+    revalidatePath(`/dashboard/${farewellId}/rehearsals`);
+    return { success: true };
+  } catch (e: any) {
+    return { error: e.message };
   }
 }

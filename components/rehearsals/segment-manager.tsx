@@ -2,254 +2,178 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Clock,
-  Play,
-  CheckCircle,
-  SkipForward,
-  MoreHorizontal,
-  GripVertical,
-  Plus,
-} from "lucide-react";
-import {
-  createSegmentAction,
-  updateSegmentStatusAction,
-  deleteSegmentAction,
-} from "@/app/actions/rehearsal-segment-actions";
+import { Card } from "@/components/ui/card";
+import { Plus, Play, Clock, Trash } from "lucide-react";
+import { updateRehearsalMetadataAction } from "@/app/actions/rehearsal-actions";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+
+interface Segment {
+  id: string;
+  title: string;
+  duration: number; // minutes
+  notes: string;
+  status: "pending" | "live" | "done";
+}
 
 interface SegmentManagerProps {
   rehearsalId: string;
   farewellId: string;
-  segments: any[];
+  segments: Segment[]; // From metadata.segments
+  metadata: any;
   isAdmin: boolean;
-  isLive: boolean; // If rehearsal is ongoing
+  isLive: boolean;
 }
 
 export function SegmentManager({
   rehearsalId,
   farewellId,
-  segments,
+  segments: initialSegments,
+  metadata,
   isAdmin,
-  isLive,
 }: SegmentManagerProps) {
-  const router = useRouter();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-
-  // Form State
-  const [title, setTitle] = useState("");
-  const [duration, setDuration] = useState("15");
+  const [segments, setSegments] = useState<Segment[]>(initialSegments || []);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDuration, setNewDuration] = useState("5");
 
   async function handleAddSegment() {
-    if (!title) return;
+    if (!newTitle) return;
 
-    const result = await createSegmentAction(rehearsalId, farewellId, {
-      title,
-      duration_minutes: parseInt(duration),
-      order_index: segments.length,
-    });
+    const newSegment: Segment = {
+      id: crypto.randomUUID(),
+      title: newTitle,
+      duration: parseInt(newDuration) || 5,
+      notes: "",
+      status: "pending",
+    };
 
-    if (result.error) {
-      toast.error("Error", { description: result.error });
-    } else {
-      toast.success("Segment Added");
-      setIsAddDialogOpen(false);
-      setTitle("");
-      setDuration("15");
-      router.refresh();
-    }
+    const updatedSegments = [...segments, newSegment];
+    await saveSegments(updatedSegments);
+
+    setNewTitle("");
+    toast.success("Segment added");
   }
 
-  async function handleStatusChange(
-    segmentId: string,
-    status: "pending" | "running" | "completed" | "skipped"
-  ) {
-    const result = await updateSegmentStatusAction(
-      segmentId,
-      rehearsalId,
-      farewellId,
-      status
-    );
-    if (result.error) {
-      toast.error("Error", { description: result.error });
-    } else {
-      // optimized: maybe optimistic update?
-      router.refresh();
-    }
+  async function handleDelete(id: string) {
+    const updatedSegments = segments.filter((s) => s.id !== id);
+    await saveSegments(updatedSegments);
   }
 
-  async function handleDelete(segmentId: string) {
-    if (!confirm("Delete this segment?")) return;
-    const result = await deleteSegmentAction(
-      segmentId,
-      rehearsalId,
-      farewellId
-    );
-    if (result.error) {
-      toast.error("Error", { description: result.error });
-    } else {
-      router.refresh();
-    }
+  async function handlePlay(id: string) {
+    // Set all others to done/pending, this one to live
+    const updatedSegments = segments.map((s) => ({
+      ...s,
+      status: (s.id === id
+        ? "live"
+        : s.status === "live"
+        ? "done"
+        : s.status) as any,
+    }));
+    await saveSegments(updatedSegments);
   }
 
-  // Calculate total duration
-  const totalDuration = segments.reduce(
-    (acc, curr) => acc + (curr.duration_minutes || 0),
-    0
-  );
+  async function saveSegments(newSegments: Segment[]) {
+    setSegments(newSegments);
+    const newMetadata = {
+      ...metadata,
+      segments: newSegments,
+    };
+    await updateRehearsalMetadataAction(rehearsalId, farewellId, newMetadata);
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">Run of Show</h3>
-          <div className="text-sm text-muted-foreground flex items-center gap-2">
-            <Clock className="w-3 h-3" />
-            <span>
-              Total Duration: {Math.floor(totalDuration / 60)}h{" "}
-              {totalDuration % 60}m
-            </span>
+    <div className="space-y-6">
+      {/* Input Area */}
+      {isAdmin && (
+        <div className="flex gap-2 items-end bg-muted/30 p-4 rounded-lg">
+          <div className="flex-1 space-y-2">
+            <span className="text-sm font-medium">Segment Title</span>
+            <Input
+              placeholder="e.g. Warm up, Scene 1..."
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+            />
           </div>
+          <div className="w-24 space-y-2">
+            <span className="text-sm font-medium">Mins</span>
+            <Input
+              type="number"
+              value={newDuration}
+              onChange={(e) => setNewDuration(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleAddSegment}>
+            <Plus className="w-4 h-4 mr-2" /> Add
+          </Button>
         </div>
-        {isAdmin && (
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
-                <Plus className="w-4 h-4 mr-2" /> Add Segment
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Segment</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    placeholder="e.g. Opening Dance"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Duration (minutes)</Label>
-                  <Input
-                    type="number"
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                  />
+      )}
+
+      {/* Timeline List */}
+      <div className="space-y-2">
+        {segments.map((segment, index) => (
+          <Card
+            key={segment.id}
+            className={`p-4 flex items-center justify-between transition-all ${
+              segment.status === "live"
+                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                : "hover:bg-muted/30"
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <div className="text-xs text-muted-foreground font-mono w-6 text-center">
+                {index + 1}
+              </div>
+              <div>
+                <h4 className="font-semibold flex items-center gap-2">
+                  {segment.title}
+                  {segment.status === "live" && (
+                    <Badge variant="default" className="text-[10px] h-4 px-1">
+                      LIVE
+                    </Badge>
+                  )}
+                </h4>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                  <Clock className="w-3 h-3" />
+                  {segment.duration} mins
                 </div>
               </div>
-              <DialogFooter>
-                <Button onClick={handleAddSegment}>Create Segment</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
+            </div>
 
-      <div className="space-y-3">
-        {segments.length === 0 ? (
-          <div className="text-center py-8 border rounded-lg bg-muted/10 text-muted-foreground text-sm">
-            No segments defined. Add segments to structure the rehearsal.
-          </div>
-        ) : (
-          segments.map((segment, index) => (
-            <Card
-              key={segment.id}
-              className={cn(
-                "transition-all",
-                segment.status === "running" &&
-                  "border-primary ring-1 ring-primary shadow-md bg-accent/5",
-                segment.status === "completed" && "opacity-70 bg-muted/20"
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={
+                      segment.status === "live"
+                        ? "text-primary animate-pulse"
+                        : "text-muted-foreground"
+                    }
+                    onClick={() => handlePlay(segment.id)}
+                    title="Set Live"
+                  >
+                    <Play className="w-4 h-4 fill-current" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDelete(segment.id)}
+                  >
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </>
               )}
-            >
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="text-muted-foreground font-mono text-xs w-6 text-center">
-                  {index + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium truncate">{segment.title}</h4>
-                    {segment.status === "running" && (
-                      <Badge className="bg-green-600 animate-pulse h-5 text-[10px]">
-                        LIVE
-                      </Badge>
-                    )}
-                    {segment.status === "completed" && (
-                      <Badge variant="secondary" className="h-5 text-[10px]">
-                        Done
-                      </Badge>
-                    )}
-                    {segment.status === "skipped" && (
-                      <Badge variant="destructive" className="h-5 text-[10px]">
-                        Skipped
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{segment.duration_minutes}m</span>
-                    </div>
-                  </div>
-                </div>
+            </div>
+          </Card>
+        ))}
 
-                {isAdmin && (
-                  <div className="flex items-center gap-1">
-                    {isLive &&
-                      segment.status !== "completed" &&
-                      segment.status !== "running" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8"
-                          onClick={() =>
-                            handleStatusChange(segment.id, "running")
-                          }
-                        >
-                          <Play className="w-3 h-3 mr-1" /> Start
-                        </Button>
-                      )}
-                    {isLive && segment.status === "running" && (
-                      <Button
-                        size="sm"
-                        className="h-8 bg-green-600 hover:bg-green-700"
-                        onClick={() =>
-                          handleStatusChange(segment.id, "completed")
-                        }
-                      >
-                        <CheckCircle className="w-3 h-3 mr-1" /> Done
-                      </Button>
-                    )}
-
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 text-muted-foreground"
-                      onClick={() => handleDelete(segment.id)}
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
+        {segments.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground border border-dashed rounded-lg">
+            No segments added. Create the Run of Show above.
+          </div>
         )}
       </div>
     </div>

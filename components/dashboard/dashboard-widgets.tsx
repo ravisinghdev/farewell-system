@@ -9,10 +9,12 @@ import { ReactNode } from "react";
 export function GlassCard({
   children,
   className,
+  contentClassName,
   hoverEffect = true,
 }: {
   children: ReactNode;
   className?: string;
+  contentClassName?: string;
   hoverEffect?: boolean;
 }) {
   return (
@@ -26,7 +28,9 @@ export function GlassCard({
     >
       {/* Noise Texture (Optional sub-layer) */}
       <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
-      <div className="relative z-10 p-5">{children}</div>
+      <div className={cn("relative z-10 p-5", contentClassName)}>
+        {children}
+      </div>
     </div>
   );
 }

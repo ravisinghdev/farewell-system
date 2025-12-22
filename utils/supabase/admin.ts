@@ -1,30 +1,18 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
+// Function to create a new admin client (useful if needed)
 export function createAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"
-    );
-  }
-
-  return createClient(url, key, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
 }
 
-let adminClientInstance: SupabaseClient | null = null;
-
-export const supabaseAdmin = new Proxy({} as SupabaseClient, {
-  get: (_target, prop) => {
-    if (!adminClientInstance) {
-      adminClientInstance = createAdminClient();
-    }
-    return (adminClientInstance as any)[prop];
-  },
-});
+// Export a singleton instance for backward compatibility
+export const supabaseAdmin = createAdminClient();

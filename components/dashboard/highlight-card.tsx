@@ -30,6 +30,7 @@ export function HighlightCard({
           src={highlight.image_url}
           alt={highlight.title}
           fill
+          unoptimized
           className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
       ) : (

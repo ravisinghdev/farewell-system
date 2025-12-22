@@ -189,6 +189,34 @@ export function AnnouncementDetailView({
           dangerouslySetInnerHTML={{ __html: announcement.content }}
         />
 
+        {/* Call to Action Button */}
+        {announcement.call_to_action_label &&
+          announcement.call_to_action_link && (
+            <div className="mt-6">
+              <Button
+                asChild
+                variant={
+                  announcement.call_to_action_type === "secondary"
+                    ? "secondary"
+                    : announcement.call_to_action_type === "outline"
+                    ? "outline"
+                    : announcement.call_to_action_type === "destructive"
+                    ? "destructive"
+                    : "default"
+                }
+                className="w-full sm:w-auto min-w-[150px]"
+              >
+                <a
+                  href={announcement.call_to_action_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {announcement.call_to_action_label}
+                </a>
+              </Button>
+            </div>
+          )}
+
         {/* Footer Actions (Reply/Forward style) */}
         <div className="pt-8 flex gap-4">
           <Button variant="outline" className="gap-2">

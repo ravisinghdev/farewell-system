@@ -1,69 +1,163 @@
-import { getTimelineEventsAction } from "@/app/actions/dashboard-actions";
-import { TimelineEventDialog } from "@/components/dashboard/timeline-event-dialog";
-import { RealtimeTimeline } from "@/components/dashboard/realtime-timeline";
-import { createClient } from "@/utils/supabase/server";
-import { CalendarClock } from "lucide-react";
+"use client";
 
-interface TimelinePageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
+import { PageScaffold } from "@/components/dashboard/page-scaffold";
+import { TimelineManager } from "@/components/timeline/timeline-manager";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useFarewell } from "@/components/providers/farewell-provider";
+import {
+  getTimelineBlocksAction,
+  getPerformancesAction,
+  getEventDetailsAction,
+  createTimelineBlockAction,
+} from "@/app/actions/event-actions";
+import { TimelineBlock } from "@/types/timeline";
+import { Performance } from "@/types/performance";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus, Coffee } from "lucide-react";
+import { toast } from "sonner";
 
-export default async function TimelinePage({ params }: TimelinePageProps) {
-  const { id } = await params;
-  const supabase = await createClient();
+export default function TimelinePage() {
+  const params = useParams();
+  const farewellId = params.id as string;
+  const [blocks, setBlocks] = useState<TimelineBlock[]>([]);
+  const [performances, setPerformances] = useState<Performance[]>([]);
+  const [eventDetails, setEventDetails] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Sort events by date
-  const events = (await getTimelineEventsAction(id)).sort(
-    (a, b) =>
-      new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
+  useEffect(() => {
+    loadData();
+  }, [farewellId]);
+
+  async function loadData() {
+    const [blocksRes, perfRes, eventRes] = await Promise.all([
+      getTimelineBlocksAction(farewellId),
+      getPerformancesAction(farewellId),
+      getEventDetailsAction(farewellId),
+    ]);
+
+    if (blocksRes.data) setBlocks(blocksRes.data as unknown as TimelineBlock[]);
+    if (perfRes.data) setPerformances(perfRes.data as unknown as Performance[]);
+    if (eventRes) setEventDetails(eventRes);
+
+    setLoading(false);
+  }
+
+  // Filter acts that are NOT in the timeline yet
+  const availablePerformances = performances.filter(
+    (p) => !blocks.some((b) => b.performance_id === p.id)
   );
 
-  // Check if user is admin
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  let isAdmin = false;
+  async function handleAddToTimeline(p: Performance) {
+    const newIndex = blocks.length;
+    await createTimelineBlockAction(farewellId, {
+      type: "performance",
+      title: p.title,
+      performance_id: p.id,
+      duration_seconds: p.duration_seconds || 300,
+      order_index: newIndex,
+    });
+    loadData(); // Reload
+    toast.success("Added to Timeline");
+  }
 
-  if (user) {
-    const { data: member } = await supabase
-      .from("farewell_members")
-      .select("role")
-      .eq("farewell_id", id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (member?.role === "main_admin" || member?.role === "parallel_admin") {
-      isAdmin = true;
-    }
+  async function handleAddBreak() {
+    const newIndex = blocks.length;
+    await createTimelineBlockAction(farewellId, {
+      type: "break",
+      title: "Break / Buffer",
+      duration_seconds: 900, // 15 mins
+      order_index: newIndex,
+    });
+    loadData();
+    toast.success("Buffer Added");
   }
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-transparent">
-      {/* Header Hero */}
-      <div className="flex items-center justify-between p-8 border-b border-white/5 bg-gradient-to-r from-background via-background to-transparent z-10">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <CalendarClock className="h-8 w-8 text-primary" />
-            Farewell Schedule
-          </h1>
-          <p className="text-muted-foreground ml-1">
-            Don't miss a moment. Here is the plan.
-          </p>
+    <PageScaffold
+      title="Smart Timeline"
+      description="Drag and drop to sequence the event flow."
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+        {/* Main Timeline Column */}
+        <div className="lg:col-span-2 overflow-y-auto pr-2">
+          {loading ? (
+            <div>Loading timeline...</div>
+          ) : (
+            <TimelineManager
+              initialBlocks={blocks}
+              farewellId={farewellId}
+              eventStartTime={
+                eventDetails?.event_date
+                  ? `${eventDetails.event_date}T${
+                      eventDetails.event_time || "17:00:00"
+                    }`
+                  : undefined
+              }
+            />
+          )}
         </div>
-        {isAdmin && <TimelineEventDialog farewellId={id} />}
-      </div>
 
-      <div className="flex-1 overflow-auto p-4 sm:p-10">
-        <div className="max-w-5xl mx-auto">
-          <RealtimeTimeline
-            initialEvents={events}
-            farewellId={id}
-            isAdmin={isAdmin}
-          />
+        {/* Sidebar Staging Area */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="py-3">
+              <CardTitle className="text-sm font-medium">
+                Add to Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="text-xs text-muted-foreground mb-2 flex items-center justify-between">
+                  <span>Available Acts</span>
+                  <span className="bg-primary/10 text-primary px-1.5 rounded-full">
+                    {availablePerformances.length}
+                  </span>
+                </h4>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                  {availablePerformances.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between p-2 border rounded bg-muted/20 text-sm"
+                    >
+                      <span className="truncate max-w-[150px]">{p.title}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleAddToTimeline(p)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {availablePerformances.length === 0 && (
+                    <div className="text-xs text-muted-foreground italic">
+                      All acts scheduled.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t">
+                <h4 className="text-xs text-muted-foreground mb-2">
+                  Non-Performance Blocks
+                </h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                  onClick={handleAddBreak}
+                >
+                  <Coffee className="w-4 h-4" />
+                  Add 15m Break
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </PageScaffold>
   );
 }
