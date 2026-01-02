@@ -10,22 +10,21 @@ import { HighlightCard } from "./highlight-card";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { useDashboardData } from "@/components/providers/dashboard-data-provider";
+
 interface RealtimeHighlightsProps {
-  initialHighlights: Highlight[];
-  farewellId: string;
+  initialHighlights?: Highlight[];
+  farewellId?: string;
 }
 
 export function RealtimeHighlights({
-  initialHighlights,
+  initialHighlights = [],
   farewellId,
 }: RealtimeHighlightsProps) {
-  const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
+  // const [highlights, setHighlights] = useState<Highlight[]>(initialHighlights);
+  const { highlights } = useDashboardData();
   const supabase = createClient();
   const router = useRouter();
-
-  useEffect(() => {
-    setHighlights(initialHighlights);
-  }, [initialHighlights]);
 
   useEffect(() => {
     const channel = supabase
@@ -40,8 +39,12 @@ export function RealtimeHighlights({
         },
         async () => {
           console.log("Realtime update received for highlights");
-          const newData = await getHighlightsAction(farewellId);
-          setHighlights(newData);
+          if (farewellId) {
+            const newData = await getHighlightsAction(farewellId);
+            // router.refresh() handles the UI update by refetching layout data
+          }
+          // For optimistic UI or local state if needed
+          // setHighlights(h as Highlight[]); // Context updates via router.refresh()
           router.refresh();
         }
       )

@@ -4,6 +4,7 @@ import {
   getDashboardStatsAction,
   getRecentTransactionsAction,
   getHighlightsAction,
+  getFarewellDetailsAction,
 } from "@/app/actions/dashboard-actions";
 import { ModernDashboard } from "@/components/dashboard/modern-dashboard";
 import { redirect } from "next/navigation";
@@ -19,16 +20,14 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   const supabase = await createClient();
 
   // Fetch data in parallel
-  const [farewellRes, announcements, stats, transactions, highlights] =
+  const [farewell, announcements, stats, transactions, highlights] =
     await Promise.all([
-      supabase.from("farewells").select("*").eq("id", id).single(),
+      getFarewellDetailsAction(id),
       getAnnouncementsAction(id),
       getDashboardStatsAction(id),
       getRecentTransactionsAction(id),
       getHighlightsAction(id),
     ]);
-
-  const farewell = farewellRes.data;
 
   if (!farewell) {
     return <div>Farewell not found.</div>;

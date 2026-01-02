@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, ArrowDownLeft, Wallet, AlertCircle } from "lucide-react";
 import { useFinance } from "@/components/admin/finance/finance-context";
 
@@ -20,75 +20,63 @@ export function FinanceStats({ farewellId }: FinanceStatsProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card className="bg-emerald-500/10 border-emerald-500/20 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between space-x-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Net Balance
-              </p>
-              <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                {formatter.format(stats.netBalance)}
-              </h3>
-            </div>
-            <div className="p-3 bg-emerald-500/20 rounded-full text-emerald-600">
-              <Wallet className="w-6 h-6" />
-            </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Net Balance</CardTitle>
+          <Wallet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            {formatter.format(stats.netBalance)}
           </div>
+          <p className="text-xs text-muted-foreground pt-1">
+            Available for withdrawal
+          </p>
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between space-x-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Collected
-              </p>
-              <h3 className="text-2xl font-bold">
-                {formatter.format(stats.totalCollected)}
-              </h3>
-            </div>
-            <div className="p-3 bg-primary/10 rounded-full text-primary">
-              <ArrowUpRight className="w-6 h-6" />
-            </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Collected</CardTitle>
+          <ArrowUpRight className="h-4 w-4 text-primary" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            {formatter.format(stats.totalCollected)}
           </div>
+          <p className="text-xs text-muted-foreground pt-1">
+            Lifetime gross volume
+          </p>
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between space-x-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Expenses
-              </p>
-              <h3 className="text-2xl font-bold text-destructive">
-                {formatter.format(stats.totalSpent)}
-              </h3>
-            </div>
-            <div className="p-3 bg-destructive/10 rounded-full text-destructive">
-              <ArrowDownLeft className="w-6 h-6" />
-            </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+          <ArrowDownLeft className="h-4 w-4 text-destructive" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-destructive">
+            {formatter.format(stats.totalSpent)}
           </div>
+          <p className="text-xs text-muted-foreground pt-1">
+            Operational costs
+          </p>
         </CardContent>
       </Card>
 
-      <Card className="bg-yellow-500/10 border-yellow-500/20 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between space-x-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Pending Action
-              </p>
-              <h3 className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                {formatter.format(stats.pendingAmount)}
-              </h3>
-            </div>
-            <div className="p-3 bg-yellow-500/20 rounded-full text-yellow-600">
-              <AlertCircle className="w-6 h-6" />
-            </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Pending Action</CardTitle>
+          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+            {formatter.format(stats.pendingAmount)}
           </div>
+          <p className="text-xs text-muted-foreground pt-1">
+            Needs verification
+          </p>
         </CardContent>
       </Card>
     </div>

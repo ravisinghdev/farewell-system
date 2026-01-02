@@ -11,8 +11,8 @@ import { createClient } from "@/utils/supabase/server";
 import { getClaims, AuthClaims } from "@/lib/auth/claims";
 import { getFarewellRoleFromDB } from "@/lib/auth/roles-server";
 import { UserRole } from "@/lib/auth/roles";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
+import { PremiumSidebar } from "@/components/dashboard/premium-sidebar";
+import { PremiumNavbar } from "@/components/dashboard/premium-navbar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ProfileProvider } from "@/components/profile-provider";
 import { SettingsProvider } from "@/components/settings/settings-provider";
@@ -150,12 +150,12 @@ export default async function DashboardLayout({
         <ProfileProvider initialUser={initialUser}>
           <SettingsProvider initialSettings={settings} userId={userId}>
             <AppearanceProvider>
-              <AppSidebar />
-              <SidebarInset className="flex flex-col overflow-hidden">
-                <SiteHeader />
+              <PremiumSidebar />
+              <SidebarInset className="flex flex-col overflow-hidden bg-background">
+                <PremiumNavbar />
 
                 {/* MAIN SCROLL CONTAINER */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden pt-4">
                   <div className="flex flex-col gap-4 p-4 pt-0 max-w-full">
                     <div className="px-1 py-2">
                       <DashboardBreadcrumb />

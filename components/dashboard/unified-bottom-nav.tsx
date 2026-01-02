@@ -14,21 +14,109 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import {
+  Settings,
+  Shield,
+  Users,
+  CreditCard,
+  ClipboardList,
+  MessageSquare,
+  Bell,
+  Image as ImageIcon,
+  FlaskConical,
+  CornerUpLeft,
+} from "lucide-react";
+
 export function UnifiedBottomNav() {
   const pathname = usePathname();
   const { farewell, isAdmin } = useFarewell();
   const farewellId = farewell.id;
 
-  // 1. Identify active group based on current path
+  const isSettings = pathname.includes("/settings");
+
+  // Settings Navigation Configuration
+  const settingsLinks: {
+    label: string;
+    href: string;
+    icon: any;
+    adminOnly: boolean;
+    disabled?: boolean;
+    disabledTooltip?: string;
+  }[] = [
+    {
+      label: "Back",
+      href: `/dashboard/${farewellId}`,
+      icon: CornerUpLeft,
+      adminOnly: false,
+    },
+    {
+      label: "General",
+      href: `/dashboard/${farewellId}/settings/general`,
+      icon: Settings,
+      adminOnly: true,
+    },
+    {
+      label: "Roles",
+      href: `/dashboard/${farewellId}/settings/roles`,
+      icon: Shield,
+      adminOnly: true,
+    },
+    {
+      label: "Joining",
+      href: `/dashboard/${farewellId}/settings/joining`,
+      icon: Users,
+      adminOnly: true,
+    },
+    {
+      label: "Finance",
+      href: `/dashboard/${farewellId}/settings/finance`,
+      icon: CreditCard,
+      adminOnly: true,
+    },
+    {
+      label: "Duties",
+      href: `/dashboard/${farewellId}/settings/duties`,
+      icon: ClipboardList,
+      adminOnly: true,
+    },
+    {
+      label: "Comm",
+      href: `/dashboard/${farewellId}/settings/communication`,
+      icon: MessageSquare,
+      adminOnly: true,
+    },
+    {
+      label: "Gallery",
+      href: `/dashboard/${farewellId}/settings/gallery`,
+      icon: ImageIcon,
+      adminOnly: true,
+    },
+    {
+      label: "Notifs",
+      href: `/dashboard/${farewellId}/settings/notifications`,
+      icon: Bell,
+      adminOnly: false,
+    },
+    {
+      label: "Advanced",
+      href: `/dashboard/${farewellId}/settings/advanced`,
+      icon: FlaskConical,
+      adminOnly: true,
+    },
+    {
+      label: "Profile",
+      href: `/dashboard/${farewellId}/settings/profile`,
+      icon: Users,
+      adminOnly: false,
+    },
+  ];
+
+  // 1. Identify active group based on current path (only if not settings)
   const activeGroup =
-    NAV_GROUPS.find((group) => {
+    !isSettings &&
+    (NAV_GROUPS.find((group) => {
       // Check if any item in this group matches the current path start
       return group.items.some((item) => {
-        // Normalize item href to handle dynamic [id]
-        // e.g. /dashboard/events -> /dashboard/[id]/events
-        // The config uses /dashboard/events format
-
-        // Construct what the REAL path looks like
         const realHref =
           item.href === "/dashboard"
             ? `/dashboard/${farewellId}`
@@ -37,10 +125,18 @@ export function UnifiedBottomNav() {
         if (item.href === "/dashboard") return pathname === realHref;
         return pathname.startsWith(realHref);
       });
-    }) || NAV_GROUPS[0]; // Default to Overview if nothing matches perfectly
+    }) ||
+      NAV_GROUPS[0]);
 
-  // 2. Filter items for current view
-  const navItems = activeGroup.items.filter((item) => {
+  // 2. Select Items to Display
+  let currentItems = isSettings
+    ? settingsLinks
+    : activeGroup
+    ? activeGroup.items
+    : [];
+
+  // Filter items
+  const navItems = currentItems.filter((item) => {
     if (item.adminOnly && !isAdmin) return false;
     return true;
   });

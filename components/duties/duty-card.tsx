@@ -27,7 +27,9 @@ import { useFarewell } from "@/components/providers/farewell-provider";
 
 interface DutyCardProps {
   duty: any;
-  onUpdate: () => void;
+  onUpdate?: () => void;
+  currentUserId?: string;
+  currentUserRole?: string;
 }
 
 export function DutyCard({ duty, onUpdate }: DutyCardProps) {
@@ -196,7 +198,7 @@ export function DutyCard({ duty, onUpdate }: DutyCardProps) {
         currentAssignees={
           duty.duty_assignments?.map((a: any) => a.user_id) || []
         }
-        onSuccess={onUpdate}
+        onSuccess={onUpdate || (() => {})}
       />
     </>
   );

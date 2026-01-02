@@ -287,9 +287,10 @@ export function TransactionTable({
       accessorKey: "method",
       header: "Method",
       cell: ({ row }) => {
+        const method = row.getValue("method") as string;
         return (
           <div className="capitalize text-foreground">
-            {(row.getValue("method") as string).replace("_", " ")}
+            {method ? method.replace(/_/g, " ") : "-"}
           </div>
         );
       },

@@ -13,7 +13,7 @@ export default async function SettingsLayout({
 
   return (
     <div className="min-h-screen pb-24">
-      {/* Bottom Floating Nav */}
+      {/* Bottom Floating Nav - Visible on Desktop only */}
       <SettingsNav farewellId={id} />
 
       <div className="flex flex-col space-y-6 p-4 md:p-8 max-w-4xl mx-auto">

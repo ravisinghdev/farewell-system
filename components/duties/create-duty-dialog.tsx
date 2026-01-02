@@ -39,14 +39,24 @@ import { useFarewell } from "@/components/providers/farewell-provider";
 import { Switch } from "@/components/ui/switch";
 
 interface CreateDutyDialogProps {
-  onSuccess: () => void;
+  onSuccess?: () => void;
   farewellId?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function CreateDutyDialog({ onSuccess }: CreateDutyDialogProps) {
+export function CreateDutyDialog({
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange,
+}: CreateDutyDialogProps) {
   const { farewell } = useFarewell();
   const farewellId = farewell.id;
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? onOpenChange! : setInternalOpen;
 
   // Form State
   const [title, setTitle] = useState("");
@@ -117,7 +127,8 @@ export function CreateDutyDialog({ onSuccess }: CreateDutyDialogProps) {
 
       setOpen(false);
       resetForm();
-      onSuccess();
+      resetForm();
+      onSuccess?.();
     } catch (error) {
       toast.error("Failed to create duty");
     } finally {

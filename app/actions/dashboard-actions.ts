@@ -1,8 +1,9 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache } from "next/cache";
 import { ActionState } from "@/types/custom";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 
 // --- Announcements ---
 export interface Announcement {
@@ -22,6 +23,30 @@ export interface Announcement {
   call_to_action_type?: string | null;
 }
 
+// Cached version of farewell details
+const getCachedFarewellDetails = unstable_cache(
+  async (farewellId: string) => {
+    const { data, error } = await supabaseAdmin
+      .from("farewells")
+      .select("*")
+      .eq("id", farewellId)
+      .single();
+
+    if (error) return null;
+    return data;
+  },
+  ["farewell-details"],
+  {
+    revalidate: 3600, // 1 hour
+    tags: ["farewell-details"],
+  }
+);
+
+export async function getFarewellDetailsAction(farewellId: string) {
+  // Use cached version
+  return getCachedFarewellDetails(farewellId);
+}
+
 export async function getAnnouncementsAction(farewellId: string) {
   const supabase = await createClient();
   const {
@@ -30,22 +55,45 @@ export async function getAnnouncementsAction(farewellId: string) {
 
   if (!user) return [];
 
-  // Fetch announcements
-  const { data: announcements, error } = await supabase
-    .from("announcements")
-    .select(
-      `
+  // Parallelize fetching:
+  // 1. Check membership (vital for security)
+  // 2. Fetch announcements (admin client, fast)
+  const [memberResult, announcementsResult] = await Promise.all([
+    supabaseAdmin
+      .from("farewell_members")
+      .select("role")
+      .eq("farewell_id", farewellId)
+      .eq("user_id", user.id)
+      .single(),
+    supabaseAdmin
+      .from("announcements")
+      .select(
+        `
       *,
       creator:users(full_name, avatar_url)
     `
-    )
-    .eq("farewell_id", farewellId)
-    .order("is_pinned", { ascending: false })
-    .order("created_at", { ascending: false });
+      )
+      .eq("farewell_id", farewellId)
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false }),
+  ]);
 
-  if (error) return [];
+  const member = memberResult.data;
+  // If not a member, strictly return empty (or could throw error if we want UI feedback)
+  if (!member) return [];
 
-  // Fetch read status for current user
+  const announcements = announcementsResult.data || [];
+  if (announcementsResult.error) {
+    console.error("Error fetching announcements:", announcementsResult.error);
+    return [];
+  }
+
+  // 3. Fetch read status for current user
+  // This depends on having the announcements first to filter, BUT we can just query all reads for this user/farewell if the table format supports it,
+  // or just IN query as before.
+  // Optimization: If no announcements, skip.
+  if (announcements.length === 0) return [];
+
   const { data: reads } = await supabase
     .from("announcement_reads")
     .select("announcement_id")
@@ -357,6 +405,8 @@ export interface Highlight {
   image_url: string | null;
   link: string | null;
   created_at: string;
+  farewell_id: string; // Added field
+  status: string; // Added field ('pending', 'approved', 'rejected')
 }
 
 export async function getHighlightsAction(farewellId: string) {
@@ -416,79 +466,86 @@ export interface DashboardStats {
   members: number;
 }
 
+const getCachedDashboardStats = unstable_cache(
+  async (farewellId: string) => {
+    // Use Admin Client to bypass RLS overhead for these heavy aggregates
+    const [
+      financialsResult,
+      verifiedContributionsResult,
+      memberCountResult,
+      mediaCountResult,
+      messageCountResult,
+    ] = await Promise.all([
+      // 1. Get approved financials
+      supabaseAdmin
+        .from("farewell_financials")
+        .select("total_collected")
+        .eq("farewell_id", farewellId)
+        .single(),
+
+      // 2. Get verified (but not approved) contributions sum
+      supabaseAdmin
+        .from("contributions")
+        .select("amount")
+        .eq("farewell_id", farewellId)
+        .eq("status", "verified"),
+
+      // 3. Direct Member Count
+      supabaseAdmin
+        .from("farewell_members")
+        .select("*", { count: "exact", head: true })
+        .eq("farewell_id", farewellId),
+
+      // 4. Direct Media Count (via albums)
+      supabaseAdmin
+        .from("media")
+        .select("id, albums!inner(farewell_id)", { count: "exact", head: true })
+        .eq("albums.farewell_id", farewellId),
+
+      // 5. Direct Message Count (via channels)
+      supabaseAdmin
+        .from("chat_messages")
+        .select("id, chat_channels!inner(farewell_id)", {
+          count: "exact",
+          head: true,
+        })
+        .eq("chat_channels.farewell_id", farewellId),
+    ]);
+
+    // Calculate Total Collected
+    const approvedTotal = Number(
+      (financialsResult.data as any)?.total_collected || 0
+    );
+    const verifiedSum = (verifiedContributionsResult.data || []).reduce(
+      (sum, c) => sum + Number(c.amount),
+      0
+    );
+
+    const totalCollected = approvedTotal + verifiedSum;
+
+    return {
+      contributions: totalCollected,
+      messages: messageCountResult.count || 0,
+      media: mediaCountResult.count || 0,
+      members: memberCountResult.count || 0,
+    };
+  },
+  ["dashboard-stats"],
+  {
+    revalidate: 30, // Cache for 30s to reduce DB load
+    tags: ["dashboard-stats"],
+  }
+);
+
 export async function getDashboardStatsAction(
   farewellId: string
 ): Promise<DashboardStats> {
-  const supabase = await createClient();
-
-  // Optimized: Hybrid approach
-  // 1. Financials: farewell_financials (cached approved) + sum(verified pending approval)
-  // 2. Counts: Direct exact counts for accuracy (performant enough for <100k records)
-
-  const [
-    financialsResult,
-    verifiedContributionsResult,
-    memberCountResult,
-    mediaCountResult,
-    messageCountResult,
-  ] = await Promise.all([
-    // 1. Get approved financials
-    supabase
-      .from("farewell_financials")
-      .select("total_collected")
-      .eq("farewell_id", farewellId)
-      .single(),
-
-    // 2. Get verified (but not approved) contributions sum
-    supabase
-      .from("contributions")
-      .select("amount")
-      .eq("farewell_id", farewellId)
-      .eq("status", "verified"),
-
-    // 3. Direct Member Count
-    supabase
-      .from("farewell_members")
-      .select("*", { count: "exact", head: true })
-      .eq("farewell_id", farewellId),
-
-    // 4. Direct Media Count (via albums)
-    supabase
-      .from("media")
-      .select("id, albums!inner(farewell_id)", { count: "exact", head: true })
-      .eq("albums.farewell_id", farewellId),
-
-    // 5. Direct Message Count (via channels)
-    // Note: This counts messages in channels linked to this farewell
-    supabase
-      .from("chat_messages")
-      .select("id, chat_channels!inner(farewell_id)", {
-        count: "exact",
-        head: true,
-      })
-      .eq("chat_channels.farewell_id", farewellId),
-  ]);
-
-  // Calculate Total Collected
-  const approvedTotal = Number(financialsResult.data?.total_collected || 0);
-  const verifiedSum = (verifiedContributionsResult.data || []).reduce(
-    (sum, c) => sum + Number(c.amount),
-    0
-  );
-
-  const totalCollected = approvedTotal + verifiedSum;
-
-  return {
-    contributions: totalCollected,
-    messages: messageCountResult.count || 0,
-    media: mediaCountResult.count || 0,
-    members: memberCountResult.count || 0,
-  };
+  return getCachedDashboardStats(farewellId);
 }
 
 export async function getRecentTransactionsAction(farewellId: string) {
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // Use admin client for speed
+  const { data, error } = await supabaseAdmin
     .from("contributions")
     .select("*, users:user_id(full_name, avatar_url)")
     .eq("farewell_id", farewellId)
@@ -497,4 +554,58 @@ export async function getRecentTransactionsAction(farewellId: string) {
 
   if (error) return [];
   return data;
+}
+
+// NEW: Fetch assigned amount
+export async function getFarewellAssignedAmountAction(farewellId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("farewells")
+    .select("target_amount, budget_goal")
+    .eq("id", farewellId)
+    .single();
+
+  if (error) return { error: "Failed to fetch amount" };
+
+  // Prefer target_amount (per person) over budget_goal (total)
+  // If target_amount is null/0, maybe fallback to budget_goal or return 0
+  return { amount: data.target_amount || 0 };
+}
+
+// STUBS for missing Highlight Comments actions
+export async function getHighlightCommentsAction(highlightId: string) {
+  return [];
+}
+
+export async function addHighlightCommentAction(
+  highlightId: string,
+  content: string,
+  farewellId: string
+) {
+  return { error: "Comments feature currently disabled" };
+}
+
+export async function getPendingHighlightsAction(farewellId: string) {
+  return [];
+}
+
+export async function approveHighlightAction(
+  highlightId: string,
+  farewellId: string
+) {
+  return { error: "Approval feature currently disabled" };
+}
+
+export async function rejectHighlightAction(
+  highlightId: string,
+  farewellId: string
+) {
+  return { error: "Rejection feature currently disabled" };
+}
+
+export async function toggleHighlightReactionAction(
+  highlightId: string,
+  type: string
+) {
+  return { error: "Reactions disabled" };
 }

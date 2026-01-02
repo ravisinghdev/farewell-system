@@ -155,8 +155,10 @@ export function LiveTickerItem({
   return (
     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-xs font-medium text-muted-foreground whitespace-nowrap mx-2">
       <Icon className="h-3 w-3 text-primary animate-pulse" />
-      <span>{text}</span>
-      <span className="opacity-50">· {time}</span>
+      <span suppressHydrationWarning>{text}</span>
+      <span suppressHydrationWarning className="opacity-50">
+        · {time}
+      </span>
     </div>
   );
 }

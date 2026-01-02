@@ -67,8 +67,31 @@ export async function assignMemberContributionAction(
 
 export async function getFarewellBudgetDetailsAction(farewellId: string) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const { data: farewell, error: fError } = await supabase
+  if (!user) return { error: "Not authenticated" };
+
+  // Check admin
+  // We use roles-server here or just fetch member?
+  // Let's use roles helper if available or check role claim?
+  // Since this is critical data, let's verify via DB (using admin client to avoid RLS)
+  const { data: member } = await supabaseAdmin
+    .from("farewell_members")
+    .select("role")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", user.id)
+    .single();
+
+  const isAdmin =
+    member?.role === "admin" ||
+    member?.role === "parallel_admin" ||
+    member?.role === "main_admin";
+
+  if (!isAdmin) return { error: "Unauthorized" };
+
+  const { data: farewell, error: fError } = await supabaseAdmin
     .from("farewells")
     .select("budget_goal, target_amount")
     .eq("id", farewellId)
@@ -76,7 +99,7 @@ export async function getFarewellBudgetDetailsAction(farewellId: string) {
 
   if (fError) return { error: "Failed to fetch farewell" };
 
-  const { data: members, error: mError } = await supabase
+  const { data: members, error: mError } = await supabaseAdmin
     .from("farewell_members")
     .select("user_id, assigned_amount, users(full_name, email)")
     .eq("farewell_id", farewellId);
@@ -157,8 +180,8 @@ export async function distributeBudgetEquallyAction(
     return { error: "Failed to update budget goal" };
   }
 
-  // 2. Get all members count
-  const { count, error: countError } = await supabase
+  // 2. Get all members count using proper client
+  const { count, error: countError } = await supabaseAdmin
     .from("farewell_members")
     .select("*", { count: "exact", head: true })
     .eq("farewell_id", farewellId);

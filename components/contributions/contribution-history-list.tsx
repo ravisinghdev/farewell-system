@@ -12,11 +12,27 @@ import {
   Smartphone,
   Wallet,
   XCircle,
+  MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GlassCard } from "@/components/ui/glass-card";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useRealtimeSubscription } from "@/hooks/use-realtime-subscription";
 import { useState, useEffect } from "react";
@@ -94,18 +110,19 @@ export function ContributionHistoryList({
 
   if (transactions.length === 0) {
     return (
-      <GlassCard className="p-12 flex flex-col items-center justify-center text-center border-dashed border-2 bg-transparent shadow-none">
-        <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center mb-6">
-          <FileText className="w-8 h-8 text-muted-foreground" />
-        </div>
-        <h3 className="text-xl font-bold text-foreground mb-2">
-          No History Yet
-        </h3>
-        <p className="text-muted-foreground max-w-sm">
-          You haven't made any contributions yet. Your payment history will
-          appear here once you start contributing.
-        </p>
-      </GlassCard>
+      <Card className="border-dashed shadow-none bg-zinc-50/50 dark:bg-zinc-900/50">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+            <FileText className="w-6 h-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-1">
+            No History Yet
+          </h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            Start contributing to see your payment history here.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -118,146 +135,164 @@ export function ContributionHistoryList({
   const getMethodIcon = (method: string) => {
     switch (method) {
       case "upi":
-        return <Smartphone className="w-5 h-5 text-purple-400" />;
+        return <Smartphone className="w-4 h-4" />;
       case "card":
       case "razorpay":
-        return <CreditCard className="w-5 h-5 text-blue-400" />;
+        return <CreditCard className="w-4 h-4" />;
       case "cash":
-        return <Wallet className="w-5 h-5 text-green-500" />;
+        return <Wallet className="w-4 h-4" />;
       default:
-        return <Wallet className="w-5 h-5 text-muted-foreground" />;
+        return <Wallet className="w-4 h-4" />;
     }
   };
 
-  const getStatusConfig = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "verified":
       case "approved":
-        return {
-          icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" />,
-          label: "Verified",
-          className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-        };
+        return (
+          <Badge
+            variant="outline"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800 gap-1.5 font-medium"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Verified
+          </Badge>
+        );
       case "rejected":
-        return {
-          icon: <XCircle className="w-4 h-4 text-red-400" />,
-          label: "Rejected",
-          className: "bg-red-500/10 text-red-400 border-red-500/20",
-        };
+        return (
+          <Badge
+            variant="outline"
+            className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 gap-1.5 font-medium"
+          >
+            <XCircle className="w-3.5 h-3.5" />
+            Rejected
+          </Badge>
+        );
+      case "paid_pending_admin_verification":
+        return (
+          <Badge
+            variant="outline"
+            className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 gap-1.5 font-medium"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            Wait for Approval
+          </Badge>
+        );
       default:
-        return {
-          icon: <Clock className="w-4 h-4 text-amber-500" />,
-          label: "Pending",
-          className:
-            "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-        };
+        return (
+          <Badge
+            variant="outline"
+            className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 gap-1.5 font-medium"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            Pending
+          </Badge>
+        );
     }
   };
 
   return (
     <div className="space-y-4">
-      {sorted.map((t, index) => {
-        const date = new Date(t.created_at);
-        const statusConfig = getStatusConfig(t.status);
-        const methodDisplay = t.method.replace("_", " ");
+      <div className="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden">
+        <Table>
+          <TableHeader className="bg-zinc-50 dark:bg-zinc-900">
+            <TableRow>
+              <TableHead className="w-[180px]">Date</TableHead>
+              <TableHead>Method</TableHead>
+              <TableHead>Transaction ID</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sorted.map((t) => {
+              const date = new Date(t.created_at);
 
-        return (
-          <GlassCard
-            key={`${t.id}-${index}`}
-            className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors group relative overflow-hidden"
-          >
-            {/* Status Line on Left */}
-            <div
-              className={cn(
-                "absolute left-0 top-0 bottom-0 w-1",
-                t.status === "verified" || t.status === "approved"
-                  ? "bg-emerald-500"
-                  : t.status === "rejected"
-                  ? "bg-red-500"
-                  : "bg-amber-500"
-              )}
-            />
-
-            <div className="flex items-start gap-4 flex-1">
-              <div className="w-12 h-12 rounded-2xl bg-secondary/50 border border-border flex items-center justify-center shrink-0">
-                {getMethodIcon(t.method)}
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-foreground text-lg">
-                    Contribution
-                  </h3>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "capitalize gap-1.5 pl-1.5 pr-2.5 h-6",
-                      statusConfig.className
-                    )}
-                  >
-                    {statusConfig.icon}
-                    {statusConfig.label}
-                  </Badge>
-                </div>
-
-                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground mr-1">
-                  <span className="flex items-center gap-1.5">
-                    {format(date, "MMM d, yyyy")}{" "}
-                    <span className="w-1 h-1 rounded-full bg-border" />{" "}
-                    {format(date, "h:mm a")}
-                  </span>
-                  <span className="capitalize flex items-center gap-1.5 before:content-['•'] before:text-border">
-                    Via {methodDisplay}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between sm:justify-end gap-6 sm:pl-4 sm:border-l border-border">
-              <div className="text-left sm:text-right">
-                <p className="text-2xl font-bold text-foreground tracking-tight">
-                  ₹{t.amount.toLocaleString()}
-                </p>
-                {t.transaction_id && (
-                  <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest truncate max-w-[120px]">
-                    ID: {t.transaction_id}
-                  </p>
-                )}
-              </div>
-
-              {(t.status === "verified" || t.status === "approved") && (
-                <Link
-                  href={`/dashboard/${farewellId}/contributions/receipt/${t.id}`}
-                >
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-10 w-10 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground"
-                    title="Download Receipt"
-                  >
-                    <Download className="w-5 h-5" />
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </GlassCard>
-        );
-      })}
+              return (
+                <TableRow key={t.id} className="group">
+                  <TableCell className="font-medium text-xs text-muted-foreground whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="text-foreground">
+                        {format(date, "MMM d, yyyy")}
+                      </span>
+                      <span className="text-[10px]">
+                        {format(date, "h:mm a")}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 text-sm capitalize">
+                      {getMethodIcon(t.method)}
+                      {t.method.replace("_", " ")}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className="font-mono text-xs text-muted-foreground truncate max-w-[150px] block"
+                      title={t.transaction_id || "-"}
+                    >
+                      {t.transaction_id || "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell>{getStatusBadge(t.status)}</TableCell>
+                  <TableCell className="text-right font-semibold">
+                    ₹{t.amount.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          asChild
+                          disabled={
+                            t.status !== "verified" && t.status !== "approved"
+                          }
+                        >
+                          <Link
+                            href={`/dashboard/${farewellId}/contributions/receipt/${t.id}`}
+                            className="flex items-center cursor-pointer"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download Receipt
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
 
       {hasMore && (
-        <div className="pt-4 flex justify-center">
+        <div className="flex justify-center pt-2">
           <Button
             variant="outline"
             onClick={loadMore}
             disabled={isLoadingMore}
-            className="bg-background border-border min-w-[200px]"
+            size="sm"
+            className="text-xs"
           >
             {isLoadingMore ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading...
+                <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Loading...
               </>
             ) : (
-              "Load Older History"
+              "Load Older Records"
             )}
           </Button>
         </div>

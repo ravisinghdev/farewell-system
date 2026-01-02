@@ -1,8 +1,10 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createClient as createDirectClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { ActionState } from "@/types/custom";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 
 // --- Rehearsals CRUD (Adapted for Next-Gen Schema: rehearsal_sessions) ---
 
@@ -21,6 +23,7 @@ export async function createRehearsalAction(
   const supabase = await createClient();
 
   // DEBUG: Verify Authentication
+  console.log("DEBUG: createRehearsalAction called");
   const {
     data: { user },
     error: authError,
@@ -135,10 +138,8 @@ export async function updateRehearsalStatusAction(
 // --- Metadata & Participants ---
 
 export async function getFarewellMembersAction(farewellId: string) {
-  const supabase = await createClient();
-
-  // Fetch all members of the farewell
-  const { data, error } = await supabase
+  // Use Admin client to bypass RLS recursion on farewell_members table
+  const { data, error } = await supabaseAdmin
     .from("farewell_members")
     .select(
       `
@@ -197,12 +198,14 @@ export async function deleteRehearsalAction(
 
 // --- Attendance (JSONB) ---
 
+// Update attendance (stored in JSONB for this legacy/hybrid approach)
 export async function updateAttendanceAction(
   rehearsalId: string,
   farewellId: string,
   userId: string,
   status: "present" | "absent" | "late"
 ): Promise<ActionState> {
+  // Use standard client, relying on fixed RLS policies
   const supabase = await createClient();
 
   try {
@@ -236,6 +239,7 @@ export async function updateAttendanceAction(
     revalidatePath(`/dashboard/${farewellId}/rehearsals/${rehearsalId}`);
     return { success: true };
   } catch (error: any) {
+    console.error("Attendance update failed:", error);
     return { error: error.message };
   }
 }
@@ -268,5 +272,41 @@ export async function duplicateRehearsalAction(
     return { success: true };
   } catch (e: any) {
     return { error: e.message };
+  }
+}
+
+export async function updateRehearsalDetailsAction(
+  rehearsalId: string,
+  farewellId: string,
+  data: {
+    title: string;
+    goal?: string;
+    start_time: string;
+    end_time: string;
+    venue?: string;
+    status: string;
+  }
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("rehearsal_sessions")
+      .update({
+        title: data.title,
+        goal: data.goal,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        venue: data.venue,
+        status: data.status,
+      })
+      .eq("id", rehearsalId);
+
+    if (error) throw error;
+
+    revalidatePath(`/dashboard/${farewellId}/rehearsals/${rehearsalId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
   }
 }

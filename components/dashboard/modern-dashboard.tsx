@@ -135,7 +135,7 @@ export function ModernDashboard({
       time: "Recently",
       icon: Heart,
     })),
-  ].sort(() => Math.random() - 0.5);
+  ];
 
   return (
     <div className="min-h-screen w-full space-y-8 pb-10 animate-in fade-in">
@@ -342,7 +342,10 @@ export function ModernDashboard({
                     className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4"
                   >
                     <h4 className="font-semibold">{a.title}</h4>
-                    <p className="text-xs text-muted-foreground">{a.content}</p>
+                    <div
+                      className="text-xs text-muted-foreground line-clamp-2 prose prose-invert prose-xs max-w-none"
+                      dangerouslySetInnerHTML={{ __html: a.content }}
+                    />
                   </div>
                 ))
               ) : (

@@ -53,7 +53,7 @@ export function PageScaffold({
 
   if (requireAdmin && !isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center h-[50vh] text-center p-8">
+      <div className="flex flex-col items-center justify-center h-[50vh] text-center p-1">
         <h2 className="text-2xl font-bold text-destructive">Access Denied</h2>
         <p className="text-muted-foreground mt-2">
           You do not have permission to view this page.
@@ -63,7 +63,7 @@ export function PageScaffold({
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6 animate-in fade-in duration-500">
+    <div className="container mx-auto p-1 space-y-1 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">

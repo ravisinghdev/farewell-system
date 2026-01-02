@@ -31,6 +31,7 @@ import { Loader2, Check, X, Eye, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { AddTransactionDialog } from "./add-transaction-dialog";
 import Image from "next/image";
+import { InvoiceButton } from "@/components/admin/gateway/invoice-button";
 
 interface ContributionManagerProps {
   farewellId: string;
@@ -115,6 +116,23 @@ export function ContributionManager({
     setProcessingId(null);
   }
 
+  async function handleRefund(id: string) {
+    if (!confirm("Are you sure you want to refund this contribution?")) return;
+    setProcessingId(id);
+    // Dynamic import to avoid circular dependency if any (though unlikely here)
+    const { refundContributionAction } = await import(
+      "@/app/actions/payment-actions"
+    );
+    const result = await refundContributionAction(id);
+    if (result.success) {
+      toast.success("Refund initiated");
+      loadContributions();
+    } else {
+      toast.error(result.error || "Failed to refund");
+    }
+    setProcessingId(null);
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center p-8">
@@ -151,15 +169,29 @@ export function ContributionManager({
               <TableRow key={c.id}>
                 <TableCell>
                   <div className="font-medium">
-                    {c.users?.full_name || "Unknown"}
+                    {c.users?.full_name || c.guest_name || "Unknown"}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {c.users?.email}
+                    {c.users?.email ||
+                      c.guest_email ||
+                      (c.payment_links?.title ? "Guest via Link" : "")}
                   </div>
                 </TableCell>
-                <TableCell>₹{c.amount}</TableCell>
+                <TableCell>
+                  <div>₹{c.amount}</div>
+                  {c.payment_links && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 mt-1 px-1 py-0"
+                    >
+                      {c.payment_links.title}
+                    </Badge>
+                  )}
+                </TableCell>
                 <TableCell className="capitalize">
-                  {c.method.replace("_", " ")}
+                  {c.method === "ups_manual"
+                    ? "Gateway"
+                    : c.method.replace("_", " ")}
                 </TableCell>
                 <TableCell className="font-mono text-xs">
                   {c.transaction_id || "-"}
@@ -228,19 +260,58 @@ export function ContributionManager({
                       </Button>
                     )}
 
-                    {/* Reject Action */}
-                    {c.status !== "approved" && c.status !== "rejected" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => handleReject(c.id)}
-                        disabled={!!processingId}
-                        title="Reject"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    {/* Invoice Button */}
+                    {(c.status === "approved" || c.status === "verified") && (
+                      <InvoiceButton
+                        contribution={c}
+                        variant="ghost"
+                        size="icon"
+                      />
                     )}
+
+                    {/* Refund Action */}
+                    {(c.status === "verified" || c.status === "approved") &&
+                      c.refund_status !== "full" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                          onClick={() => handleRefund(c.id)}
+                          disabled={!!processingId}
+                          title="Refund"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                            <path d="M3 3v5h5" />
+                          </svg>
+                        </Button>
+                      )}
+
+                    {/* Reject Action */}
+                    {c.status !== "approved" &&
+                      c.status !== "rejected" &&
+                      c.status !== "verified" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleReject(c.id)}
+                          disabled={!!processingId}
+                          title="Reject"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
                   </div>
                 </TableCell>
               </TableRow>

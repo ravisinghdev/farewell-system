@@ -114,6 +114,18 @@ export async function createContributionAction(
     screenshotUrl = publicUrlData.publicUrl;
   }
 
+  // 3.5 Check for Auto-Verify (Trust Mode)
+  // Fetch payment config directly from farewells table
+  const { data: farewellData } = await supabase
+    .from("farewells")
+    .select("payment_config")
+    .eq("id", farewellId)
+    .single();
+
+  const autoVerify =
+    (farewellData?.payment_config as any)?.auto_verify === true;
+  const initialStatus = autoVerify ? "verified" : "pending";
+
   // 4. Insert into DB
   const { error: insertError } = await supabase.from("contributions").insert({
     user_id: userId,
@@ -122,7 +134,7 @@ export async function createContributionAction(
     method: method as "upi" | "cash" | "bank_transfer",
     transaction_id: transactionId || null,
     screenshot_url: screenshotUrl,
-    status: "pending",
+    status: initialStatus,
   });
 
   if (insertError) {
@@ -140,32 +152,37 @@ export async function getContributionsAction(farewellId: string) {
   if (!claimsData || !claimsData.claims) return [];
   const userId = claimsData.claims.sub;
 
-  const { data, error } = await supabase
-    .from("contributions")
-    .select("*, users:user_id(full_name, avatar_url)")
-    .eq("farewell_id", farewellId)
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
+  // Use admin client to bypass RLS and avoid timeout
+  // Only fetch essential fields for the current user
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("contributions")
+      .select(
+        "id, amount, status, method, created_at, transaction_id, screenshot_url, metadata"
+      )
+      .eq("farewell_id", farewellId)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Fetch contributions error details:");
-    console.error("User ID:", userId);
-    console.error("Farewell ID:", farewellId);
-    console.error("Error Object:", error);
-    // @ts-ignore
-    if (error.message) console.error("Error Message:", error.message);
-    // @ts-ignore
-    if (error.code) console.error("Error Code:", error.code);
-    // @ts-ignore
-    if (error.details) console.error("Error Details:", error.details);
-    // @ts-ignore
-    if (error.hint) console.error("Error Hint:", error.hint);
-    if (error instanceof Error) console.error("Stack:", error.stack);
+    if (error) {
+      console.error("Fetch contributions error:", error);
+      console.error("Error stringify:", JSON.stringify(error));
+      console.error("Error keys:", Object.keys(error));
+      console.error("Type of error:", typeof error);
+      // Return empty array on error
+      return [];
+    }
 
+    console.log(
+      `Successfully fetched ${
+        data?.length || 0
+      } contributions for user ${userId}`
+    );
+    return data || [];
+  } catch (exception) {
+    console.error("Exception in getContributionsAction:", exception);
     return [];
   }
-
-  return data;
 }
 
 export async function getAllContributionsAction(farewellId: string) {
@@ -180,7 +197,7 @@ export async function getAllContributionsAction(farewellId: string) {
   // Use admin client to bypass RLS for farewell admins
   const { data, error } = await supabaseAdmin
     .from("contributions")
-    .select("*, users:user_id(full_name, avatar_url)")
+    .select("*, users:user_id(full_name, avatar_url), payment_links(title)")
     .eq("farewell_id", farewellId)
     .order("created_at", { ascending: false });
 
@@ -268,6 +285,64 @@ export async function getUserContributionsPaginatedAction(
   return { data: data || [], total: count || 0 };
 }
 
+export async function getMoreContributionsAction(
+  farewellId: string,
+  offset: number,
+  limit: number,
+  userId?: string
+) {
+  const supabase = await createClient();
+  // Verify auth
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims)
+    return { data: [], error: "Not authenticated" };
+  const currentUserId = claimsData.claims.sub;
+
+  // Use admin client to bypass RLS recursion
+  let query = supabaseAdmin
+    .from("contributions")
+    .select("*, users:user_id(full_name, avatar_url)")
+    .eq("farewell_id", farewellId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  // If provided userId (and not requesting unrelated user), specific filter
+  // However, usually userId param is passed if we want ONLY that user's data (e.g. non-admin view)
+  // If no userId passed, we assume Admin view wanting ALL.
+
+  if (userId) {
+    // If user is asking for specific user, ensure they are authorized (themself or admin)
+    // For simplicity, if userId provided matches currentUserId, allow.
+    // If mismatched, check admin.
+    if (userId !== currentUserId) {
+      const authorized = await isFarewellAdmin(
+        supabase,
+        currentUserId,
+        farewellId
+      );
+      if (!authorized) return { data: [], error: "Unauthorized" };
+    }
+    query = query.eq("user_id", userId);
+  } else {
+    // If no userId filter (Admin view), MUST be admin
+    const authorized = await isFarewellAdmin(
+      supabase,
+      currentUserId,
+      farewellId
+    );
+    if (!authorized) return { data: [], error: "Unauthorized" };
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Fetch more contributions error:", error);
+    return { data: [], error: error.message };
+  }
+
+  return { data, error: null };
+}
+
 export async function getUserStatsAction(farewellId: string, userId?: string) {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -277,27 +352,46 @@ export async function getUserStatsAction(farewellId: string, userId?: string) {
   const currentUserId = claimsData.claims.sub;
   const targetUserId = userId || currentUserId;
 
-  // reuse rank logic
-  const rankData = await getContributionRankAction(farewellId, targetUserId);
-
-  // Utilize Supabase/Postgres aggregate could be optimized with .sum() but .select is fine for reasonable counts
-  const { data, error } = await supabase
+  // Use admin client to bypass RLS and avoid recursion
+  const { data, error } = await supabaseAdmin
     .from("contributions")
-    .select("amount")
+    .select("amount, user_id")
     .eq("farewell_id", farewellId)
-    .eq("user_id", targetUserId)
     .in("status", ["verified", "approved", "paid_pending_admin_verification"]);
 
   if (error) {
     console.error("Get user stats error:", error);
-    return { ...rankData, totalContribution: 0 };
+    return { rank: 0, percentile: 0, totalContribution: 0 };
   }
 
-  const totalContribution = data.reduce(
-    (sum, row) => sum + Number(row.amount),
-    0
+  // Calculate user's total contribution
+  const totalContribution = data
+    .filter((c) => c.user_id === targetUserId)
+    .reduce((sum, row) => sum + Number(row.amount), 0);
+
+  // Calculate rank by aggregating all user totals
+  const userTotals = new Map<string, number>();
+  data.forEach((c) => {
+    const current = userTotals.get(c.user_id) || 0;
+    userTotals.set(c.user_id, current + Number(c.amount));
+  });
+
+  const sortedUsers = Array.from(userTotals.entries()).sort(
+    (a, b) => b[1] - a[1]
   );
-  return { ...rankData, totalContribution };
+
+  const rankIndex = sortedUsers.findIndex((u) => u[0] === targetUserId);
+  const totalUsers = sortedUsers.length;
+
+  if (rankIndex === -1) {
+    return { rank: 0, percentile: 0, totalContribution };
+  }
+
+  const rank = rankIndex + 1;
+  const percentile =
+    totalUsers > 1 ? Math.round(((totalUsers - rank) / totalUsers) * 100) : 100;
+
+  return { rank, percentile, totalContribution };
 }
 
 export async function getPublicRecentTransactionsAction(
@@ -320,6 +414,7 @@ export async function getPublicRecentTransactionsAction(
     return [];
   }
 
+  console.log(`[Server] Found ${data?.length} transactions for ${farewellId}`);
   return data;
 }
 

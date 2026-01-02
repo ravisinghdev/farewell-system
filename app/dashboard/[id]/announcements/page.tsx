@@ -1,7 +1,8 @@
 import { getAnnouncementsAction } from "@/app/actions/dashboard-actions";
 import AnnouncementsClient from "@/components/dashboard/announcements-client";
-import { createClient } from "@/utils/supabase/server";
 import { CreateAnnouncementDialog } from "@/components/dashboard/create-announcement-dialog";
+// Import provider to supply data to the client component
+import { DashboardDataProvider } from "@/components/providers/dashboard-data-provider";
 
 interface AnnouncementsPageProps {
   params: Promise<{
@@ -13,8 +14,8 @@ export default async function AnnouncementsPage({
   params,
 }: AnnouncementsPageProps) {
   const { id } = await params;
-  const supabase = await createClient();
 
+  // Fetch announcements directly here (optimized: only fetch what's needed)
   const announcements = await getAnnouncementsAction(id);
 
   return (
@@ -36,7 +37,18 @@ export default async function AnnouncementsPage({
 
       <div className="flex-1 p-4 sm:p-6 overflow-hidden">
         <div className="h-full">
-          <AnnouncementsClient announcements={announcements} />
+          {/* Provide data explicitly to this subtree */}
+          <DashboardDataProvider
+            farewellId={id}
+            announcements={announcements}
+            // Pass empty/defaults for others as this page only needs announcements
+            stats={undefined as any}
+            recentTransactions={[]}
+            highlights={[]}
+            timeline={[]}
+          >
+            <AnnouncementsClient />
+          </DashboardDataProvider>
         </div>
       </div>
     </div>

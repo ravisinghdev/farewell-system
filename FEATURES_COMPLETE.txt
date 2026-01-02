@@ -1,0 +1,1240 @@
+═══════════════════════════════════════════════════════════════════════════
+                    FAREWELL MANAGEMENT SYSTEM
+                     Complete Feature Documentation
+                          Version 4.0 - 2025
+═══════════════════════════════════════════════════════════════════════════
+
+OVERVIEW
+--------
+A comprehensive cross-platform application for organizing and managing school 
+farewell events. Built with Next.js 14, React Native (Expo), and Supabase 
+backend. Supports web and mobile with feature parity.
+
+═══════════════════════════════════════════════════════════════════════════
+                        CORE SYSTEM FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+1. AUTHENTICATION & USER MANAGEMENT
+   ├── User Registration & Login
+   │   ├── Email/Password authentication
+   │   ├── OAuth (Google, GitHub)
+   │   ├── Password reset & recovery
+   │   ├── Email verification
+   │   └── Session management
+   │
+   ├── User Profiles
+   │   ├── Avatar upload
+   │   ├── Personal information management
+   │   ├── Username customization
+   │   └── Profile visibility settings
+   │
+   ├── Device Management
+   │   ├── Device fingerprinting
+   │   ├── Login history tracking
+   │   ├── Active session monitoring
+   │   └── Device-based security
+   │
+   └── JWT Claims System
+       ├── Role-based permissions in JWT
+       ├── Fast server-side authorization
+       ├── Auto-sync membership changes
+       └── Minimal database queries
+
+2. FAREWELL EVENT MANAGEMENT
+   ├── Event Creation & Setup
+   │   ├── Farewell title and description
+   │   ├── Event date and time
+   │   ├── Budget estimation
+   │   ├── Section/class information
+   │   ├── Year specification
+   │   └── Status (active/archived)
+   │
+   ├── Event Configuration
+   │   ├── Payment settings (UPI, cash, bank transfer)
+   │   ├── Approval requirements for joining
+   │   ├── Contribution pools setup
+   │   ├── Duty assignment rules
+   │   ├── Visibility settings
+   │   └── Maintenance mode toggle
+   │
+   ├── Invitation System
+   │   ├── Shareable invite links
+   │   ├── QR code generation
+   │   ├── Link expiration settings
+   │   └── Role assignment on join
+   │
+   └── Multi-Farewell Support
+       ├── Users can join multiple farewells
+       ├── Aggregated home dashboard
+       ├── Quick farewell switcher
+       └── Separate workspaces per farewell
+
+3. MEMBER MANAGEMENT & ROLES
+   ├── Role Hierarchy
+   │   ├── Main Admin (creator, full control)
+   │   ├── Admin (event management, approvals)
+   │   ├── Teacher (oversight, approvals)
+   │   ├── Organizer (task & duty management)
+   │   ├── Treasurer (financial management)
+   │   ├── Student (basic member)
+   │   └── Guest (read-only access)
+   │
+   ├── Permission System
+   │   ├── Edit farewell details
+   │   ├── Manage members
+   │   ├── Approve contributions
+   │   ├── Assign duties
+   │   ├── Create announcements
+   │   ├── Manage budget
+   │   ├── Upload to gallery
+   │   └── Access admin panel
+   │
+   ├── Member Actions
+   │   ├── View member directory
+   │   ├── Search members
+   │   ├── Filter by role
+   │   ├── Export member list
+   │   └── Member activity tracking
+   │
+   └── Join Requests
+       ├── Request-based joining (if approval required)
+       ├── Pending user list
+       ├── Approve/reject requests
+       └── Automatic role assignment
+
+═══════════════════════════════════════════════════════════════════════════
+                      FINANCIAL MANAGEMENT FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+4. CONTRIBUTIONS & PAYMENTS
+   ├── Payment Methods
+   │   ├── UPI (primary)
+   │   │   ├── QR code generation
+   │   │   ├── UPI deep links
+   │   │   ├── UPI ID configuration
+   │   │   └── Real-time transaction validation
+   │   ├── Cash payments
+   │   └── Bank transfer tracking
+   │
+   ├── Contribution Process
+   │   ├── Amount selection
+   │   │   ├── Quick amount buttons
+   │   │   ├── Custom amount input
+   │   │   ├── Assigned amount display
+   │   │   └── Remaining goal tracker
+   │   │
+   │   ├── Payment Execution
+   │   │   ├── UPI QR code scan
+   │   │   ├── Transaction ID submission
+   │   │   ├── Payment screenshot upload
+   │   │   └── Proof of payment
+   │   │
+   │   └── Verification Workflow
+   │       ├── Pending status after submission
+   │       ├── Admin/treasurer review
+   │       ├── Approve/reject contributions
+   │       └── Auto-update financial totals
+   │
+   ├── Contribution Tracking
+   │   ├── Personal contribution history
+   │   │   ├── All contributions list
+   │   │   ├── Status tracking (pending/verified/approved)
+   │   │   ├── Receipt generation
+   │   │   └── Download receipts
+   │   │
+   │   ├── Farewell-wide tracking
+   │   │   ├── Total collected
+   │   │   ├── Total contributors
+   │   │   ├── Pending verifications
+   │   │   └── Goal progress percentage
+   │   │
+   │   └── Live contribution feed
+   │       ├── Real-time updates
+   │       ├── Recent transactions
+   │       ├── Contributor names
+   │       └── Amounts display
+   │
+   └── Financial Reports
+       ├── Contribution summary
+       ├── Payment method breakdown
+       ├── Daily/weekly statistics
+       ├── Export to CSV/PDF
+       └── Financial analytics
+
+5. BUDGET MANAGEMENT
+   ├── Budget Planning
+   │   ├── Set target amount
+   │   ├── Category-wise allocation
+   │   ├── Spending limits
+   │   └── Budget revision history
+   │
+   ├── Expense Tracking
+   │   ├── Record expenses
+   │   ├── Category assignment
+   │   ├── Receipt uploads
+   │   ├── Approval workflow
+   │   └── Expense history
+   │
+   ├── Ledger System
+   │   ├── Credit entries (contributions)
+   │   ├── Debit entries (expenses)
+   │   ├── Balance calculation
+   │   ├── Transaction references
+   │   └── Audit trail
+   │
+   └── Financial Dashboard
+       ├── Total collected
+       ├── Total spent
+       ├── Net balance
+       ├── Budget vs actual
+       └── Visual charts
+
+6. REIMBURSEMENT SYSTEM
+   ├── Claim Submission
+   │   ├── Claim amount entry
+   │   ├── Expense description
+   │   ├── Receipt/proof upload
+   │   ├── Category selection
+   │   └── Submit for review
+   │
+   ├── Approval Workflow
+   │   ├── Pending claims list
+   │   ├── Admin/treasurer review
+   │   ├── Approve/reject/partial approve
+   │   ├── Deduction with reason
+   │   └── Payment mode selection
+   │
+   └── Payment Tracking
+       ├── Approved amount tracking
+       ├── Payment status
+       ├── Transaction reference
+       └── Payment receipt
+
+═══════════════════════════════════════════════════════════════════════════
+                     TASK & DUTY MANAGEMENT FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+7. DUTY ASSIGNMENT SYSTEM
+   ├── Duty Creation
+   │   ├── Title and description
+   │   ├── Category assignment
+   │   ├── Min/max assignees
+   │   ├── Due date setting
+   │   └── Status tracking
+   │
+   ├── Duty Assignment
+   │   ├── Assign to members
+   │   ├── Multiple assignees support
+   │   ├── Auto-notify assignees
+   │   └── Assignment history
+   │
+   ├── Duty Progress
+   │   ├── Status updates (unassigned → completed)
+   │   ├── Progress percentage
+   │   ├── Volunteer check-ins
+   │   └── Admin verification
+   │
+   ├── Duty Claims
+   │   ├── Expense claim submission
+   │   ├── Proof of work upload
+   │   ├── Voting system (optional)
+   │   └── Approval workflow
+   │
+   └── Duty Dashboard
+       ├── All duties overview
+       ├── My assigned duties
+       ├── Status filters
+       ├── Category filters
+       └── Search & sort
+
+8. TASK MANAGEMENT
+   ├── Task Creation
+   │   ├── Title and description
+   │   ├── Priority levels (low/medium/high/critical)
+   │   ├── Status (planned/in-progress/completed)
+   │   ├── Due date
+   │   └── Creator tracking
+   │
+   ├── Task Assignment
+   │   ├── Assign to multiple users
+   │   ├── Notify assignees
+   │   └── Track assignments
+   │
+   ├── Task Collaboration
+   │   ├── Task comments
+   │   ├── File attachments
+   │   ├── Activity log
+   │   └── Status updates
+   │
+   └── Task Views
+       ├── List view
+       ├── Kanban board
+       ├── Calendar view
+       ├── My tasks filter
+       └── Search functionality
+
+═══════════════════════════════════════════════════════════════════════════
+                    COMMUNICATION & ENGAGEMENT FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+9. REAL-TIME CHAT SYSTEM
+   ├── Chat Channels
+   │   ├── Group channels
+   │   │   ├── General farewell chat
+   │   │   ├── Topic-specific channels
+   │   │   ├── Committee channels
+   │   │   └── Custom channels
+   │   │
+   │   └── Direct Messages (DM)
+   │       ├── 1-on-1 conversations
+   │       ├── Private messaging
+   │       └── Message history
+   │
+   ├── Message Features
+   │   ├── Text messages
+   │   ├── Media attachments (images/videos)
+   │   ├── File sharing
+   │   ├── Reply to messages
+   │   ├── Message reactions
+   │   ├── @mentions
+   │   └── Message editing/deletion
+   │
+   ├── Real-time Features
+   │   ├── Live typing indicators
+   │   ├── Online/offline status
+   │   ├── Message read receipts
+   │   ├── Last seen timestamps
+   │   └── Instant notifications
+   │
+   └── Chat Management
+       ├── Mute channels
+       ├── Pin important messages
+       ├── Search message history
+       ├── Export conversations
+       └── Archive channels
+
+10. ANNOUNCEMENTS
+    ├── Announcement Creation
+    │   ├── Title and content
+    │   ├── Rich text formatting
+    │   ├── Pin important announcements
+    │   ├── Call-to-action buttons
+    │   └── Schedule publishing
+    │
+    ├── Announcement Display
+    │   ├── Chronological feed
+    │   ├── Pinned at top
+    │   ├── Unread indicators
+    │   └── Creator information
+    │
+    ├── User Interactions
+    │   ├── Mark as read
+    │   ├── Reactions (like/bookmark)
+    │   ├── Share announcements
+    │   └── Notification preferences
+    │
+    └── Management
+        ├── Edit announcements
+        ├── Delete announcements
+        ├── Archive old ones
+        └── Analytics (views/reactions)
+
+11. NOTIFICATIONS
+    ├── Notification Types
+    │   ├── System notifications
+    │   ├── Payment updates
+    │   ├── Task assignments
+    │   ├── Duty assignments
+    │   ├── Chat mentions
+    │   ├── Announcements
+    │   └── Event reminders
+    │
+    ├── Delivery Channels
+    │   ├── In-app notifications
+    │   ├── Push notifications (mobile)
+    │   ├── Browser notifications (web)
+    │   └── Email notifications (optional)
+    │
+    ├── Notification Center
+    │   ├── All notifications list
+    │   ├── Unread count badge
+    │   ├── Mark as read
+    │   ├── Clear all
+    │   └── Notification settings
+    │
+    └── Preferences
+        ├── Enable/disable by type
+        ├── Quiet hours
+        ├── Sound settings
+        └── Frequency control
+
+═══════════════════════════════════════════════════════════════════════════
+                      CONTENT & MEDIA FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+12. GALLERY & MEDIA MANAGEMENT
+    ├── Photo Gallery
+    │   ├── Upload photos
+    │   ├── Organize by albums
+    │   ├── Auto-thumbnail generation
+    │   ├── Grid/masonry view
+    │   └── Lightbox viewing
+    │
+    ├── Video Gallery
+    │   ├── Upload videos
+    │   ├── Video preview
+    │   ├── Streaming support
+    │   └── Download option
+    │
+    ├── Album Management
+    │   ├── Create albums
+    │   ├── Album descriptions
+    │   ├── Album covers
+    │   ├── Public/private albums
+    │   └── Share albums
+    │
+    ├── Media Features
+    │   ├── Bulk upload
+    │   ├── Drag and drop
+    │   ├── Image compression
+    │   ├── EXIF data preservation
+    │   └── Download media
+    │
+    └── Permissions
+        ├── Upload permissions by role
+        ├── View permissions
+        ├── Delete permissions
+        └── Admin moderation
+
+13. HIGHLIGHTS
+    ├── Highlight Creation
+    │   ├── Title and description
+    │   ├── Featured image
+    │   ├── External links
+    │   ├── Tags/categories
+    │   └── Submit for approval
+    │
+    ├── Approval System
+    │   ├── Pending highlights queue
+    │   ├── Admin review
+    │   ├── Approve/reject with notes
+    │   └── Auto-approve for admins
+    │
+    ├── Display & Interaction
+    │   ├── Highlights showcase
+    │   ├── Reactions (emoji)
+    │   ├── Comments
+    │   ├── Share highlights
+    │   └── View count tracking
+    │
+    └── Management
+        ├── Edit highlights
+        ├── Delete highlights
+        ├── Archive highlights
+        └── Featured highlights
+
+14. TIMELINE
+    ├── Event Timeline
+    │   ├── Add timeline events
+    │   ├── Event title and description
+    │   ├── Date and time
+    │   ├── Location
+    │   ├── Custom icon
+    │   └── Event status
+    │
+    ├── Timeline Display
+    │   ├── Chronological view
+    │   ├── Past/upcoming separation
+    │   ├── Visual timeline
+    │   └── Event countdowns
+    │
+    └── Management
+        ├── Edit events
+        ├── Delete events
+        ├── Reorder events
+        └── Event notifications
+
+═══════════════════════════════════════════════════════════════════════════
+                        SPECIALIZED FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+15. REHEARSALS MANAGEMENT
+    ├── Rehearsal Planning
+    │   ├── Create rehearsal sessions
+    │   ├── Date, time, location
+    │   ├── Segment management
+    │   └── Participant tracking
+    │
+    ├── Attendance Tracking
+    │   ├── Check-in system
+    │   ├── Attendance records
+    │   ├── Late arrivals
+    │   └── Attendance reports
+    │
+    ├── Segment Management
+    │   ├── Performance segments
+    │   ├── Time allocation
+    │   ├── Participant assignments
+    │   └── Segment notes
+    │
+    └── Rehearsal History
+        ├── Past rehearsals log
+        ├── Attendance analytics
+        ├── Performance reviews
+        └── Export reports
+
+16. COMMITTEES
+    ├── Committee Creation
+    │   ├── Committee name
+    │   ├── Description
+    │   ├── Leader assignment
+    │   └── Member allocation
+    │
+    ├── Committee Management
+    │   ├── Add/remove members
+    │   ├── Role assignment
+    │   ├── Dedicated chat channel
+    │   └── Task board
+    │
+    └── Committee Dashboard
+        ├── Member list
+        ├── Assigned tasks
+        ├── Progress tracking
+        └── Activity log
+
+17. PERFORMANCES
+    ├── Performance Planning
+    │   ├── Performance type
+    │   ├── Title and description
+    │   ├── Performers list
+    │   ├── Duration
+    │   └── Requirements
+    │
+    ├── Performance Tracking
+    │   ├── Rehearsal schedule
+    │   ├── Props checklist
+    │   ├── Music/audio files
+    │   └── Status updates
+    │
+    └── Performance Day
+        ├── Running order
+        ├── Timing control
+        ├── Backstage notes
+        └── Live updates
+
+18. ARTWORKS & DECOR
+    ├── Artwork Submission
+    │   ├── Upload designs
+    │   ├── Category (posters/cards/decorations)
+    │   ├── Description
+    │   └── Creator attribution
+    │
+    ├── Decor Planning
+    │   ├── Decor items list
+    │   ├── Quantity needed
+    │   ├── Cost estimation
+    │   └── Assignment to volunteers
+    │
+    └── Approval & Execution
+        ├── Admin approval
+        ├── Procurement tracking
+        ├── Setup checklist
+        └── Photo documentation
+
+19. GIFT WALL
+    ├── Gift Submission
+    │   ├── Upload gift photos
+    │   ├── Gift description
+    │   ├── Giver & receiver info
+    │   └── Message/note
+    │
+    ├── Gift Display
+    │   ├── Grid view
+    │   ├── Filter by recipient
+    │   ├── Search gifts
+    │   └── Gift categories
+    │
+    └── Management
+        ├── Approve gifts
+        ├── Moderate content
+        └── Export gift list
+
+20. LETTERS & MESSAGES
+    ├── Personal Letters
+    │   ├── Write to individuals
+    │   ├── Rich text editor
+    │   ├── Attachments
+    │   └── Send/schedule delivery
+    │
+    ├── Group Messages
+    │   ├── Broadcast to all
+    │   ├── Filter recipients
+    │   └── Delivery tracking
+    │
+    └── Yearbook Messages
+        ├── Collect yearbook notes
+        ├── Organize by author
+        ├── Export compilation
+        └── Print-ready format
+
+21. MUSIC LIBRARY
+    ├── Song Management
+    │   ├── Upload songs
+    │   ├── Song requests
+    │   ├── Vote on songs
+    │   └── Playlist creation
+    │
+    ├── Performance Music
+    │   ├── Assign to performances
+    │   ├── Audio editing (basic)
+    │   └── Playback queue
+    │
+    └── Event Playlist
+        ├── Curated playlists
+        ├── Voting system
+        ├── Share playlists
+        └── Download songs
+
+22. QUOTES COLLECTION
+    ├── Quote Submission
+    │   ├── Submit quotes
+    │   ├── Author attribution
+    │   ├── Category tags
+    │   └── Moderation queue
+    │
+    ├── Quote Display
+    │   ├── Random quote widget
+    │   ├── Browse all quotes
+    │   ├── Search quotes
+    │   └── Share quotes
+    │
+    └── Curation
+        ├── Featured quotes
+        ├── Quote of the day
+        └── Export collection
+
+23. FAREWELL VIDEO
+    ├── Video Planning
+    │   ├── Theme selection
+    │   ├── Segment planning
+    │   ├── Music selection
+    │   └── Timeline creation
+    │
+    ├── Content Collection
+    │   ├── Upload video clips
+    │   ├── Photo submissions
+    │   ├── Voice messages
+    │   └── Text overlays
+    │
+    ├── Editing Coordination
+    │   ├── Editor assignment
+    │   ├── Review workflow
+    │   ├── Revision tracking
+    │   └── Final approval
+    │
+    └── Distribution
+        ├── Preview sharing
+        ├── Final video upload
+        ├── Download links
+        └── Social media sharing
+
+24. ALUMNI CONNECTIONS
+    ├── Alumni Database
+    │   ├── Alumni profiles
+    │   ├── Graduation year
+    │   ├── Current location
+    │   └── Contact info
+    │
+    ├── Alumni Messages
+    │   ├── Message from alumni
+    │   ├── Advice & wishes
+    │   └── Video messages
+    │
+    └── Networking
+        ├── Connect with alumni
+        ├── Mentorship requests
+        └── Career guidance
+
+25. JUNIORS ENGAGEMENT
+    ├── Junior Involvement
+    │   ├── Add junior participants
+    │   ├── Role assignment
+    │   └── Permission levels
+    │
+    ├── Junior Tasks
+    │   ├── Assign junior duties
+    │   ├── Track participation
+    │   └── Recognition system
+    │
+    └── Transition Planning
+        ├── Knowledge transfer
+        ├── Resource handover
+        └── Next year planning
+
+═══════════════════════════════════════════════════════════════════════════
+                      ADMINISTRATIVE FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+26. ADMIN PANEL
+    ├── Dashboard
+    │   ├── System overview
+    │   ├── Key metrics
+    │   ├── Quick actions
+    │   └── Recent activity
+    │
+    ├── User Management
+    │   ├── All users list
+    │   ├── Role management
+    │   ├── Permission assignment
+    │   ├── Account status
+    │   └── User analytics
+    │
+    ├── Content Moderation
+    │   ├── Pending approvals queue
+    │   ├── Reported content
+    │   ├── Bulk actions
+    │   └── Moderation history
+    │
+    ├── Financial Controls
+    │   ├── Payment verification
+    │   ├── Reimbursement approvals
+    │   ├── Budget adjustments
+    │   └── Financial reports
+    │
+    └── System Settings
+        ├── Farewell settings
+        ├── Payment configuration
+        ├── Feature toggles
+        ├── Access controls
+        └── Maintenance mode
+
+27. SETTINGS & CONFIGURATION
+    ├── Personal Settings
+    │   ├── Profile settings
+    │   ├── Privacy controls
+    │   ├── Notification preferences
+    │   ├── Theme selection
+    │   └── Language preferences
+    │
+    ├── Farewell Settings
+    │   ├── Event details
+    │   ├── Payment methods
+    │   ├── Contribution settings
+    │   ├── Member permissions
+    │   └── Feature enablement
+    │
+    └── System Settings (Admin)
+        ├── UPI configuration
+        ├── Email settings
+        ├── Storage settings
+        ├── Security settings
+        └── API configurations
+
+28. PERMISSIONS & ACCESS CONTROL
+    ├── Role-Based Access Control (RBAC)
+    │   ├── Predefined role permissions
+    │   ├── Custom permission sets
+    │   ├── Permission inheritance
+    │   └── Override permissions
+    │
+    ├── Row-Level Security (RLS)
+    │   ├── Database-level security
+    │   ├── User can see own data
+    │   ├── Members see farewell data
+    │   └── Admins see all data
+    │
+    └── Feature Flags
+        ├── Enable/disable features
+        ├── Beta feature access
+        ├── Role-based feature access
+        └── Gradual rollout
+
+29. AUDIT & LOGGING
+    ├── Activity Logs
+    │   ├── User actions
+    │   ├── System events
+    │   ├── Data changes
+    │   └── Timestamps
+    │
+    ├── Audit Trail
+    │   ├── Financial transactions
+    │   ├── Permission changes
+    │   ├── Content modifications
+    │   └── Admin actions
+    │
+    └── Analytics
+        ├── User engagement
+        ├── Feature usage
+        ├── Performance metrics
+        └── Export logs
+
+30. SUPPORT & FEEDBACK
+    ├── Help Center
+    │   ├── FAQs
+    │   ├── User guides
+    │   ├── Video tutorials
+    │   └── Troubleshooting
+    │
+    ├── Support Tickets
+    │   ├── Submit issues
+    │   ├── Track ticket status
+    │   ├── Admin responses
+    │   └── Ticket history
+    │
+    ├── Feedback System
+    │   ├── Feature requests
+    │   ├── Bug reports
+    │   ├── Suggestions
+    │   └── Rating system
+    │
+    └── Live Chat Support
+        ├── Chat with admin
+        ├── Quick responses
+        └── Support history
+
+═══════════════════════════════════════════════════════════════════════════
+                          TECHNICAL FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+31. REAL-TIME FEATURES
+    ├── Live Updates
+    │   ├── Chat messages
+    │   ├── Contributions feed
+    │   ├── Notifications
+    │   ├── Online presence
+    │   └── Typing indicators
+    │
+    ├── Supabase Realtime
+    │   ├── Database change subscriptions
+    │   ├── Broadcast messages
+    │   ├── Presence tracking
+    │   └── WebSocket connections
+    │
+    └── Optimistic Updates
+        ├── Instant UI feedback
+        ├── Background sync
+        └── Conflict resolution
+
+32. STORAGE & MEDIA HANDLING
+    ├── Supabase Storage
+    │   ├── Photo uploads
+    │   ├── Video uploads
+    │   ├── Document storage
+    │   ├── Receipt storage
+    │   └── Profile pictures
+    │
+    ├── Media Processing
+    │   ├── Image compression
+    │   ├── Thumbnail generation
+    │   ├── Format conversion
+    │   └── Size optimization
+    │
+    └── CDN & Delivery
+        ├── Fast content delivery
+        ├── Signed URLs
+        ├── Expiring links
+        └── Secure access
+
+33. SEARCH & FILTERING
+    ├── Global Search
+    │   ├── Search all content
+    │   ├── Filter by type
+    │   ├── Sort results
+    │   └── Recent searches
+    │
+    ├── Advanced Filters
+    │   ├── Date range
+    │   ├── Status filters
+    │   ├── Category filters
+    │   └── Custom filters
+    │
+    └── Search by Section
+        ├── Members search
+        ├── Contributions search
+        ├── Messages search
+        └── Media search
+
+34. EXPORT & REPORTING
+    ├── Data Export
+    │   ├── Member lists (CSV/Excel)
+    │   ├── Financial reports (PDF)
+    │   ├── Attendance sheets
+    │   └── Complete event data
+    │
+    ├── Reports Generation
+    │   ├── Contribution reports
+    │   ├── Expense reports
+    │   ├── Duty completion reports
+    │   └── Activity summaries
+    │
+    └── Print-Ready Formats
+        ├── Receipts
+        ├── Certificates
+        ├── Member lists
+        └── Event programs
+
+35. MOBILE APP (React Native/Expo)
+    ├── Feature Parity with Web
+    │   ├── All core features
+    │   ├── Same UX flow
+    │   ├── Consistent design
+    │   └── Synchronized data
+    │
+    ├── Mobile-Specific Features
+    │   ├── Push notifications
+    │   ├── Camera integration
+    │   ├── QR code scanner
+    │   ├── Offline mode
+    │   └── Biometric authentication
+    │
+    ├── App Distribution
+    │   ├── Google Play Store
+    │   ├── APK distribution
+    │   ├── Signed URLs for APK
+    │   └── Auto-update system
+    │
+    └── Performance
+        ├── Fast startup
+        ├── Optimized rendering
+        ├── Background sync
+        └── Minimal battery usage
+
+36. SECURITY FEATURES
+    ├── Authentication Security
+    │   ├── Secure password hashing
+    │   ├── JWT token management
+    │   ├── Session timeout
+    │   ├── Rate limiting
+    │   └── Brute force protection
+    │
+    ├── Data Security
+    │   ├── Row-level security (RLS)
+    │   ├── Encrypted storage
+    │   ├── Secure API endpoints
+    │   └── SQL injection prevention
+    │
+    ├── Payment Security
+    │   ├── UPI verification
+    │   ├── Transaction validation
+    │   ├── Duplicate prevention
+    │   └── Secure screenshot storage
+    │
+    └── Privacy Controls
+        ├── Data privacy settings
+        ├── GDPR compliance ready
+        ├── Data export rights
+        └── Account deletion
+
+37. PERFORMANCE OPTIMIZATION
+    ├── Frontend Optimization
+    │   ├── Code splitting
+    │   ├── Lazy loading
+    │   ├── Image optimization
+    │   ├── Caching strategies
+    │   └── Bundle size optimization
+    │
+    ├── Backend Optimization
+    │   ├── Database indexing
+    │   ├── Query optimization
+    │   ├── Connection pooling
+    │   └── Efficient RLS policies
+    │
+    └── Monitoring
+        ├── Performance metrics
+        ├── Error tracking
+        ├── Load monitoring
+        └── User analytics
+
+═══════════════════════════════════════════════════════════════════════════
+                        DASHBOARD & OVERVIEW
+═══════════════════════════════════════════════════════════════════════════
+
+38. HOME DASHBOARD
+    ├── Overview Widgets
+    │   ├── Active farewells
+    │   ├── Recent contributions
+    │   ├── Pending tasks
+    │   ├── Unread notifications
+    │   └── Quick actions
+    │
+    ├── Statistics
+    │   ├── Total contributions made
+    │   ├── Tasks completed
+    │   ├── Duties assigned
+    │   └── Activity streak
+    │
+    └── Navigation
+        ├── Quick farewell switcher
+        ├── Recent pages
+        ├── Favorites
+        └── Search
+
+39. FAREWELL DASHBOARD
+    ├── Overview Cards
+    │   ├── Total collected
+    │   ├── Total members
+    │   ├── Total media
+    │   ├── Active tasks
+    │   └── Upcoming events
+    │
+    ├── Activity Feed
+    │   ├── Recent contributions
+    │   ├── New members
+    │   ├── Task updates
+    │   └── Announcements
+    │
+    ├── Quick Links
+    │   ├── Make contribution
+    │   ├── Upload photo
+    │   ├── Create task
+    │   └── Send message
+    │
+    └── Personalization
+        ├── Customizable layout
+        ├── Widget preferences
+        └── Default view
+
+═══════════════════════════════════════════════════════════════════════════
+                          ADDITIONAL FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+40. TEMPLATES & RESOURCES
+    ├── Event Templates
+    │   ├── Invitation templates
+    │   ├── Announcement templates
+    │   ├── Certificate templates
+    │   └── Program templates
+    │
+    ├── Resource Library
+    │   ├── Planning guides
+    │   ├── Checklists
+    │   ├── Sample budgets
+    │   └── Best practices
+    │
+    └── Downloads
+        ├── Editable templates
+        ├── Graphics pack
+        └── Documentation
+
+41. ABOUT & INFORMATION
+    ├── Farewell Information
+    │   ├── About this farewell
+    │   ├── Organizer details
+    │   ├── Event history
+    │   └── Milestones
+    │
+    └── System Information
+        ├── Terms of service
+        ├── Privacy policy
+        ├── Credits
+        └── Version info
+
+42. YEARBOOK INTEGRATION
+    ├── Yearbook Creation
+    │   ├── Collect photos
+    │   ├── Gather messages
+    │   ├── Layout design
+    │   └── Digital yearbook
+    │
+    ├── Student Profiles
+    │   ├── Profile photos
+    │   ├── Quotes
+    │   ├── Achievements
+    │   └── Messages
+    │
+    └── Distribution
+        ├── Digital copy
+        ├── Print-ready PDF
+        └── Share links
+
+43. EVENT DAY MANAGEMENT
+    ├── Checklist
+    │   ├── Pre-event checklist
+    │   ├── During event checklist
+    │   ├── Post-event checklist
+    │   └── Emergency contacts
+    │
+    ├── Live Updates
+    │   ├── Event status updates
+    │   ├── Running order
+    │   ├── Time management
+    │   └── Issue tracking
+    │
+    └── Documentation
+        ├── Live photo uploads
+        ├── Video recording
+        ├── Attendance marking
+        └── Feedback collection
+
+44. POST-EVENT FEATURES
+    ├── Thank You Notes
+    │   ├── Automated thank you messages
+    │   ├── Personalized messages
+    │   └── Group acknowledgments
+    │
+    ├── Event Archive
+    │   ├── Archive farewell
+    │   ├── Read-only mode
+    │   ├── Memory preservation
+    │   └── Access control
+    │
+    ├── Analytics & Review
+    │   ├── Final statistics
+    │   ├── Budget summary
+    │   ├── Participation metrics
+    │   └── Success report
+    │
+    └── Next Year Preparation
+        ├── Export lessons learned
+        ├── Template creation
+        ├── Data for next batch
+        └── Knowledge transfer
+
+═══════════════════════════════════════════════════════════════════════════
+                           PLATFORM FEATURES
+═══════════════════════════════════════════════════════════════════════════
+
+45. WEB PLATFORM (Next.js 14)
+    ├── Modern UI/UX
+    │   ├── Responsive design
+    │   ├── Dark/light themes
+    │   ├── Smooth animations (Framer Motion)
+    │   ├── shadcn/ui components
+    │   └── TailwindCSS styling
+    │
+    ├── Server Components
+    │   ├── Faster page loads
+    │   ├── Better SEO
+    │   ├── Reduced client bundle
+    │   └── Improved performance
+    │
+    └── Progressive Web App (PWA)
+        ├── Offline functionality
+        ├── Install to home screen
+        ├── Push notifications
+        └── Background sync
+
+46. MOBILE PLATFORM (Expo/React Native)
+    ├── Native Features
+    │   ├── Camera access
+    │   ├── File system
+    │   ├── Push notifications
+    │   ├── Biometric auth
+    │   └── QR scanner
+    │
+    ├── Cross-Platform
+    │   ├── iOS support
+    │   ├── Android support
+    │   ├── Shared codebase
+    │   └── Platform-specific optimizations
+    │
+    └── Offline Support
+        ├── Local caching
+        ├── Offline data access
+        ├── Auto-sync on reconnect
+        └── Conflict resolution
+
+47. BACKEND (Supabase)
+    ├── Database (PostgreSQL)
+    │   ├── 26+ tables
+    │   ├── Foreign key relationships
+    │   ├── Indexed queries
+    │   └── Data integrity
+    │
+    ├── Authentication
+    │   ├── Email/password
+    │   ├── OAuth providers
+    │   ├── Magic links
+    │   └── JWT management
+    │
+    ├── Storage
+    │   ├── File uploads
+    │   ├── CDN delivery
+    │   ├── Access control
+    │   └── Automatic backups
+    │
+    ├── Edge Functions
+    │   ├── Payment verification
+    │   ├── Media processing
+    │   ├── Email sending
+    │   └── Custom business logic
+    │
+    └── Realtime
+        ├── Database subscriptions
+        ├── Presence
+        ├── Broadcast
+        └── WebSocket support
+
+═══════════════════════════════════════════════════════════════════════════
+                         SUMMARY & STATISTICS
+═══════════════════════════════════════════════════════════════════════════
+
+TOTAL FEATURE COUNT: 47 MAJOR FEATURE CATEGORIES
+
+FEATURE BREAKDOWN:
+├── Core System: 3 features (Auth, Events, Members)
+├── Financial: 3 features (Contributions, Budget, Reimbursements)
+├── Tasks & Duties: 2 features
+├── Communication: 3 features (Chat, Announcements, Notifications)
+├── Content & Media: 3 features (Gallery, Highlights, Timeline)
+├── Specialized: 10 features (Rehearsals, Committees, etc.)
+├── Administrative: 5 features
+├── Technical: 7 features
+├── Dashboard: 2 features
+├── Additional: 4 features
+└── Platform: 3 features
+
+TOTAL DATABASE TABLES: 26+
+TOTAL API ENDPOINTS: 30+ action files
+SUPPORTED PLATFORMS: Web, iOS, Android
+REAL-TIME CAPABILITIES: Yes (Supabase Realtime)
+OFFLINE SUPPORT: Yes (PWA + Mobile caching)
+MULTI-LANGUAGE: Ready for expansion
+SCALABILITY: Designed for multiple farewells
+
+═══════════════════════════════════════════════════════════════════════════
+                         TECHNOLOGY STACK
+═══════════════════════════════════════════════════════════════════════════
+
+FRONTEND:
+├── Web: Next.js 14, React, TypeScript
+├── Mobile: React Native, Expo
+├── UI: shadcn/ui, TailwindCSS
+├── Animations: Framer Motion
+└── State: React hooks, Context API
+
+BACKEND:
+├── Database: PostgreSQL (Supabase)
+├── Auth: Supabase Auth
+├── Storage: Supabase Storage
+├── Functions: Supabase Edge Functions
+└── Realtime: Supabase Realtime
+
+INTEGRATIONS:
+├── Payments: UPI (manual verification)
+├── Media: Supabase Storage
+├── Notifications: Push, In-app
+└── Analytics: Custom tracking
+
+SECURITY:
+├── RLS Policies
+├── JWT Authentication
+├── Encrypted Storage
+└── Secure API endpoints
+
+═══════════════════════════════════════════════════════════════════════════
+                              END OF DOCUMENT
+═══════════════════════════════════════════════════════════════════════════
+
+Document Version: 4.0
+Last Updated: January 1, 2025
+Total Pages: Comprehensive multi-category specification
+Maintained by: Development Team
+
+For technical documentation, refer to:
+- Database Schema: final_schema.sql
+- API Documentation: /app/actions/*
+- Component Library: /components/*
+- Mobile App: React Native/Expo setup
+
+═══════════════════════════════════════════════════════════════════════════

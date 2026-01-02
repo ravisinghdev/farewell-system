@@ -6,7 +6,7 @@ import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
 import { ContributionHistoryList } from "@/components/contributions/contribution-history-list";
 import { checkIsAdmin } from "@/lib/auth/roles";
-import { GlassCard } from "@/components/ui/glass-card";
+import { Card, CardContent } from "@/components/ui/card";
 import { TransactionTable } from "@/components/admin/transaction-table";
 import { ContributionHeader } from "@/components/contributions/contribution-header";
 import { Wallet, Clock } from "lucide-react";
@@ -41,7 +41,7 @@ export default async function HistoryPage({
   // Admin: TransactionTable handles fetching
 
   return (
-    <div className="w-full space-y-8 animate-in fade-in duration-700 p-4 md:p-8">
+    <div className="w-full space-y-8 animate-in fade-in duration-700 p-4 md:p-8 pb-10">
       <ContributionHeader
         title={isAdmin ? "All Transactions" : "My Payment History"}
         description={
@@ -54,53 +54,63 @@ export default async function HistoryPage({
       />
 
       {isAdmin ? (
-        <GlassCard className="p-6">
-          <TransactionTable farewellId={id} isAdmin={isAdmin} />
-        </GlassCard>
+        <Card>
+          <CardContent className="p-0">
+            <TransactionTable farewellId={id} isAdmin={isAdmin} />
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-6">
           {/* Total Summary for User */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <GlassCard className="p-6 flex items-center justify-between bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-emerald-200/60 uppercase tracking-wider">
-                  Total Contributed
-                </p>
-                <p className="text-3xl font-bold text-white">
-                  ₹{userStats.totalContribution.toLocaleString()}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20">
-                <Wallet className="w-6 h-6 text-emerald-400" />
-              </div>
-            </GlassCard>
+            <Card className="bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900">
+              <CardContent className="p-6 flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                    Total Contributed
+                  </p>
+                  <p className="text-3xl font-bold">
+                    ₹{userStats.totalContribution.toLocaleString()}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-zinc-800 dark:bg-zinc-200 flex items-center justify-center">
+                  <Wallet className="w-6 h-6 text-emerald-500 dark:text-emerald-600" />
+                </div>
+              </CardContent>
+            </Card>
 
-            <GlassCard className="p-6 flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-white/40 uppercase tracking-wider">
-                  Latest Contribution
-                </p>
-                <p className="text-xl font-bold text-white">
-                  {initialTransactions.length > 0
-                    ? format(
-                        new Date(initialTransactions[0].created_at),
-                        "MMM d, yyyy"
-                      )
-                    : "N/A"}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
-                <Clock className="w-6 h-6 text-white/60" />
-              </div>
-            </GlassCard>
+            <Card>
+              <CardContent className="p-6 flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                    Latest Contribution
+                  </p>
+                  <p className="text-xl font-bold text-foreground">
+                    {initialTransactions.length > 0
+                      ? format(
+                          new Date(initialTransactions[0].created_at),
+                          "MMM d, yyyy"
+                        )
+                      : "N/A"}
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <h3 className="text-lg font-bold text-white px-1">Recent Activity</h3>
-          <ContributionHistoryList
-            initialTransactions={initialTransactions}
-            farewellId={id}
-            initialTotal={initialTotal}
-          />
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-4 px-1">
+              Recent Activity
+            </h3>
+            <ContributionHistoryList
+              initialTransactions={initialTransactions}
+              farewellId={id}
+              initialTotal={initialTotal}
+            />
+          </div>
         </div>
       )}
     </div>

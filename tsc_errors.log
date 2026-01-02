@@ -1,4 +1,0 @@
-app/dashboard/[id]/contributions/manage/page.tsx(74,27): error TS2322: Type '{ farewellId: string; }' is not assignable to type 'IntrinsicAttributes & FinanceStatsProps'.
-  Property 'farewellId' does not exist on type 'IntrinsicAttributes & FinanceStatsProps'.
-components/performances/performance-card.tsx(185,13): error TS2322: Type '{ value: number; indicatorColor: string; className: string; }' is not assignable to type 'IntrinsicAttributes & ProgressProps & RefAttributes<HTMLDivElement>'.
-  Property 'indicatorColor' does not exist on type 'IntrinsicAttributes & ProgressProps & RefAttributes<HTMLDivElement>'.

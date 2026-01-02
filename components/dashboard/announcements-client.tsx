@@ -8,18 +8,17 @@ import { useState } from "react";
 import { CreateAnnouncementDialog } from "@/components/dashboard/create-announcement-dialog";
 
 import { useFarewell } from "@/components/providers/farewell-provider";
+import { useDashboardData } from "@/components/providers/dashboard-data-provider";
 
 interface AnnouncementsClientProps {
-  announcements: Announcement[];
-  // Props are now optional/unused as we use context
-  farewellId?: string;
-  isAdmin?: boolean;
-  userId?: string;
+  // announcements: Announcement[]; // Handled by context
+  initialAnnouncements?: Announcement[]; // Optional for server fallback if needed
 }
 
 export default function AnnouncementsClient({
-  announcements,
+  initialAnnouncements,
 }: AnnouncementsClientProps) {
+  const { announcements } = useDashboardData();
   const { user, farewell, isAdmin } = useFarewell();
   const farewellId = farewell.id;
   const userId = user.id;

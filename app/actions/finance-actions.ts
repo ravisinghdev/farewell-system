@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { isFarewellAdmin } from "@/lib/auth/roles-server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 
 export interface Transaction {
   id: string;
@@ -50,10 +51,61 @@ async function validateAdmin(farewellId: string) {
 
   if (!user) throw new Error("Not authenticated");
 
-  const isAdmin = await isFarewellAdmin(farewellId, user.id);
+  // Use admin client to check role and avoid RLS recursion
+  const { data: member } = await supabaseAdmin
+    .from("farewell_members")
+    .select("role")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", user.id)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  const isAdmin =
+    member?.role === "admin" ||
+    member?.role === "parallel_admin" ||
+    member?.role === "main_admin";
+
   if (!isAdmin) throw new Error("Unauthorized: Admin access required");
 
-  return { supabase, user };
+  // Return admin client for subsequent queries to avoid RLS recursion
+  return { supabase: supabaseAdmin, user };
+}
+
+export async function updatePaymentConfigAction(
+  farewellId: string,
+  newConfig: { auto_verify?: boolean; upi?: boolean; upi_id?: string | null }
+) {
+  const { supabase } = await validateAdmin(farewellId);
+
+  // 1. Fetch existing config
+  const { data: farewell } = await supabase
+    .from("farewells")
+    .select("payment_config")
+    .eq("id", farewellId)
+    .single();
+
+  const currentConfig = (farewell?.payment_config as any) || {};
+
+  // 2. Merge config
+  const updatedConfig = {
+    ...currentConfig,
+    ...newConfig,
+  };
+
+  // 3. Update
+  const { error } = await supabase
+    .from("farewells")
+    .update({ payment_config: updatedConfig })
+    .eq("id", farewellId);
+
+  if (error) {
+    console.error("Update payment config error:", error);
+    throw new Error("Failed to update payment settings");
+  }
+
+  revalidatePath(`/dashboard/${farewellId}/contributions/manage`);
+  revalidatePath(`/dashboard/${farewellId}/contributions/payment`);
+  return { success: true };
 }
 
 export async function getUnifiedTransactions(

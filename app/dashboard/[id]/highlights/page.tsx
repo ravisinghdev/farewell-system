@@ -1,7 +1,7 @@
 import { getHighlightsAction } from "@/app/actions/dashboard-actions";
 import { CreateHighlightDialog } from "@/components/dashboard/create-highlight-dialog";
 import { RealtimeHighlights } from "@/components/dashboard/realtime-highlights";
-import { createClient } from "@/utils/supabase/server";
+import { DashboardDataProvider } from "@/components/providers/dashboard-data-provider";
 import { Star } from "lucide-react";
 
 interface HighlightsPageProps {
@@ -12,8 +12,8 @@ interface HighlightsPageProps {
 
 export default async function HighlightsPage({ params }: HighlightsPageProps) {
   const { id } = await params;
-  const supabase = await createClient();
 
+  // Fetch highlights directly (optimized)
   const highlights = await getHighlightsAction(id);
 
   return (
@@ -35,7 +35,19 @@ export default async function HighlightsPage({ params }: HighlightsPageProps) {
 
       <div className="flex-1 overflow-auto p-4 sm:p-10">
         <div className="max-w-7xl mx-auto">
-          <RealtimeHighlights initialHighlights={highlights} farewellId={id} />
+          <DashboardDataProvider
+            farewellId={id}
+            highlights={highlights}
+            stats={undefined as any}
+            announcements={[]}
+            recentTransactions={[]}
+            timeline={[]}
+          >
+            <RealtimeHighlights
+              initialHighlights={highlights}
+              farewellId={id}
+            />
+          </DashboardDataProvider>
         </div>
       </div>
     </div>

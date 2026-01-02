@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/utils/supabase/admin"; // service-role client
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { ActionState } from "@/types/custom";
 
 /**
@@ -193,4 +194,65 @@ export async function createFarewellAction(formData: FormData): Promise<void> {
   }
 
   redirect("/dashboard");
+}
+
+export async function updatePageSettingsAction(
+  farewellId: string,
+  pageKey: string,
+  settings: {
+    enabled: boolean;
+    reason: "maintenance" | "disabled" | "coming_soon";
+    message?: string;
+  }
+): Promise<ActionState> {
+  const supabase = await createClient();
+
+  // 1. Auth & Admin Check
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
+
+  // Verify admin role
+  const { data: member } = await supabase
+    .from("farewell_members")
+    .select("role")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", userId)
+    .single();
+
+  if (
+    !member ||
+    (member.role !== "main_admin" && member.role !== "parallel_admin")
+  ) {
+    return { error: "Unauthorized" };
+  }
+
+  // 2. Fetch current settings
+  const { data: farewell } = await supabase
+    .from("farewells")
+    .select("page_settings")
+    .eq("id", farewellId)
+    .single();
+
+  const currentSettings = (farewell?.page_settings || {}) as Record<
+    string,
+    any
+  >;
+
+  // 3. Update specific page setting
+  const updatedSettings = {
+    ...currentSettings,
+    [pageKey]: settings,
+  };
+
+  // 4. Save
+  const { error } = await supabaseAdmin
+    .from("farewells")
+    .update({ page_settings: updatedSettings })
+    .eq("id", farewellId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/dashboard/${farewellId}`);
+  return { success: true };
 }

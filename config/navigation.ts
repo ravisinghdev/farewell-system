@@ -8,7 +8,6 @@ import {
   ClipboardList,
   Download,
   Film,
-  GalleryVerticalEnd,
   Gift,
   GraduationCap,
   Heart,
@@ -33,6 +32,10 @@ import {
   User,
   Users,
   Wallet,
+  BarChart3,
+  FileCheck,
+  History,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,6 +46,9 @@ export interface NavItem {
   disabled?: boolean;
   disabledTooltip?: string;
   adminOnly?: boolean;
+  // Enhanced properties for stats
+  showStats?: boolean;
+  showProgress?: boolean;
 }
 
 export interface NavGroup {
@@ -105,14 +111,15 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
 
-  /* ------------------- CONTRIBUTIONS (High Priority) ------------------- */
+  /* ------------------- CONTRIBUTIONS (Enhanced) ------------------- */
   {
     title: "Contributions",
     items: [
       {
-        href: "/dashboard/contributions",
-        label: "Main Dashboard",
+        href: "/dashboard/contributions/overview",
+        label: "Overview",
         icon: PiggyBank,
+        showProgress: true,
       },
       {
         href: "/dashboard/contributions/payment",
@@ -120,13 +127,25 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Plus,
       },
       {
+        href: "/dashboard/contributions/history",
+        label: "My Contributions",
+        icon: History,
+        showStats: true,
+      },
+      {
         href: "/dashboard/contributions/receipt",
-        label: "Receipts & Downloads",
-        icon: ReceiptText,
+        label: "Receipts",
+        icon: FileCheck,
+        showStats: true,
+      },
+      {
+        href: "/dashboard/contributions/analytics",
+        label: "Analytics",
+        icon: BarChart3,
       },
       {
         href: "/dashboard/contributions/leaderboard",
-        label: "Top Contributors",
+        label: "Leaderboard",
         icon: Trophy,
       },
       {
@@ -137,9 +156,10 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       {
         href: "/dashboard/contributions/manage",
-        label: "Manage Contributions",
+        label: "Manage",
         icon: Shield,
         adminOnly: true,
+        showStats: true,
       },
     ],
   },

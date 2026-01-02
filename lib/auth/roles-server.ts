@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 import { Database } from "@/types/supabase";
 import { UserRole } from "./roles";
 
@@ -16,9 +16,9 @@ export async function getFarewellRoleFromDB(
   farewellId: string,
   userId: string
 ): Promise<FarewellRole | null> {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
+  // Use Admin client to bypass RLS policies that might cause infinite recursion
+  // when the policy itself tries to check membership
+  const { data, error } = await supabaseAdmin
     .from("farewell_members")
     .select("role")
     .eq("farewell_id", farewellId)

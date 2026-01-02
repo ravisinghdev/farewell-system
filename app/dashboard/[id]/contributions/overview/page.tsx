@@ -4,7 +4,10 @@ import {
   getContributionsAction,
   getFinancialStatsAction,
 } from "@/app/actions/contribution-actions";
-import { getFarewellBudgetDetailsAction } from "@/app/actions/budget-actions";
+import {
+  getFarewellBudgetDetailsAction,
+  getMyAssignedAmountAction,
+} from "@/app/actions/budget-actions";
 import { getCurrentUserWithRole } from "@/lib/auth/current-user";
 import { redirect } from "next/navigation";
 import { BudgetManager } from "@/components/admin/budget-manager";
@@ -23,12 +26,16 @@ export default async function ContributionOverviewPage({
 
   const isAdmin = checkIsAdmin(user.role);
 
-  // Fetch data in parallel
-  const [contributionsResult, statsResult, budgetResult] = await Promise.all([
-    isAdmin ? getAllContributionsAction(id) : getContributionsAction(id),
-    getFinancialStatsAction(id),
-    getFarewellBudgetDetailsAction(id),
-  ]);
+  // Fetch data in parallel with conditional logic
+  const [contributionsResult, statsResult, budgetResult, myAssignedAmount] =
+    await Promise.all([
+      isAdmin ? getAllContributionsAction(id) : getContributionsAction(id),
+      getFinancialStatsAction(id),
+      isAdmin
+        ? getFarewellBudgetDetailsAction(id)
+        : Promise.resolve({ error: "Skip" }),
+      !isAdmin ? getMyAssignedAmountAction(id) : Promise.resolve(0),
+    ]);
 
   const totalAmount = statsResult.collectedAmount || 0;
 
@@ -40,22 +47,20 @@ export default async function ContributionOverviewPage({
     total: totalAmount,
     contribution_count: statsResult.totalContributors || 0,
   };
-  // console.log("Stats: ", stats);
-  const budgetGoal = budgetResult.budgetGoal || 0;
-  const members = budgetResult.members || [];
 
-  // Find current user's assigned amount
-  const currentUserMember = members.find((m) => m.userId === user.id);
-  const assignedAmount = currentUserMember?.assignedAmount || 0;
+  let budgetGoal = statsResult.targetAmount || 0;
+  let members: any[] = [];
+  let assignedAmount = 0;
 
-  // Debug Logs
-  // console.log("--- Dashboard Overview Debug ---");
-  // console.log("User ID:", user.id);
-  // console.log("Is Admin:", isAdmin);
-  // console.log("Budget Goal (Raw):", budgetGoal);
-  // console.log("Member Found:", currentUserMember);
-  // console.log("Assigned Amount (Calculated):", assignedAmount);
-  // console.log("Stats: ", stats); // Already logged
+  if (isAdmin && !(budgetResult as any).error) {
+    const br = budgetResult as any;
+    budgetGoal = br.budgetGoal || budgetGoal;
+    members = br.members || [];
+    const me = members.find((m: any) => m.userId === user.id);
+    assignedAmount = me?.assignedAmount || 0;
+  } else if (!isAdmin) {
+    assignedAmount = (myAssignedAmount as number) || 0;
+  }
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">

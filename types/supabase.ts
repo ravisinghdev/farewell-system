@@ -600,6 +600,110 @@ export interface Database {
           created_at?: string | null;
         };
       };
+      tasks: {
+        Row: {
+          id: string;
+          farewell_id: string;
+          title: string;
+          description: string | null;
+          status: "todo" | "in_progress" | "done";
+          priority: "low" | "medium" | "high";
+          due_at: string | null;
+          created_by: string;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          farewell_id: string;
+          title: string;
+          description?: string | null;
+          status?: "todo" | "in_progress" | "done";
+          priority?: "low" | "medium" | "high";
+          due_at?: string | null;
+          created_by: string;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          farewell_id?: string;
+          title?: string;
+          description?: string | null;
+          status?: "todo" | "in_progress" | "done";
+          priority?: "low" | "medium" | "high";
+          due_at?: string | null;
+          created_by?: string;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
+      task_assignments: {
+        Row: {
+          task_id: string;
+          user_id: string;
+          assigned_at: string;
+        };
+        Insert: {
+          task_id: string;
+          user_id: string;
+          assigned_at?: string;
+        };
+        Update: {
+          task_id?: string;
+          user_id?: string;
+          assigned_at?: string;
+        };
+      };
+      task_comments: {
+        Row: {
+          id: string;
+          task_id: string;
+          user_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          user_id: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          user_id?: string;
+          content?: string;
+          created_at?: string;
+        };
+      };
+      task_activity_log: {
+        Row: {
+          id: string;
+          task_id: string;
+          action_type: string;
+          actor_id: string;
+          metadata: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          task_id: string;
+          action_type: string;
+          actor_id: string;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          task_id?: string;
+          action_type?: string;
+          actor_id?: string;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -638,6 +742,8 @@ export interface Database {
       contribution_status: "pending" | "verified" | "rejected";
       media_type: "image" | "video";
       duty_status: "pending" | "in_progress" | "completed";
+      task_status: "todo" | "in_progress" | "done";
+      task_priority: "low" | "medium" | "high";
       notif_type:
         | "message"
         | "mention"

@@ -185,7 +185,7 @@ export function AnnouncementDetailView({
 
         {/* Body */}
         <div
-          className="prose prose-invert max-w-none prose-sm sm:prose-base leading-relaxed text-foreground/90 whitespace-pre-wrap"
+          className="prose prose-invert max-w-none prose-sm sm:prose-base leading-relaxed text-foreground/90"
           dangerouslySetInnerHTML={{ __html: announcement.content }}
         />
 

@@ -464,6 +464,7 @@ export async function rejectDutyReceiptAction(
     action: "reject_receipt",
     targetId: receiptId,
     targetType: "receipt",
+    metadata: { adminNotes },
   });
 
   // Notify Uploader
@@ -542,6 +543,60 @@ export async function unassignDutyAction(
     targetId: dutyId,
     targetType: "duty",
     metadata: { removed_user_id: userIdToRemove },
+  });
+
+  revalidatePath(`/dashboard/${farewellId}/duties`);
+  return { success: true };
+}
+
+// Added to fix build error and usage in duty-claim-actions.ts
+export async function logDutyActivity(
+  dutyId: string,
+  action: string,
+  message: string, // 'details' maps to 'message' in common semantic, but logAudit uses strict action names
+  metadata: any = {}
+) {
+  const supabase = await createClient();
+  // We need farewellId. Fetch it.
+  const { data: duty } = await supabase
+    .from("duties")
+    .select("farewell_id")
+    .eq("id", dutyId)
+    .single();
+
+  if (duty) {
+    await logAudit({
+      farewellId: duty.farewell_id,
+      action: "duty_activity_log", // Generic action
+      targetId: dutyId,
+      targetType: "duty",
+      metadata: { message, ...metadata },
+    });
+  }
+}
+
+// Delete a duty
+export async function deleteDutyAction(
+  farewellId: string,
+  dutyId: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
+
+  const isAdmin = await isFarewellAdmin(farewellId, userId);
+  if (!isAdmin) return { error: "Unauthorized" };
+
+  const { error } = await supabase.from("duties").delete().eq("id", dutyId);
+
+  if (error) return { error: error.message };
+
+  await logAudit({
+    farewellId,
+    action: "delete_duty",
+    targetId: dutyId,
+    targetType: "duty",
   });
 
   revalidatePath(`/dashboard/${farewellId}/duties`);

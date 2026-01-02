@@ -77,7 +77,7 @@ export function SettingsNav({ farewellId }: SettingsNavProps) {
   ];
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-fit px-4 pointer-events-none">
+    <div className="hidden sm:block fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-fit px-4 pointer-events-none">
       <nav className="pointer-events-auto flex items-center gap-1 p-2 bg-white/80 dark:bg-black/40 w-fit max-w-full overflow-x-auto rounded-2xl border border-zinc-200 dark:border-white/10 backdrop-blur-xl shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 ring-1 ring-black/5 dark:ring-white/5 no-scrollbar">
         {links.map((link) => {
           const isActive = pathname.startsWith(link.href);

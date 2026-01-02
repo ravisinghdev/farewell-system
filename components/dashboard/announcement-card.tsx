@@ -274,9 +274,11 @@ export function AnnouncementCard({
 
         <CardContent className="space-y-4 relative z-10">
           {/* Announcement Text */}
-          <p className="text-sm sm:text-[0.95rem] leading-relaxed text-foreground/95 whitespace-pre-wrap">
-            {announcement.content}
-          </p>
+          {/* Announcement Text */}
+          <div
+            className="text-sm sm:text-[0.95rem] leading-relaxed text-foreground/95 prose prose-invert max-w-none [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4"
+            dangerouslySetInnerHTML={{ __html: announcement.content }}
+          />
 
           {/* Divider */}
           <div className="border-t border-white/10 pt-3" />
