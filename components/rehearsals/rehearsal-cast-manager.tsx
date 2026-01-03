@@ -129,7 +129,7 @@ export function RehearsalCastManager({
       </div>
 
       {isAdmin ? (
-        <div className="flex gap-2 p-4 bg-muted/20 rounded-lg border items-center">
+        <div className="flex gap-2 p-4 rounded-lg border items-center">
           <div className="flex-1">
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
@@ -213,7 +213,7 @@ export function RehearsalCastManager({
         {participants.map((person) => (
           <div
             key={person.user_id}
-            className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:border-primary/50 transition-colors group relative"
+            className="flex items-center gap-3 p-3 rounded-lg border bg-transparent hover:border-primary/50 transition-colors group relative"
           >
             <Avatar className="h-10 w-10 border">
               <AvatarImage src={person.avatar_url} />

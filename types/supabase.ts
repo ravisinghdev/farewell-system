@@ -47,6 +47,53 @@ export interface Database {
           updated_at?: string | null;
         };
       };
+      decor_items: {
+        Row: {
+          id: string;
+          farewell_id: string;
+          item_name: string;
+          category: string;
+          quantity: number;
+          notes: string | null;
+          status: string | null;
+          image_url: string | null;
+          estimated_cost: number | null;
+          actual_cost: number | null;
+          assigned_to: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          farewell_id: string;
+          item_name: string;
+          category: string;
+          quantity?: number;
+          notes?: string | null;
+          status?: string | null;
+          image_url?: string | null;
+          estimated_cost?: number | null;
+          actual_cost?: number | null;
+          assigned_to?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          farewell_id?: string;
+          item_name?: string;
+          category?: string;
+          quantity?: number;
+          notes?: string | null;
+          status?: string | null;
+          image_url?: string | null;
+          estimated_cost?: number | null;
+          actual_cost?: number | null;
+          assigned_to?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
       farewells: {
         Row: {
           id: string;
@@ -90,7 +137,14 @@ export interface Database {
           id: string;
           farewell_id: string;
           user_id: string;
-          role: "admin" | "student" | "guest" | "teacher" | "junior";
+          role:
+            | "admin"
+            | "student"
+            | "guest"
+            | "teacher"
+            | "junior"
+            | "parallel_admin"
+            | "main_admin";
           grade: number | null;
           section: string | null;
           status: "pending" | "approved" | "rejected";
@@ -606,7 +660,7 @@ export interface Database {
           farewell_id: string;
           title: string;
           description: string | null;
-          status: "todo" | "in_progress" | "done";
+          status: "planned" | "in_progress" | "waiting" | "completed";
           priority: "low" | "medium" | "high";
           due_at: string | null;
           created_by: string;
@@ -618,7 +672,7 @@ export interface Database {
           farewell_id: string;
           title: string;
           description?: string | null;
-          status?: "todo" | "in_progress" | "done";
+          status?: "planned" | "in_progress" | "waiting" | "completed";
           priority?: "low" | "medium" | "high";
           due_at?: string | null;
           created_by: string;
@@ -630,7 +684,7 @@ export interface Database {
           farewell_id?: string;
           title?: string;
           description?: string | null;
-          status?: "todo" | "in_progress" | "done";
+          status?: "planned" | "in_progress" | "waiting" | "completed";
           priority?: "low" | "medium" | "high";
           due_at?: string | null;
           created_by?: string;
@@ -742,7 +796,7 @@ export interface Database {
       contribution_status: "pending" | "verified" | "rejected";
       media_type: "image" | "video";
       duty_status: "pending" | "in_progress" | "completed";
-      task_status: "todo" | "in_progress" | "done";
+      task_status: "planned" | "in_progress" | "waiting" | "completed";
       task_priority: "low" | "medium" | "high";
       notif_type:
         | "message"

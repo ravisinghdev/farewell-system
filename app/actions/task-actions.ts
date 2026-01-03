@@ -416,14 +416,15 @@ export async function updateTaskStatusAction(
   return { success: true };
 }
 
-export async function updateTaskDetailsAction(
+export async function updateTaskAction(
   taskId: string,
   farewellId: string,
   updates: {
     title?: string;
     description?: string;
     priority?: Database["public"]["Enums"]["task_priority"];
-    due_at?: string | null;
+    status?: Database["public"]["Enums"]["task_status"];
+    dueAt?: Date;
   }
 ): Promise<ActionState> {
   const supabase = await createClient();
@@ -432,9 +433,16 @@ export async function updateTaskDetailsAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  const dbUpdates: any = { ...updates };
+  // map dueAt to due_at
+  if (updates.dueAt !== undefined) {
+    dbUpdates.due_at = updates.dueAt ? updates.dueAt.toISOString() : null;
+    delete dbUpdates.dueAt;
+  }
+
   const { error } = await supabase
     .from("tasks")
-    .update(updates)
+    .update(dbUpdates)
     .eq("id", taskId);
 
   if (error) return { error: error.message };
@@ -526,7 +534,3 @@ export async function getFarewellMembersAction(farewellId: string) {
     },
   }));
 }
-
-
-
-

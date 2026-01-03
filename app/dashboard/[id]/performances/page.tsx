@@ -122,6 +122,34 @@ export default function PerformancesPage() {
     toast.info("Lock toggling coming next update!");
   }
 
+  async function handleApprove(id: string) {
+    const result = await import("@/app/actions/event-actions").then((m) =>
+      m.updatePerformanceStatusAction(id, farewellId, "approved")
+    );
+    if (result.error) {
+      toast.error("Failed to approve", { description: result.error });
+    } else {
+      toast.success("Performance Approved!", {
+        description: "Rehearsal schedule has been auto-generated.",
+      });
+      fetchPerformances();
+    }
+  }
+
+  async function handleDuplicate(id: string) {
+    const result = await import("@/app/actions/event-actions").then((m) =>
+      m.duplicatePerformanceAction(id, farewellId)
+    );
+    if (result.error) {
+      toast.error("Duplicate Failed", { description: result.error });
+    } else {
+      toast.success("Duplicated", {
+        description: "Performance copy created in Drafts.",
+      });
+      fetchPerformances();
+    }
+  }
+
   // Calculate Health Stats
   const avgHealth =
     performances.length > 0
@@ -310,6 +338,8 @@ export default function PerformancesPage() {
               onEdit={() => {}} // TODO: Open Edit Dialog
               onDelete={handleDelete}
               onToggleLock={handleToggleLock}
+              onApprove={handleApprove}
+              onDuplicate={handleDuplicate}
             />
           ))}
           {performances.length === 0 && (

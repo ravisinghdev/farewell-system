@@ -30,7 +30,14 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- STEP 3: ENUMS
 -- ============================================================================
 
-CREATE TYPE user_role AS ENUM ('student', 'teacher', 'parallel_admin', 'main_admin', 'admin', 'organizer', 'treasurer');
+CREATE TYPE user_role AS ENUM ('admin', 'student', 'guest', 'teacher', 'junior', 'parallel_admin', 'main_admin');
+-- (Updated from user request)
+
+-- ... (rest of file) ...
+
+CREATE POLICY "decor_admin_all" ON public.decor_items FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.farewell_members WHERE farewell_id = decor_items.farewell_id AND user_id = auth.uid() AND role IN ('admin', 'main_admin', 'parallel_admin', 'teacher'))
+);
 CREATE TYPE contribution_status AS ENUM ('pending', 'verified', 'rejected', 'approved');
 CREATE TYPE payment_method AS ENUM ('upi', 'cash', 'bank_transfer');
 CREATE TYPE duty_status AS ENUM ('unassigned', 'partially_assigned', 'fully_assigned', 'over_assigned', 'completed_pending_verification', 'approved', 'paid', 'archived', 'pending', 'in_progress', 'completed');
@@ -839,3 +846,152 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.announcements;
 -- ============================================================================
 -- COMPLETE! Schema is ready with optimized RLS policies.
 -- ============================================================================
+
+-- ============================================================================
+-- STEP 15: DECOR SYSTEM (ADDED MANUALLY)
+-- ============================================================================
+
+CREATE TABLE public.decor_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE NOT NULL,
+  item_name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  quantity INTEGER DEFAULT 1,
+  notes TEXT,
+  status TEXT DEFAULT 'planned', -- planned, purchased, arranged
+  image_url TEXT,
+  estimated_cost DECIMAL(10, 2),
+  actual_cost DECIMAL(10, 2),
+  assigned_to UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS
+ALTER TABLE public.decor_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "decor_member_read" ON public.decor_items FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.farewell_members WHERE farewell_id = decor_items.farewell_id AND user_id = auth.uid())
+);
+
+CREATE POLICY "decor_admin_all" ON public.decor_items FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.farewell_members WHERE farewell_id = decor_items.farewell_id AND user_id = auth.uid() AND role IN ('admin', 'main_admin', 'parallel_admin', 'teacher'))
+);
+
+-- ============================================================================
+-- STEP 16: PERFORMANCE & REHEARSALS SYSTEM
+-- ============================================================================
+
+-- 1. PERFORMANCES TABLE
+CREATE TABLE public.performances (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  type TEXT NOT NULL,
+  description TEXT,
+  risk_level TEXT DEFAULT 'low',
+  -- Statuses: draft -> pending_approval -> approved (auto-rehearsal) -> rehearsing -> ready -> locked
+  status TEXT DEFAULT 'draft', 
+  duration_seconds INTEGER DEFAULT 300,
+  sequence_order INTEGER DEFAULT 999,
+  video_url TEXT,
+  performers TEXT[] DEFAULT '{}',
+  health_score INTEGER DEFAULT 100,
+  is_locked BOOLEAN DEFAULT FALSE,
+  lead_coordinator_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  backup_coordinator_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. REHEARSALS TABLE
+CREATE TABLE public.rehearsals (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  farewell_id UUID REFERENCES public.farewells(id) ON DELETE CASCADE NOT NULL,
+  performance_id UUID REFERENCES public.performances(id) ON DELETE CASCADE,
+  title TEXT,
+  start_time TIMESTAMPTZ,
+  end_time TIMESTAMPTZ,
+  venue TEXT DEFAULT 'Main Auditorium',
+  goal TEXT,
+  is_mandatory BOOLEAN DEFAULT TRUE,
+  status TEXT DEFAULT 'scheduled', -- scheduled, completed, cancelled
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. VOTES TABLE
+CREATE TABLE public.performance_votes (
+  performance_id UUID REFERENCES public.performances(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (performance_id, user_id)
+);
+
+-- 4. RLS & POLICIES
+ALTER TABLE public.performances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rehearsals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.performance_votes ENABLE ROW LEVEL SECURITY;
+
+-- Performances Policies
+CREATE POLICY "performances_read" ON public.performances FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.farewell_members WHERE farewell_id = performances.farewell_id AND user_id = auth.uid())
+);
+CREATE POLICY "performances_write" ON public.performances FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.farewell_members WHERE farewell_id = performances.farewell_id AND user_id = auth.uid() AND role IN ('admin', 'main_admin', 'parallel_admin', 'teacher'))
+);
+
+-- Rehearsals Policies
+CREATE POLICY "rehearsals_read" ON public.rehearsals FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.farewell_members WHERE farewell_id = rehearsals.farewell_id AND user_id = auth.uid())
+);
+CREATE POLICY "rehearsals_write" ON public.rehearsals FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.farewell_members WHERE farewell_id = rehearsals.farewell_id AND user_id = auth.uid() AND role IN ('admin', 'main_admin', 'parallel_admin', 'teacher'))
+);
+
+-- Votes Policies
+CREATE POLICY "votes_read" ON public.performance_votes FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.farewell_members WHERE farewell_id = (SELECT farewell_id FROM public.performances WHERE id = performance_votes.performance_id) AND user_id = auth.uid())
+);
+CREATE POLICY "votes_insert" ON public.performance_votes FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "votes_delete" ON public.performance_votes FOR DELETE USING (user_id = auth.uid());
+
+-- 5. GRANTS
+GRANT ALL ON public.performances TO postgres, service_role, authenticated;
+GRANT ALL ON public.rehearsals TO postgres, service_role, authenticated;
+GRANT ALL ON public.performance_votes TO postgres, service_role, authenticated;
+
+-- 6. AUTOMATION TRIGGER: Auto-create Rehearsal on Approval
+CREATE OR REPLACE FUNCTION public.handle_performance_approval()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- If status changed to 'approved'
+  IF NEW.status = 'approved' AND (OLD.status IS NULL OR OLD.status != 'approved') THEN
+    INSERT INTO public.rehearsals (
+      farewell_id,
+      performance_id,
+      title,
+      start_time,
+      end_time,
+      venue,
+      goal,
+      is_mandatory
+    ) VALUES (
+      NEW.farewell_id,
+      NEW.id,
+      'Initial Rehearsal for ' || NEW.title,
+      NOW() + INTERVAL '1 day', -- Default to tomorrow
+      NOW() + INTERVAL '1 day' + INTERVAL '1 hour',
+      'Main Stage',
+      'Initial Blocking & Walkthrough',
+      TRUE
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_performance_approved
+  AFTER UPDATE ON public.performances
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_performance_approval();

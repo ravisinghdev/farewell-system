@@ -3,11 +3,25 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Check, X, Clock, User, UserCheck } from "lucide-react";
+import {
+  Check,
+  X,
+  Clock,
+  User,
+  UserCheck,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 import { updateAttendanceAction } from "@/app/actions/rehearsal-actions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
 
 interface Participant {
   user_id: string;
@@ -17,10 +31,9 @@ interface Participant {
 }
 
 interface AttendanceRecord {
-  [userId: string]: {
-    status: "present" | "absent" | "late" | "excused";
-    timestamp: string;
-  };
+  // New Structure: { "YYYY-MM-DD": { userId: { status: ... } } }
+  // Legacy: { userId: { status: ... } }
+  [key: string]: any;
 }
 
 interface AttendanceTrackerProps {
@@ -42,9 +55,16 @@ export function AttendanceTracker({
     initialAttendance || {}
   );
 
+  // Use Date object for Calendar, string YYYY-MM-DD for logic
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
+
+  // Derive daily records safely
+  const dailyRecords = attendance[selectedDateStr] || {};
+
   // Stats
-  const presentCount = Object.values(attendance).filter(
-    (r) => r.status === "present" || r.status === "late"
+  const presentCount = Object.values(dailyRecords).filter(
+    (r: any) => r.status === "present" || r.status === "late"
   ).length;
   const totalCount = participants.length;
   const percentage = totalCount > 0 ? (presentCount / totalCount) * 100 : 0;
@@ -53,56 +73,97 @@ export function AttendanceTracker({
     userId: string,
     status: "present" | "absent" | "late"
   ) {
-    const newRecord = {
-      ...attendance,
+    // 1. Optimistic Update
+    const currentDay = attendance[selectedDateStr] || {};
+    const updatedDay = {
+      ...currentDay,
       [userId]: {
         status,
         timestamp: new Date().toISOString(),
       },
     };
+    const newFullRecord = {
+      ...attendance,
+      [selectedDateStr]: updatedDay,
+    };
 
-    setAttendance(newRecord); // Optimistic
+    setAttendance(newFullRecord);
+
+    // 2. Server Action
     const result = await updateAttendanceAction(
       rehearsalId,
       farewellId,
       userId,
-      status
+      status,
+      selectedDateStr
     );
+
     if (result.error) {
       toast.error(`Failed to save attendance: ${result.error}`);
       console.error("Attendance update error:", result.error);
-      // revert logic here if needed
+      // could revert here if necessary
     }
   }
 
   return (
     <div className="space-y-8">
-      {/* Stats Card */}
-      <div className="bg-card border rounded-xl p-6 shadow-sm">
-        <div className="flex items-end justify-between mb-2">
-          <div>
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <UserCheck className="w-5 h-5 text-primary" />
-              Daily Attendance
-            </h3>
-            <div className="text-muted-foreground text-sm">
-              {presentCount} of {totalCount} here today
+      {/* Date Selector & Stats */}
+      <div className="bg-transparent border rounded-xl p-6 shadow-sm">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2 mb-1">
+                <UserCheck className="w-5 h-5 text-primary" />
+                Attendance
+              </h3>
+              <div className="text-muted-foreground text-sm">
+                {presentCount} of {totalCount} here
+              </div>
             </div>
+            <div className="text-2xl font-bold">{Math.round(percentage)}%</div>
           </div>
-          <div className="text-2xl font-bold">{Math.round(percentage)}%</div>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? (
+                  format(selectedDate, "PPP")
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
         </div>
+
         <Progress value={percentage} className="h-2" />
       </div>
 
       {/* List */}
       <div className="space-y-2">
         {participants.map((person) => {
-          const status = attendance[person.user_id]?.status;
+          const record = dailyRecords[person.user_id];
+          const status = record?.status;
 
           return (
             <div
               key={person.user_id}
-              className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card transition-colors"
+              className="flex items-center justify-between p-3 rounded-lg border bg-transparent hover:bg-transparent transition-colors"
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-9 w-9">

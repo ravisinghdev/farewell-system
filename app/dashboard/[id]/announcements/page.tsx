@@ -21,7 +21,7 @@ export default async function AnnouncementsPage({
   return (
     <div className="flex flex-col h-full min-h-screen bg-transparent">
       {/* Header Hero */}
-      <div className="flex items-center justify-between p-4 sm:p-8 border-b border-white/5 bg-gradient-to-r from-background via-background to-transparent z-10 sticky top-0 backdrop-blur-md">
+      <div className="flex items-center justify-between sm:p-8 border-b border-white/5 z-10 sticky top-0 backdrop-blur-md">
         <div className="space-y-1">
           <h1 className="text-xl sm:text-3xl font-bold tracking-tight flex items-center gap-2 sm:gap-3">
             <span className="text-primary">📢</span>
@@ -35,7 +35,7 @@ export default async function AnnouncementsPage({
         <CreateAnnouncementDialog farewellId={id} />
       </div>
 
-      <div className="flex-1 p-4 sm:p-6 overflow-hidden">
+      <div className="flex-1 pt-4 sm:p-6 overflow-hidden">
         <div className="h-full">
           {/* Provide data explicitly to this subtree */}
           <DashboardDataProvider

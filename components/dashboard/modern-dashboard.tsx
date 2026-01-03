@@ -26,6 +26,7 @@ import {
   Settings,
   History,
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -124,7 +125,7 @@ export function ModernDashboard({
     ...announcements.slice(0, 3).map((a) => ({
       id: `a-${a.id}`,
       text: a.title,
-      time: "Just now",
+      time: formatDistanceToNow(new Date(a.created_at), { addSuffix: true }),
       icon: Bell,
     })),
     ...transactions.slice(0, 5).map((t) => ({
@@ -132,7 +133,7 @@ export function ModernDashboard({
       text: `${
         t.metadata?.is_anonymous ? "Someone" : t.users?.full_name ?? "Supporter"
       } contributed ₹${t.amount}`,
-      time: "Recently",
+      time: formatDistanceToNow(new Date(t.created_at), { addSuffix: true }),
       icon: Heart,
     })),
   ];
@@ -142,11 +143,12 @@ export function ModernDashboard({
       {/* ---------------- Header ---------------- */}
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-pink-500">
-            {farewellName}
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-white via-white/80 to-white/50 pb-2">
+            Ready to make memories, <br className="hidden md:block" />
+            <span className="text-primary">{user?.name?.split(" ")[0]}?</span>
           </h1>
-          <p className="text-muted-foreground mt-2 text-lg">
-            Welcome back, {user?.name?.split(" ")[0] || "Friend"} 👋
+          <p className="text-muted-foreground mt-4 text-xl font-medium max-w-2xl">
+            Your farewell is closer than you think. Let's make it legendary.
           </p>
         </div>
 
@@ -158,18 +160,21 @@ export function ModernDashboard({
       </div>
 
       {/* ---------------- Live Pulse ---------------- */}
-      <div className="relative overflow-hidden rounded-full border bg-white/5 backdrop-blur-sm">
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex w-max items-center p-2 animate-scroll">
+      <div className="relative overflow-hidden rounded-full border border-white/20 bg-white/5 backdrop-blur-sm">
+        <div className="w-full overflow-hidden">
+          <div className="flex w-max items-center p-2 animate-scroll hover:pause">
             <span className="flex items-center gap-2 px-3 text-xs font-bold uppercase text-primary">
               <Sparkles className="h-3 w-3" /> Live Pulse
             </span>
             {pulseItems.map((item) => (
               <LiveTickerItem key={item.id} {...item} />
             ))}
+            {/* Duplicate items for infinite scroll effect */}
+            {pulseItems.map((item) => (
+              <LiveTickerItem key={`duplicate-${item.id}`} {...item} />
+            ))}
           </div>
-          <ScrollBar orientation="horizontal" className="invisible" />
-        </ScrollArea>
+        </div>
       </div>
 
       {/* ================= FIXED RESPONSIVE GRID ================= */}
@@ -188,7 +193,7 @@ export function ModernDashboard({
         {/* ---------------- Spotlight ---------------- */}
         <div className="col-span-1 sm:col-span-2 lg:row-span-2">
           <GlassCard
-            className="relative h-full overflow-hidden"
+            className="relative h-full min-h-[500px] overflow-hidden"
             contentClassName="p-0 h-full"
           >
             {spotlightItem?.image_url ? (
@@ -294,12 +299,12 @@ export function ModernDashboard({
         {/* ---------------- Recent Activity ---------------- */}
         <div className="col-span-1 sm:col-span-2 lg:row-span-2">
           <GlassCard>
-            <h3 className="mb-4 flex items-center gap-2 font-bold">
+            <h3 className="mb-4 flex items-center gap-2 font-bold sticky top-0 bg-background/5 p-2 rounded-xl backdrop-blur-md z-10 border border-white/10">
               <TrendingUp className="h-5 w-5 text-primary" />
               Recent Activity
             </h3>
 
-            <div className="space-y-4 sm:max-h-[400px] sm:overflow-y-auto">
+            <div className="space-y-4 h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {transactions.length ? (
                 transactions.map((t) => (
                   <div
@@ -329,14 +334,14 @@ export function ModernDashboard({
         {/* ---------------- Announcements ---------------- */}
         <div className="col-span-1 sm:col-span-2 lg:row-span-2">
           <GlassCard>
-            <h3 className="mb-4 flex items-center gap-2 font-bold">
+            <h3 className="mb-4 flex items-center gap-2 font-bold sticky top-0 bg-background/5 p-2 rounded-xl backdrop-blur-md z-10 border border-white/10">
               <Bell className="h-5 w-5 text-yellow-500" />
               Announcements
             </h3>
 
-            <div className="space-y-4">
+            <div className="space-y-4 h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {announcements.length ? (
-                announcements.slice(0, 3).map((a) => (
+                announcements.map((a) => (
                   <div
                     key={a.id}
                     className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 p-4"

@@ -139,7 +139,7 @@ export function RunOfShowExtended({
 
         {/* Quick Add Form */}
         {isAdmin && (
-          <div className="flex gap-4 items-end bg-card p-4 rounded-xl border shadow-sm">
+          <div className="flex gap-4 items-end p-4 rounded-xl border shadow-sm">
             <div className="flex-1 space-y-1.5">
               <span className="text-xs font-semibold text-muted-foreground uppercase">
                 Segment Title
@@ -198,8 +198,8 @@ export function RunOfShowExtended({
                 className={cn(
                   "p-4 flex flex-col sm:flex-row sm:items-center gap-4 transition-all",
                   segment.status === "live"
-                    ? "border-red-500 shadow-lg shadow-red-500/5 bg-red-50/5"
-                    : "hover:border-primary/50"
+                    ? "border-red-500 shadow-none bg-transparent"
+                    : "hover:border-primary/50 bg-transparent"
                 )}
               >
                 {/* Time Block */}
@@ -302,7 +302,7 @@ export function RunOfShowExtended({
           </h3>
 
           {liveSegment ? (
-            <Card className="p-6 border-red-500/50 bg-red-50/10 shadow-xl overflow-hidden relative">
+            <Card className="p-6 border-red-500/50 bg-transparent shadow-none overflow-hidden relative">
               <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] uppercase font-bold px-2 py-1 rounded-bl">
                 On Air
               </div>

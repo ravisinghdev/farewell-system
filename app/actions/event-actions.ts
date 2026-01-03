@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { ActionState } from "@/types/custom";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 
 // --- Event Details ---
 export async function getEventDetailsAction(farewellId: string) {
@@ -66,7 +67,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 export async function getRehearsalsAction(farewellId: string) {
   const supabase = await createClient(); // Reverting to Standard Client (Admin Key was broken)
   const { data, error } = await supabase
-    .from("rehearsal_sessions")
+    .from("rehearsals")
     .select(
       `
       *,
@@ -163,14 +164,59 @@ export async function updatePerformanceStatusAction(
   farewellId: string,
   status: string
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const supabase = await createClient(); // Use User Client for initial checks
+
+  // 1. Update the status
   const { error } = await supabase
     .from("performances")
     .update({ status })
     .eq("id", id);
 
   if (error) return { error: error.message };
+
+  // 2. Fallback: If status is 'approved', ensure a rehearsal exists.
+  // We use the ADMIN client here to ensure we have permission to check/create rehearsals regardless of RLS quirks,
+  // although 'create' usually requires permissions. The key is "Robustness".
+  if (status === "approved") {
+    const { data: existing } = await supabaseAdmin
+      .from("rehearsals")
+      .select("id")
+      .eq("performance_id", id)
+      .maybeSingle();
+
+    if (!existing) {
+      // Fetch performance details for the title
+      const { data: perf } = await supabaseAdmin
+        .from("performances")
+        .select("title")
+        .eq("id", id)
+        .single();
+      const title = perf?.title || "Untitled Act";
+
+      // Create Rehearsal Manually
+      const startTime = new Date();
+      startTime.setDate(startTime.getDate() + 1); // Tomorrow
+      startTime.setHours(10, 0, 0, 0);
+
+      const endTime = new Date(startTime);
+      endTime.setHours(11, 0, 0, 0);
+
+      await supabaseAdmin.from("rehearsals").insert({
+        farewell_id: farewellId,
+        performance_id: id,
+        title: `Initial Rehearsal: ${title}`,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        venue: "Main Auditorium",
+        goal: "Initial Blocking & Walkthrough",
+        is_mandatory: true,
+        status: "scheduled",
+      });
+    }
+  }
+
   revalidatePath(`/dashboard/${farewellId}/performances`);
+  revalidatePath(`/dashboard/${farewellId}/rehearsals`);
   return { success: true };
 }
 
@@ -228,17 +274,80 @@ export async function removeVoteForPerformanceAction(performanceId: string) {
   }
 }
 
+export async function duplicatePerformanceAction(
+  performanceId: string,
+  farewellId: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  try {
+    const { data: original, error: fetchError } = await supabase
+      .from("performances")
+      .select("*")
+      .eq("id", performanceId)
+      .single();
+
+    if (fetchError || !original)
+      throw new Error("Original performance not found");
+
+    const { error: insertError } = await supabase.from("performances").insert({
+      farewell_id: farewellId,
+      title: `${original.title} (Copy)`,
+      type: original.type,
+      description: original.description,
+      risk_level: original.risk_level,
+      duration_seconds: original.duration_seconds,
+      video_url: original.video_url,
+      performers: original.performers,
+      status: "draft",
+      is_locked: false,
+      lead_coordinator_id: user.id,
+    });
+
+    if (insertError) throw insertError;
+
+    revalidatePath(`/dashboard/${farewellId}/performances`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
 // --- Decor Items ---
 export async function getDecorItemsAction(farewellId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("decor_items")
-    .select("*")
+    .select(
+      `
+      *,
+      assignee:users(
+        id,
+        full_name,
+        avatar_url
+      )
+    `
+    )
     .eq("farewell_id", farewellId)
     .order("category", { ascending: true });
 
   if (error) return [];
-  return data;
+  // Map assignee to a simpler structure if needed, or keeping it as relational data
+  return data.map((item: any) => ({
+    ...item,
+    assignee: item.assignee
+      ? {
+          id: item.assignee.id,
+          full_name: item.assignee.full_name,
+          avatar_url: item.assignee.avatar_url,
+        }
+      : null,
+  }));
 }
 
 export async function createDecorItemAction(
@@ -247,13 +356,26 @@ export async function createDecorItemAction(
     item_name: string;
     category: string;
     quantity: number;
-    notes: string;
+    notes?: string;
+    estimated_cost?: number;
+    actual_cost?: number;
+    image_url?: string;
+    assigned_to?: string;
+    status?: string;
   }
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { error } = await supabase.from("decor_items").insert({
     farewell_id: farewellId,
-    ...data,
+    item_name: data.item_name,
+    category: data.category,
+    quantity: data.quantity,
+    notes: data.notes,
+    estimated_cost: data.estimated_cost,
+    actual_cost: data.actual_cost,
+    image_url: data.image_url,
+    assigned_to: data.assigned_to,
+    status: data.status || "planned",
   });
 
   if (error) return { error: error.message };
@@ -261,15 +383,28 @@ export async function createDecorItemAction(
   return { success: true };
 }
 
-export async function updateDecorStatusAction(
+export async function updateDecorItemAction(
   id: string,
   farewellId: string,
-  status: string
+  data: {
+    item_name?: string;
+    category?: string;
+    quantity?: number;
+    notes?: string;
+    status?: string;
+    estimated_cost?: number;
+    actual_cost?: number;
+    image_url?: string;
+    assigned_to?: string;
+  }
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { error } = await supabase
     .from("decor_items")
-    .update({ status })
+    .update({
+      ...data,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id);
 
   if (error) return { error: error.message };
@@ -359,6 +494,7 @@ export async function getTimelineBlocksAction(farewellId: string) {
       `
       *,
       performance:performances(*)
+      // reactions:timeline_reactions(count)
     `
     )
     .eq("farewell_id", farewellId)
@@ -377,10 +513,18 @@ export async function createTimelineBlockAction(
     order_index: number;
     performance_id?: string;
     color_code?: string;
+    manual_start_time?: string;
   }
 ) {
   const supabase = await createClient();
-  const { error } = await supabase.from("timeline_blocks").insert({
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // Use Admin Client to bypass RLS
+  const { error } = await supabaseAdmin.from("timeline_blocks").insert({
     farewell_id: farewellId,
     ...data,
   });
@@ -395,6 +539,11 @@ export async function updateTimelineOrderAction(
   items: { id: string; order_index: number; start_time_projected?: string }[]
 ) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
 
   const updates = items.map((item) => ({
     id: item.id,
@@ -404,7 +553,8 @@ export async function updateTimelineOrderAction(
     updated_at: new Date().toISOString(),
   }));
 
-  const { error } = await supabase
+  // Use Admin Client
+  const { error } = await supabaseAdmin
     .from("timeline_blocks")
     .upsert(updates, { onConflict: "id" });
 
@@ -418,11 +568,82 @@ export async function deleteTimelineBlockAction(
   farewellId: string
 ) {
   const supabase = await createClient();
-  const { error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // Use Admin Client
+  const { error } = await supabaseAdmin
     .from("timeline_blocks")
     .delete()
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath(`/dashboard/${farewellId}/timeline`);
   return { success: true };
+}
+
+export async function updateTimelineBlockDetailsAction(
+  farewellId: string,
+  blockId: string,
+  data: {
+    title: string;
+    type: string;
+    duration_seconds: number;
+    color_code?: string;
+    manual_start_time?: string;
+  }
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // Use Admin Client
+  const { error } = await supabaseAdmin
+    .from("timeline_blocks")
+    .update({
+      ...data,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", blockId);
+
+  if (error) return { error: error.message };
+  revalidatePath(`/dashboard/${farewellId}/timeline`);
+  return { success: true };
+}
+
+export async function toggleTimelineBlockHypeAction(blockId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Not authenticated" };
+
+  // Check if exists
+  const { data: existing } = await supabase
+    .from("timeline_reactions")
+    .select("id")
+    .eq("block_id", blockId)
+    .eq("user_id", user.id)
+    .eq("type", "hype")
+    .single();
+
+  if (existing) {
+    // Ungle
+    await supabase.from("timeline_reactions").delete().eq("id", existing.id);
+    return { success: true, hyped: false };
+  } else {
+    // Hype
+    await supabase.from("timeline_reactions").insert({
+      block_id: blockId,
+      user_id: user.id,
+      type: "hype",
+    });
+    return { success: true, hyped: true };
+  }
 }

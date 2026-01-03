@@ -1,79 +1,145 @@
 "use client";
 
-import { PageScaffold } from "@/components/dashboard/page-scaffold";
 import { TimelineManager } from "@/components/timeline/timeline-manager";
 import { useState } from "react";
-import { createTimelineBlockAction } from "@/app/actions/event-actions";
 import { TimelineBlock } from "@/types/timeline";
-import { Performance } from "@/types/performance";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Coffee } from "lucide-react";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { FreshTimelineView } from "@/components/timeline/fresh-timeline-view";
+import { Sparkles, Settings2, CalendarClock } from "lucide-react"; // Added CalendarClock
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { updateEventDetailsAction } from "@/app/actions/event-actions";
+import { toast } from "sonner";
 
 interface TimelinePageClientProps {
   initialBlocks: TimelineBlock[];
-  initialPerformances: Performance[];
   initialEventDetails: any;
   farewellId: string;
 }
 
 export default function TimelinePageClient({
   initialBlocks,
-  initialPerformances,
   initialEventDetails,
   farewellId,
 }: TimelinePageClientProps) {
   const router = useRouter();
-  // We keep local state for optimistic updates / dnd, but initialize from server
-  const [blocks, setBlocks] = useState<TimelineBlock[]>(initialBlocks);
-  const [performances, setPerformances] =
-    useState<Performance[]>(initialPerformances);
+  // We directly use the server data which is refreshed via router.refresh()
+  const blocks = initialBlocks;
 
-  // Filter acts that are NOT in the timeline yet
-  const availablePerformances = performances.filter(
-    (p) => !blocks.some((b) => b.performance_id === p.id)
+  const [viewMode, setViewMode] = useState<"visual" | "manage">("visual");
+
+  // Event Settings State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [eventDate, setEventDate] = useState(
+    initialEventDetails?.event_date || ""
+  );
+  const [eventTime, setEventTime] = useState(
+    initialEventDetails?.event_time || ""
   );
 
-  async function handleAddToTimeline(p: Performance) {
-    // Optimistic update
-    const newIndex = blocks.length;
-
-    // Server mutation
-    await createTimelineBlockAction(farewellId, {
-      type: "performance",
-      title: p.title,
-      performance_id: p.id,
-      duration_seconds: p.duration_seconds || 300,
-      order_index: newIndex,
+  async function handleSaveSettings() {
+    const res = await updateEventDetailsAction(farewellId, {
+      event_date: eventDate,
+      event_time: eventTime,
     });
-
-    // Refresh to get new ID/state
-    router.refresh();
-    toast.success("Added to Timeline");
-  }
-
-  async function handleAddBreak() {
-    const newIndex = blocks.length;
-    await createTimelineBlockAction(farewellId, {
-      type: "break",
-      title: "Break / Buffer",
-      duration_seconds: 900, // 15 mins
-      order_index: newIndex,
-    });
-    router.refresh();
-    toast.success("Buffer Added");
+    if (res.error) {
+      toast.error("Failed to update settings", { description: res.error });
+    } else {
+      toast.success("Settings updated");
+      setIsSettingsOpen(false);
+      router.refresh();
+    }
   }
 
   return (
-    <PageScaffold
-      title="Smart Timeline"
-      description="Drag and drop to sequence the event flow."
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-        {/* Main Timeline Column */}
-        <div className="lg:col-span-2 overflow-y-auto pr-2">
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Timeline</h1>
+          <p className="text-muted-foreground">
+            Manage the show flow or view the journey.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Settings Dialog */}
+          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <CalendarClock className="w-4 h-4" />
+                Event Start
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Event Start Time</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="date">Event Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="time">Start Time</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={eventTime}
+                    onChange={(e) => setEventTime(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleSaveSettings}>Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <div className="bg-muted p-1 rounded-lg inline-flex self-start md:self-auto">
+            <button
+              onClick={() => setViewMode("visual")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                viewMode === "visual"
+                  ? "bg-background shadow text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              Journey
+            </button>
+            <button
+              onClick={() => setViewMode("manage")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                viewMode === "manage"
+                  ? "bg-background shadow text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Settings2 className="w-4 h-4" />
+              Manage
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {viewMode === "visual" ? (
+        <FreshTimelineView blocks={blocks} eventDetails={initialEventDetails} />
+      ) : (
+        <div className="h-[calc(100vh-200px)] overflow-y-auto pr-2">
           <TimelineManager
             initialBlocks={blocks}
             farewellId={farewellId}
@@ -86,66 +152,7 @@ export default function TimelinePageClient({
             }
           />
         </div>
-
-        {/* Sidebar Staging Area */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="py-3">
-              <CardTitle className="text-sm font-medium">
-                Add to Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="text-xs text-muted-foreground mb-2 flex items-center justify-between">
-                  <span>Available Acts</span>
-                  <span className="bg-primary/10 text-primary px-1.5 rounded-full">
-                    {availablePerformances.length}
-                  </span>
-                </h4>
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {availablePerformances.map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between p-2 border rounded bg-muted/20 text-sm"
-                    >
-                      <span className="truncate max-w-[150px]">{p.title}</span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0"
-                        onClick={() => handleAddToTimeline(p)}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  {availablePerformances.length === 0 && (
-                    <div className="text-xs text-muted-foreground italic">
-                      All acts scheduled.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <h4 className="text-xs text-muted-foreground mb-2">
-                  Non-Performance Blocks
-                </h4>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={handleAddBreak}
-                >
-                  <Coffee className="w-4 h-4" />
-                  Add 15m Break
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </PageScaffold>
+      )}
+    </div>
   );
 }

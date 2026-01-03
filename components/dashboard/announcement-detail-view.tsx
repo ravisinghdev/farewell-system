@@ -91,28 +91,28 @@ export function AnnouncementDetailView({
     <div className="flex flex-col h-full bg-background/40 backdrop-blur-md rounded-xl sm:rounded-2xl border border-white/5 overflow-hidden">
       {/* Header Toolbar */}
       <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/[0.02]">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
           <Button
             variant="ghost"
             size="icon"
-            className="sm:hidden"
+            className="sm:hidden shrink-0"
             onClick={onBack}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
 
           {/* Subject acts as title here */}
-          <h2 className="text-lg font-semibold truncate max-w-[200px] sm:max-w-md">
+          <h2 className="text-lg font-semibold truncate">
             {announcement.title}
           </h2>
           {announcement.is_pinned && (
-            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider shrink-0">
               Featured
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="ghost"
             size="icon"

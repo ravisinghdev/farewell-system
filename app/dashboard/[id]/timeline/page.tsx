@@ -17,21 +17,18 @@ export default async function TimelinePage({ params }: TimelinePageProps) {
   const { id } = await params;
 
   // Parallel data fetching on Server
-  const [blocksRes, perfRes, eventRes] = await Promise.all([
+  const [blocksRes, eventRes] = await Promise.all([
     getTimelineBlocksAction(id),
-    getPerformancesAction(id),
     getEventDetailsAction(id),
   ]);
 
   const blocks = (blocksRes.data || []) as TimelineBlock[];
-  const performances = (perfRes.data || []) as Performance[];
   const eventDetails = eventRes || null;
 
   return (
     <TimelinePageClient
       farewellId={id}
       initialBlocks={blocks}
-      initialPerformances={performances}
       initialEventDetails={eventDetails}
     />
   );

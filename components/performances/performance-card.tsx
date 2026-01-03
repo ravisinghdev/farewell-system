@@ -21,16 +21,9 @@ import {
   MoreVertical,
   Activity,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { PerformanceActionsMenu } from "./performance-actions-menu";
 
 interface PerformanceCardProps {
   performance: Performance;
@@ -38,6 +31,8 @@ interface PerformanceCardProps {
   onEdit: (p: Performance) => void;
   onDelete: (id: string) => void;
   onToggleLock: (id: string, current: boolean) => void;
+  onApprove?: (id: string) => void;
+  onDuplicate?: (id: string) => void;
 }
 
 export function PerformanceCard({
@@ -46,6 +41,8 @@ export function PerformanceCard({
   onEdit,
   onDelete,
   onToggleLock,
+  onApprove,
+  onDuplicate,
 }: PerformanceCardProps) {
   // Helpers for UI logic
   const getRiskColor = (risk: RiskLevel) => {
@@ -123,39 +120,15 @@ export function PerformanceCard({
               {performance.risk_level} Risk
             </Badge>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => onEdit(performance)}>
-                  Edit Details
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        onToggleLock(performance.id, performance.is_locked)
-                      }
-                    >
-                      {performance.is_locked
-                        ? "Unlock Performance"
-                        : "Lock Details"}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
-                      onClick={() => onDelete(performance.id)}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <PerformanceActionsMenu
+              performance={performance}
+              isAdmin={isAdmin}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onToggleLock={onToggleLock}
+              onApprove={onApprove}
+              onDuplicate={onDuplicate}
+            />
           </div>
         </div>
       </CardHeader>

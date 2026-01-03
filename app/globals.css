@@ -147,6 +147,16 @@
   }
 }
 
+/* Marquee Scroll */
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 /* Utility Classes */
 .animate-gradient {
   background-size: 200% 200%;
@@ -187,6 +197,13 @@
 
 .animate-rotate-slow {
   animation: rotate-slow 20s linear infinite;
+}
+
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+}
+.animate-scroll:hover {
+  animation-play-state: paused;
 }
 
 /* Glassmorphism */

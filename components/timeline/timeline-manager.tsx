@@ -19,29 +19,29 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TimelineBlock } from "@/types/timeline";
-import { Performance } from "@/types/performance";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  GripVertical,
-  Mic2,
-  Clock,
-  Music,
-  AlertCircle,
-  Save,
-} from "lucide-react";
+import { GripVertical, Clock, Save, Edit, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { updateTimelineOrderAction } from "@/app/actions/event-actions";
+import {
+  updateTimelineOrderAction,
+  deleteTimelineBlockAction,
+} from "@/app/actions/event-actions";
+import { TimelineBlockDialog } from "./timeline-block-dialog";
+import { useRouter } from "next/navigation";
 
 // Sortable Item Component
 function SortableTimelineItem({
   block,
   startTime,
+  onEdit,
+  onDelete,
 }: {
   block: TimelineBlock;
   startTime: Date;
+  onEdit: (block: TimelineBlock) => void;
+  onDelete: (blockId: string) => void;
 }) {
   const {
     attributes,
@@ -63,7 +63,7 @@ function SortableTimelineItem({
   const isPerformance = block.type === "performance";
 
   return (
-    <div ref={setNodeRef} style={style} className="mb-3">
+    <div ref={setNodeRef} style={style} className="mb-3 group">
       <div
         className={`
          flex items-center p-3 rounded-lg border bg-card shadow-sm
@@ -142,6 +142,26 @@ function SortableTimelineItem({
             </Badge>
           </div>
         )}
+
+        {/* Actions */}
+        <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onEdit(block)}
+          >
+            <Edit className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive hover:text-destructive"
+            onClick={() => onDelete(block.id)}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -158,9 +178,17 @@ export function TimelineManager({
   farewellId,
   eventStartTime,
 }: TimelineManagerProps) {
+  const router = useRouter();
   const [items, setItems] = useState<TimelineBlock[]>(initialBlocks);
   const [hasChanges, setHasChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingBlock, setEditingBlock] = useState<TimelineBlock | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Sync props to state if props change (revalidation)
+  useEffect(() => {
+    setItems(initialBlocks);
+  }, [initialBlocks]);
 
   // Drag Sensors
   const sensors = useSensors(
@@ -204,6 +232,26 @@ export function TimelineManager({
     setIsSaving(false);
   }
 
+  async function handleDelete(blockId: string) {
+    if (!confirm("Are you sure?")) return;
+    const res = await deleteTimelineBlockAction(blockId, farewellId);
+    if (res.error) toast.error(res.error);
+    else {
+      toast.success("Deleted");
+      router.refresh();
+    }
+  }
+
+  function handleEdit(block: TimelineBlock) {
+    setEditingBlock(block);
+    setIsDialogOpen(true);
+  }
+
+  function handleAddNew() {
+    setEditingBlock(null);
+    setIsDialogOpen(true);
+  }
+
   // Calculate Start Times dynamically
   const baseTime = eventStartTime ? new Date(eventStartTime) : new Date(); // Fallback to now
   // We actually need a fixed reference point, usually fetched from Event Details.
@@ -214,6 +262,14 @@ export function TimelineManager({
 
   return (
     <div className="space-y-4">
+      <TimelineBlockDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        farewellId={farewellId}
+        blockToEdit={editingBlock}
+        currentOrderIndex={items.length}
+      />
+
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold">Stage Sequence</h3>
@@ -223,15 +279,20 @@ export function TimelineManager({
             </Badge>
           )}
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={!hasChanges || isSaving}
-          size="sm"
-          className="gap-2"
-        >
-          <Save className="w-4 h-4" />
-          {isSaving ? "Saving..." : "Save Sequence"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={handleAddNew}>
+            <Plus className="w-4 h-4 mr-2" /> Add Event
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            size="sm"
+            className="gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {isSaving ? "Saving..." : "Save Sequence"}
+          </Button>
+        </div>
       </div>
 
       <DndContext
@@ -256,6 +317,8 @@ export function TimelineManager({
                   key={block.id}
                   block={block}
                   startTime={startTime}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
                 />
               );
             })}

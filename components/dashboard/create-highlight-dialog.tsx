@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -44,6 +45,7 @@ export function CreateHighlightDialog({
   const [link, setLink] = useState("");
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
+  const router = useRouter();
 
   if (!isAdmin) return null;
 
@@ -138,6 +140,7 @@ export function CreateHighlightDialog({
           toast.error(res.error);
         } else {
           toast.success("Highlight added successfully!");
+          router.refresh(); // Refresh server components to show new data
           setOpen(false);
           setTitle("");
           setDescription("");

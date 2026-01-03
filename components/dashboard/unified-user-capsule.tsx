@@ -78,8 +78,8 @@ export function UnifiedUserCapsule({
 
         <div className="hidden sm:block h-4 w-px bg-white/10 mx-1.5" />
 
-        {/* 3. Theme Toggle (Hidden on mobile) */}
-        <ThemeToggle className="hidden sm:block hover:bg-white/10 text-zinc-400 hover:text-white transition-colors h-8 w-8 rounded-full" />
+        {/* 3. Theme Toggle (Visible on all screens) */}
+        <ThemeToggle className="hover:bg-white/10 text-zinc-300 hover:text-white transition-colors h-8 w-8 rounded-full" />
 
         <div className="h-4 w-px bg-white/10 mx-1.5" />
 

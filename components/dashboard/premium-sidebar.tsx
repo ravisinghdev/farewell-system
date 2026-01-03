@@ -51,7 +51,7 @@ export function PremiumSidebar({
           isCollapsed ? "px-1" : "px-3"
         )}
       >
-        <div className="flex h-full flex-col rounded-3xl bg-card/80 backdrop-blur-3xl border border-border/50 shadow-2xl overflow-hidden transition-all duration-300">
+        <div className="flex h-full flex-col rounded-3xl bg-black/40 backdrop-blur-3xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-300">
           {/* Header Area */}
           <SidebarHeader
             className={cn(
@@ -206,7 +206,7 @@ export function PremiumSidebar({
           {/* Footer / Pro Tip */}
           <SidebarFooter className="p-4 relative">
             {!isCollapsed && (
-              <div className="rounded-2xl bg-muted/40 border border-border/50 p-4 relative overflow-hidden group hover:border-border transition-colors">
+              <div className="rounded-2xl bg-white/5 border border-white/10 p-4 relative overflow-hidden group hover:border-white/20 transition-colors">
                 <div className="absolute top-0 right-0 p-2 opacity-30 group-hover:opacity-100 transition-opacity">
                   <Command className="h-3 w-3 text-muted-foreground" />
                 </div>

@@ -22,6 +22,7 @@ import { FarewellProvider } from "@/components/providers/farewell-provider";
 import { AdminNotifications } from "@/components/admin/admin-notifications";
 import { UnifiedBottomNav } from "@/components/dashboard/unified-bottom-nav";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
+import { GlobalBackground } from "@/components/dashboard/global-background";
 
 // Metadata for dashboard pages
 export const metadata: Metadata = {
@@ -150,8 +151,9 @@ export default async function DashboardLayout({
         <ProfileProvider initialUser={initialUser}>
           <SettingsProvider initialSettings={settings} userId={userId}>
             <AppearanceProvider>
+              <GlobalBackground />
               <PremiumSidebar />
-              <SidebarInset className="flex flex-col overflow-hidden bg-background">
+              <SidebarInset className="flex flex-col overflow-hidden bg-transparent/0 relative z-10">
                 <PremiumNavbar />
 
                 {/* MAIN SCROLL CONTAINER */}

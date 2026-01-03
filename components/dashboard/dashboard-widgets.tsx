@@ -20,14 +20,13 @@ export function GlassCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-md shadow-xl transition-all duration-300",
+        "relative overflow-hidden rounded-3xl border border-white/20 transition-all duration-300",
         hoverEffect &&
-          "hover:bg-white/10 hover:shadow-2xl hover:-translate-y-1",
+          "hover:border-white/30 hover:shadow-sm hover:-translate-y-1",
         className
       )}
     >
-      {/* Noise Texture (Optional sub-layer) */}
-      <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
+      {/* Noise Texture removed */}
       <div className={cn("relative z-10 p-5", contentClassName)}>
         {children}
       </div>
@@ -109,20 +108,20 @@ export function QuickAction({
     <Link href={href} className="block group h-full">
       <div
         className={cn(
-          "relative h-full p-4 rounded-2xl border border-white/5 bg-white/5 transition-all duration-300 overflow-hidden",
-          "hover:bg-white/10 hover:border-white/10 hover:shadow-lg group-hover:-translate-y-0.5"
+          "relative h-full p-4 rounded-2xl border border-white/20 transition-all duration-300 overflow-hidden",
+          "hover:border-white/30 hover:shadow-sm group-hover:-translate-y-0.5"
         )}
       >
         <div
           className={cn(
-            "absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500",
+            "absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500",
             `bg-${color}-500`
           )}
         />
         <div className="flex flex-col items-center text-center gap-3 relative z-10">
           <div
             className={cn(
-              "p-3 rounded-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-inner",
+              "p-3 rounded-2xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3",
               `bg-${color}-500/10 text-${color}-500`
             )}
           >
@@ -153,7 +152,7 @@ export function LiveTickerItem({
   time: string;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-xs font-medium text-muted-foreground whitespace-nowrap mx-2">
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 text-xs font-medium text-muted-foreground whitespace-nowrap mx-2">
       <Icon className="h-3 w-3 text-primary animate-pulse" />
       <span suppressHydrationWarning>{text}</span>
       <span suppressHydrationWarning className="opacity-50">

@@ -411,13 +411,33 @@ export interface Highlight {
 
 export async function getHighlightsAction(farewellId: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  // Check membership first for security since we'll use admin client
+  const { data: member } = await supabaseAdmin
+    .from("farewell_members")
+    .select("role")
+    .eq("farewell_id", farewellId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!member) return [];
+
+  // Use admin client to bypass RLS on highlights table
+  const { data, error } = await supabaseAdmin
     .from("highlights")
     .select("*")
     .eq("farewell_id", farewellId)
     .order("created_at", { ascending: false });
 
-  if (error) return [];
+  if (error) {
+    console.error("Error fetching highlights:", error);
+    return [];
+  }
   return data as Highlight[];
 }
 

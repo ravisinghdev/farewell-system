@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import {
-  Highlight,
-  getHighlightsAction,
-} from "@/app/actions/dashboard-actions";
+import { Highlight } from "@/app/actions/dashboard-actions";
 import { HighlightCard } from "./highlight-card";
 import { Star } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -38,13 +35,7 @@ export function RealtimeHighlights({
           filter: `farewell_id=eq.${farewellId}`,
         },
         async () => {
-          console.log("Realtime update received for highlights");
-          if (farewellId) {
-            const newData = await getHighlightsAction(farewellId);
-            // router.refresh() handles the UI update by refetching layout data
-          }
-          // For optimistic UI or local state if needed
-          // setHighlights(h as Highlight[]); // Context updates via router.refresh()
+          // router.refresh() handles the UI update by refetching layout data
           router.refresh();
         }
       )

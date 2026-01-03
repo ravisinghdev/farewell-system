@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   TaskWithDetails,
-  updateTaskDetailsAction,
+  updateTaskAction,
   deleteTaskAction,
   addTaskCommentAction,
   updateTaskStatusAction,
@@ -126,14 +126,14 @@ export function TaskDetailView({
       setIsEditingTitle(false);
       return;
     }
-    const res = await updateTaskDetailsAction(task.id, farewellId, { title });
+    const res = await updateTaskAction(task.id, farewellId, { title });
     if (res.error) toast.error(res.error);
     else setIsEditingTitle(false);
   };
 
   const handleUpdateDescription = async () => {
     if (description === task.description) return;
-    const res = await updateTaskDetailsAction(task.id, farewellId, {
+    const res = await updateTaskAction(task.id, farewellId, {
       description,
     });
     if (res.error) toast.error(res.error);
@@ -155,7 +155,7 @@ export function TaskDetailView({
   };
 
   const handleUpdatePriority = async (priority: string) => {
-    const res = await updateTaskDetailsAction(task.id, farewellId, {
+    const res = await updateTaskAction(task.id, farewellId, {
       priority: priority as any,
     });
     if (res.error) toast.error(res.error);

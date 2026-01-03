@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { NotificationList } from "./notification-list";
+import { GoogleNotificationPanel } from "./google-notification-panel";
 import { createClient } from "@/utils/supabase/client";
 import { getUnreadCountAction } from "@/app/actions/notifications";
 import { toast } from "sonner";
@@ -79,12 +79,17 @@ export function NotificationBell({ userId, className }: NotificationBellProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <NotificationList
+      <PopoverContent
+        className="w-auto p-0 border-none shadow-none bg-transparent"
+        align="end"
+        sideOffset={10}
+      >
+        <GoogleNotificationPanel
           onMarkAsRead={handleMarkAsRead}
           onNotificationsChanged={() =>
             getUnreadCountAction().then(setUnreadCount)
           }
+          userId={userId}
         />
       </PopoverContent>
     </Popover>

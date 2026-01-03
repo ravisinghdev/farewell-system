@@ -5,7 +5,9 @@ export type TimelineBlockType =
   | "performance"
   | "buffer"
   | "announcement"
-  | "break";
+  | "break"
+  | "speech"
+  | "other";
 
 export interface TimelineBlock {
   id: string;
@@ -21,4 +23,6 @@ export interface TimelineBlock {
 
   // Join
   performance?: Performance;
+  manual_start_time?: string;
+  reaction_count?: number; // from joined query
 }

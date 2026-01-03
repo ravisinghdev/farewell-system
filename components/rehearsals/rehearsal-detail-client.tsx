@@ -83,9 +83,8 @@ export function RehearsalDetailClient({
   const router = useRouter();
 
   return (
-    <div className="flex flex-col h-full min-h-screen bg-background relative overflow-hidden">
-      {/* Sticky Header (Clean/Solid UI) */}
-      <div className="flex items-center justify-between p-4 sm:px-6 sm:py-4 border-b bg-background/95 backdrop-blur z-20 sticky top-0">
+    <div className="flex flex-col min-h-screen relative">
+      <div className="flex items-center justify-between p-4 sm:px-6 sm:py-4 border-b backdrop-blur z-20 sticky top-0">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -138,23 +137,23 @@ export function RehearsalDetailClient({
 
         {/* 2. Main Content Tabs */}
         <Tabs defaultValue="run-of-show" className="space-y-8">
-          <div className="sticky top-[73px] z-10 bg-background/80 backdrop-blur-xl p-1 rounded-full border border-white/10 w-fit shadow-lg shadow-black/5 mx-auto sm:mx-0">
+          <div className="sticky top-[73px] z-10 p-1 w-fit mx-auto sm:mx-0">
             <TabsList className="bg-transparent h-9 p-0 gap-1">
               <TabsTrigger
                 value="run-of-show"
-                className="rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
+                className="cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
               >
                 Run of Show
               </TabsTrigger>
               <TabsTrigger
                 value="cast-attendance"
-                className="rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
+                className="cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
               >
                 Cast & Attendance
               </TabsTrigger>
               <TabsTrigger
                 value="studio"
-                className="rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
+                className="cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
               >
                 Studio
               </TabsTrigger>
@@ -170,7 +169,7 @@ export function RehearsalDetailClient({
           {/* TAB: Run of Show */}
           <TabsContent
             value="run-of-show"
-            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
           >
             <RunOfShowExtended
               rehearsalId={rehearsalId}
@@ -185,11 +184,11 @@ export function RehearsalDetailClient({
           {/* TAB: Cast & Attendance */}
           <TabsContent
             value="cast-attendance"
-            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               <div className="md:col-span-2 space-y-6">
-                <Card className="p-4 sm:p-6 border-white/5 bg-white/5 backdrop-blur-sm shadow-xl shadow-black/5">
+                <Card className="p-4 sm:p-6 border bg-transparent shadow-none">
                   <RehearsalCastManager
                     rehearsalId={rehearsalId}
                     farewellId={farewellId}
@@ -215,7 +214,7 @@ export function RehearsalDetailClient({
           {/* TAB: Studio */}
           <TabsContent
             value="studio"
-            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
           >
             <RehearsalAssets
               rehearsalId={rehearsalId}
@@ -229,7 +228,7 @@ export function RehearsalDetailClient({
           {/* TAB: Overview (Simple Read-only) */}
           <TabsContent
             value="overview"
-            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
           >
             <RehearsalOverviewTab
               rehearsal={rehearsal}

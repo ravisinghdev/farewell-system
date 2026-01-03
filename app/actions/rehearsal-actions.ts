@@ -36,7 +36,7 @@ export async function createRehearsalAction(
 
   try {
     const { data: rehearsal, error } = await supabase
-      .from("rehearsal_sessions")
+      .from("rehearsals")
       .insert({
         farewell_id: farewellId,
         title: data.title,
@@ -67,7 +67,7 @@ export async function getRehearsalsAction(farewellId: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("rehearsal_sessions")
+    .from("rehearsals")
     .select(
       `
       *,
@@ -90,7 +90,7 @@ export async function getRehearsalByIdAction(rehearsalId: string) {
 
   // Fetch rehearsal with linked performance
   const { data: rehearsal, error } = await supabase
-    .from("rehearsal_sessions")
+    .from("rehearsals")
     .select(
       `
         *,
@@ -121,7 +121,7 @@ export async function updateRehearsalStatusAction(
 
   try {
     const { error } = await supabase
-      .from("rehearsal_sessions")
+      .from("rehearsals")
       .update({ status })
       .eq("id", rehearsalId);
 
@@ -167,7 +167,7 @@ export async function updateRehearsalMetadataAction(
 
   try {
     const { error } = await supabase
-      .from("rehearsal_sessions")
+      .from("rehearsals")
       .update({ metadata })
       .eq("id", rehearsalId);
 
@@ -186,7 +186,7 @@ export async function deleteRehearsalAction(
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { error } = await supabase
-    .from("rehearsal_sessions")
+    .from("rehearsals")
     .delete()
     .eq("id", rehearsalId);
 
@@ -199,19 +199,21 @@ export async function deleteRehearsalAction(
 // --- Attendance (JSONB) ---
 
 // Update attendance (stored in JSONB for this legacy/hybrid approach)
+// Update attendance (stored in JSONB, keyed by DATE -> USER_ID)
 export async function updateAttendanceAction(
   rehearsalId: string,
   farewellId: string,
   userId: string,
-  status: "present" | "absent" | "late"
+  status: "present" | "absent" | "late",
+  date?: string // YYYY-MM-DD
 ): Promise<ActionState> {
-  // Use standard client, relying on fixed RLS policies
   const supabase = await createClient();
+  const targetDate = date || new Date().toISOString().split("T")[0];
 
   try {
     // 1. Fetch current attendance
     const { data: rehearsal, error: fetchError } = await supabase
-      .from("rehearsal_sessions")
+      .from("rehearsals")
       .select("attendance")
       .eq("id", rehearsalId)
       .single();
@@ -219,18 +221,31 @@ export async function updateAttendanceAction(
     if (fetchError) throw fetchError;
 
     // 2. Update JSON
-    const currentAttendance = rehearsal.attendance || {};
-    const updatedAttendance = {
-      ...currentAttendance,
+    // Structure: { "2024-01-01": { "user_id": { status: "present", ... } } }
+    const fullAttendance = rehearsal.attendance || {};
+
+    // Handle legacy flat structure migration (optional, or just ignore legacy keys)
+    // We simply write to the date key.
+
+    const dayRecords = fullAttendance[targetDate] || {};
+
+    // Update the specific record for this day
+    const updatedDayRecords = {
+      ...dayRecords,
       [userId]: {
         status,
         timestamp: new Date().toISOString(),
       },
     };
 
+    const updatedAttendance = {
+      ...fullAttendance,
+      [targetDate]: updatedDayRecords,
+    };
+
     // 3. Save back
     const { error: updateError } = await supabase
-      .from("rehearsal_sessions")
+      .from("rehearsals")
       .update({ attendance: updatedAttendance })
       .eq("id", rehearsalId);
 
@@ -252,14 +267,14 @@ export async function duplicateRehearsalAction(
   const supabase = await createClient();
   try {
     const { data: original } = await supabase
-      .from("rehearsal_sessions")
+      .from("rehearsals")
       .select("*")
       .eq("id", rehearsalId)
       .single();
     if (!original) throw new Error("Original not found");
 
     const newStart = new Date(newDate);
-    const { error } = await supabase.from("rehearsal_sessions").insert({
+    const { error } = await supabase.from("rehearsals").insert({
       ...original,
       id: undefined,
       created_at: undefined,
@@ -291,7 +306,7 @@ export async function updateRehearsalDetailsAction(
 
   try {
     const { error } = await supabase
-      .from("rehearsal_sessions")
+      .from("rehearsals")
       .update({
         title: data.title,
         goal: data.goal,
