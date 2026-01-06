@@ -82,7 +82,7 @@ export function PageScaffold({
         {action && <div>{action}</div>}
       </div>
 
-      <div className="min-h-[400px] border rounded-xl bg-muted/5 p-6 backdrop-blur-sm relative overflow-hidden">
+      <div className="min-h-[400px] border rounded-xl bg-transparent p-6 relative overflow-hidden">
         {children || (
           <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground">
             <p>Content for {title} is coming soon.</p>

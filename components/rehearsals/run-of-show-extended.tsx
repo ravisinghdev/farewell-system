@@ -108,11 +108,10 @@ export function RunOfShowExtended({
   async function saveSegments(newSegments: Segment[]) {
     // Optimistic update
     setSegments(newSegments);
-    const newMetadata = {
-      ...metadata,
+    // Send partial update to merge server-side
+    await updateRehearsalMetadataAction(rehearsalId, farewellId, {
       segments: newSegments,
-    };
-    await updateRehearsalMetadataAction(rehearsalId, farewellId, newMetadata);
+    });
   }
 
   return (
@@ -139,7 +138,7 @@ export function RunOfShowExtended({
 
         {/* Quick Add Form */}
         {isAdmin && (
-          <div className="flex gap-4 items-end p-4 rounded-xl border shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end p-4 rounded-xl border shadow-sm bg-transparent">
             <div className="flex-1 space-y-1.5">
               <span className="text-xs font-semibold text-muted-foreground uppercase">
                 Segment Title
@@ -151,7 +150,7 @@ export function RunOfShowExtended({
                 className="bg-background"
               />
             </div>
-            <div className="w-24 space-y-1.5">
+            <div className="w-full sm:w-24 space-y-1.5">
               <span className="text-xs font-semibold text-muted-foreground uppercase">
                 Mins
               </span>
@@ -165,7 +164,7 @@ export function RunOfShowExtended({
             <Button
               onClick={handleAddSegment}
               size="icon"
-              className="shrink-0 mb-0.5"
+              className="shrink-0 mb-0.5 self-end sm:self-auto w-full sm:w-10"
             >
               <Plus className="w-5 h-5" />
             </Button>
@@ -320,7 +319,7 @@ export function RunOfShowExtended({
                   </p>
                 </div>
 
-                <div className="p-4 bg-background/50 rounded-lg border">
+                <div className="p-4 bg-transparent rounded-lg border">
                   <span className="text-xs text-muted-foreground block mb-2">
                     UP NEXT
                   </span>
@@ -361,8 +360,8 @@ export function RunOfShowExtended({
               </div>
             </Card>
           ) : (
-            <Card className="p-8 border-dashed flex flex-col items-center justify-center text-center text-muted-foreground">
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+            <Card className="p-8 border-dashed flex flex-col items-center justify-center text-center bg-transparent border text-muted-foreground">
+              <div className="w-12 h-12 rounded-full border flex items-center justify-center mb-3">
                 <Pause className="w-6 h-6 opacity-50" />
               </div>
               <p>No active segment.</p>

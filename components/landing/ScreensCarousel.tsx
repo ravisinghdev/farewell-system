@@ -123,7 +123,7 @@ export default function ScreensCarousel() {
                 </div>
 
                 {/* Countdown Card Preview */}
-                <div className="w-full max-w-xs bg-background text-foreground rounded-2xl p-6 border border-white/10 shadow-2xl">
+                <div className="w-full max-w-xs bg-background text-foreground rounded-2xl p-6 border border-border dark:border-white/10 shadow-2xl">
                   <p className="text-xs font-medium uppercase tracking-widest text-center mb-4 text-default">
                     Countdown
                   </p>

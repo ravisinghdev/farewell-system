@@ -74,17 +74,25 @@ export function RehearsalOverviewTab({
     status: rehearsal.status || "scheduled",
   });
 
+  const handleEditOpen = (open: boolean) => {
+    setIsEditing(open);
+  };
+
   const durationMinutes =
     (new Date(rehearsal.end_time).getTime() -
       new Date(rehearsal.start_time).getTime()) /
     60000;
 
   async function handleUpdate() {
+    const payload: any = { ...formData };
+    // Metadata updates handled in Cast Manager now if needed.
+
     const res = await updateRehearsalDetailsAction(
       rehearsal.id,
       farewellId,
-      formData
+      payload
     );
+
     if (res.success) {
       toast.success("Rehearsal updated successfully");
       setIsEditing(false);
@@ -126,7 +134,7 @@ export function RehearsalOverviewTab({
     <div className="space-y-6 animate-in fade-in-50 duration-500">
       {/* 1. Hero Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-card border-l-4 border-l-primary shadow-sm hover:shadow-md transition-all">
+        <Card className="bg-transparent border-l-4 border-l-primary shadow-sm hover:shadow-md transition-all">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">
@@ -148,7 +156,7 @@ export function RehearsalOverviewTab({
           </CardContent>
         </Card>
 
-        <Card className="hover:border-primary/20 transition-colors">
+        <Card className="bg-transparent border hover:border-primary/50 transition-colors">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground uppercase font-semibold">
@@ -166,7 +174,7 @@ export function RehearsalOverviewTab({
           </CardContent>
         </Card>
 
-        <Card className="hover:border-primary/20 transition-colors">
+        <Card className="bg-transparent border hover:border-primary/50 transition-colors">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground uppercase font-semibold">
@@ -186,7 +194,7 @@ export function RehearsalOverviewTab({
           </CardContent>
         </Card>
 
-        <Card className="hover:border-primary/20 transition-colors">
+        <Card className="bg-transparent border hover:border-primary/50 transition-colors">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground uppercase font-semibold">
@@ -203,13 +211,13 @@ export function RehearsalOverviewTab({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 2. Main Details & Edit */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="h-full border-muted/40">
+          <Card className="h-full bg-transparent border-muted/40">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg font-medium">
                 Session Details
               </CardTitle>
               {isAdmin && (
-                <Dialog open={isEditing} onOpenChange={setIsEditing}>
+                <Dialog open={isEditing} onOpenChange={handleEditOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2 h-8">
                       <Edit3 className="w-3.5 h-3.5" />
@@ -319,6 +327,7 @@ export function RehearsalOverviewTab({
                           </Select>
                         </div>
                       </div>
+
                       <div className="grid gap-2">
                         <Label>Goal / Objective</Label>
                         <Textarea
@@ -349,7 +358,7 @@ export function RehearsalOverviewTab({
                 <h4 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
                   Goal
                 </h4>
-                <div className="bg-muted/30 p-4 rounded-lg border border-dashed border-muted-foreground/20 text-sm leading-relaxed">
+                <div className="bg-transparent p-4 rounded-lg border border-dashed border-muted-foreground/20 text-sm leading-relaxed">
                   {rehearsal.goal || (
                     <span className="text-muted-foreground italic">
                       No specific goal set. Click edit to add one.
@@ -363,7 +372,7 @@ export function RehearsalOverviewTab({
                   Linked Performance
                 </h4>
                 {rehearsal.performance ? (
-                  <div className="flex items-center gap-3 p-3 bg-secondary/20 rounded-lg border border-secondary/20">
+                  <div className="flex items-center gap-3 p-3 bg-transparent rounded-lg border border-secondary/20">
                     <div className="h-10 w-10 bg-primary/10 rounded-md flex items-center justify-center text-primary">
                       <Play className="w-5 h-5 fill-current" />
                     </div>
@@ -402,7 +411,7 @@ export function RehearsalOverviewTab({
 
         {/* 3. Quick Actions & Danger Zone */}
         <div className="space-y-6">
-          <Card className="bg-muted/10 border-dashed">
+          <Card className="bg-transparent border-dashed">
             <CardHeader>
               <CardTitle className="text-base">Quick Actions</CardTitle>
             </CardHeader>
@@ -423,7 +432,7 @@ export function RehearsalOverviewTab({
           </Card>
 
           {isAdmin && (
-            <Card className="border-destructive/20 bg-destructive/5">
+            <Card className="border-destructive/20 bg-transparent">
               <CardHeader>
                 <CardTitle className="text-base text-destructive flex items-center gap-2">
                   <Trash2 className="w-4 h-4" />

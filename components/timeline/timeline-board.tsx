@@ -9,7 +9,8 @@ import {
   DndContext,
   closestCenter,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -41,9 +42,15 @@ export function TimelineBoard({ eventStartTime }: { eventStartTime?: string }) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -138,7 +145,3 @@ export function TimelineBoard({ eventStartTime }: { eventStartTime?: string }) {
     </div>
   );
 }
-
-
-
-

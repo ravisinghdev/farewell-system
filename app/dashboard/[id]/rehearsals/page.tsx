@@ -38,8 +38,10 @@ import { Performance } from "@/types/performance";
 import {
   createRehearsalAction,
   deleteRehearsalAction,
+  getFarewellMembersAction,
 } from "@/app/actions/rehearsal-actions";
 import Link from "next/link";
+import { RehearsalCard } from "@/components/rehearsals/rehearsal-card";
 
 export default function RehearsalsPage() {
   return (
@@ -71,6 +73,7 @@ function RehearsalsContent() {
 
   const [rehearsals, setRehearsals] = useState<any[]>([]);
   const [performances, setPerformances] = useState<Performance[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +86,9 @@ function RehearsalsContent() {
   const [venue, setVenue] = useState("");
   const [description, setDescription] = useState("");
   const [performanceId, setPerformanceId] = useState<string>("general"); // 'general' or UUID
+  const [rehearsalType, setRehearsalType] = useState<string>("general");
+  const [pair1, setPair1] = useState<string>("");
+  const [pair2, setPair2] = useState<string>("");
 
   useEffect(() => {
     fetchData();
@@ -90,14 +96,16 @@ function RehearsalsContent() {
 
   async function fetchData() {
     setLoading(true);
-    const [rehearsalData, perfData] = await Promise.all([
+    const [rehearsalData, perfData, membersData] = await Promise.all([
       getRehearsalsAction(farewellId),
       getPerformancesAction(farewellId),
+      getFarewellMembersAction(farewellId),
     ]);
 
     setRehearsals(rehearsalData);
     if (perfData.data)
       setPerformances(perfData.data as unknown as Performance[]);
+    if (membersData) setMembers(membersData);
     setLoading(false);
   }
 
@@ -118,10 +126,47 @@ function RehearsalsContent() {
       return;
     }
 
+    if (rehearsalType === "pair" && (!pair1 || !pair2)) {
+      toast.error("Error", {
+        description: "Please select both partners for the pair",
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const startDateTime = new Date(`${date}T${startTime}`);
       const endDateTime = new Date(`${date}T${endTime}`);
+
+      // Construct metadata if pair
+      let metadata = {};
+      if (rehearsalType === "pair") {
+        // Find user objects
+        const p1 = members.find((m) => m.id === pair1);
+        const p2 = members.find((m) => m.id === pair2);
+
+        // Add to participants list automatically
+        const pairParticipants = [];
+        if (p1)
+          pairParticipants.push({
+            user_id: p1.id,
+            name: p1.full_name,
+            role: "Partner 1",
+            avatar_url: p1.avatar_url,
+          });
+        if (p2)
+          pairParticipants.push({
+            user_id: p2.id,
+            name: p2.full_name,
+            role: "Partner 2",
+            avatar_url: p2.avatar_url,
+          });
+
+        metadata = {
+          participants: pairParticipants,
+          is_pair: true,
+        };
+      }
 
       const result = await createRehearsalAction(farewellId, {
         title,
@@ -129,8 +174,9 @@ function RehearsalsContent() {
         end_time: endDateTime.toISOString(),
         venue,
         description,
-        rehearsal_type: performanceId === "general" ? "general" : "specific",
+        rehearsal_type: rehearsalType,
         performance_id: performanceId === "general" ? undefined : performanceId,
+        metadata, // Pass initial metadata
       });
 
       if (result.error) {
@@ -172,32 +218,176 @@ function RehearsalsContent() {
       title="Rehearsals & Planning"
       description="Military-grade scheduling for all practices."
       action={
-        // Manual creation disabled - Auto-generated from Performances
-        // isAdmin && ( ... Dialog code ... )
-        null
+        isAdmin && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => resetForm()}>
+                <Plus className="w-4 h-4 mr-2" /> Schedule Session
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Schedule Rehearsal</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label>Title</Label>
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Opening Number Practice"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Date</Label>
+                    <Input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Venue</Label>
+                    <Input
+                      value={venue}
+                      onChange={(e) => setVenue(e.target.value)}
+                      placeholder="e.g. Auditorium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Start Time</Label>
+                    <Input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>End Time</Label>
+                    <Input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Rehearsal Type</Label>
+                  <Select
+                    value={rehearsalType}
+                    onValueChange={(val) => {
+                      setRehearsalType(val);
+                      // Reset pair if switching away
+                      if (val !== "pair") {
+                        setPair1("");
+                        setPair2("");
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">
+                        General (Open to All)
+                      </SelectItem>
+                      <SelectItem value="pair">Pair / Duet</SelectItem>
+                      <SelectItem value="sectional">
+                        Sectional / Group
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {rehearsalType === "pair" && (
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border border-dashed">
+                    <div className="grid gap-2">
+                      <Label className="text-xs">Partner 1</Label>
+                      <Select value={pair1} onValueChange={setPair1}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Select Partner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {members.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-xs">Partner 2</Label>
+                      <Select value={pair2} onValueChange={setPair2}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="Select Partner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {members.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid gap-2">
+                  <Label>Linked Performance (Optional)</Label>
+                  <Select
+                    value={performanceId}
+                    onValueChange={setPerformanceId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="General Session" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">None (General)</SelectItem>
+                      {performances.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label>Goal / Description</Label>
+                  <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="What do we need to achieve?"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleCreate} disabled={isSubmitting}>
+                  {isSubmitting && (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  )}
+                  Schedule
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )
       }
     >
-      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-4 rounded-lg mb-6 flex items-start gap-3">
-        <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-full mt-0.5">
-          <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-        </div>
-        <div>
-          <h4 className="font-semibold text-sm text-amber-900 dark:text-amber-200">
-            Automated Scheduling Only
-          </h4>
-          <p className="text-sm text-amber-800/80 dark:text-amber-300/80 mt-1">
-            Rehearsals are automatically created when a Performance is marked as{" "}
-            <strong>Approved</strong>. To schedule a new session, go to{" "}
-            <Link
-              href={`/dashboard/${farewellId}/performances`}
-              className="underline underline-offset-2 hover:text-amber-900"
-            >
-              Performances
-            </Link>{" "}
-            and approve an act.
-          </p>
-        </div>
-      </div>
       {filterPerfId && (
         <div className="mb-6 flex items-center justify-between bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-900/30">
           <div className="flex items-center gap-2">
@@ -245,83 +435,16 @@ function RehearsalsContent() {
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredRehearsals.map((rehearsal) => (
-            <Card key={rehearsal.id} className="overflow-hidden">
-              <div className="flex flex-col md:flex-row border-l-4 border-l-primary">
-                {/* Date Block */}
-                <div className="bg-muted/30 p-4 flex flex-col items-center justify-center min-w-[100px] border-r">
-                  <span className="text-xs font-semibold uppercase text-muted-foreground">
-                    {format(new Date(rehearsal.start_time), "MMM")}
-                  </span>
-                  <span className="text-2xl font-bold">
-                    {format(new Date(rehearsal.start_time), "dd")}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(rehearsal.start_time), "EEE")}
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-lg">
-                          {rehearsal.title}
-                        </h3>
-                        {rehearsal.performance && (
-                          <Badge variant="secondary" className="text-[10px]">
-                            For: {rehearsal.performance.title}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {format(
-                            new Date(rehearsal.start_time),
-                            "h:mm a"
-                          )} - {format(new Date(rehearsal.end_time), "h:mm a")}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {rehearsal.venue || "TBD"}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" asChild>
-                        <Link
-                          href={`/dashboard/${farewellId}/rehearsals/${rehearsal.id}`}
-                        >
-                          Enter Room
-                        </Link>
-                      </Button>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive h-8 px-2"
-                          onClick={() => handleDelete(rehearsal.id)}
-                        >
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {rehearsal.goal && (
-                    <div className="bg-secondary/50 p-2 rounded text-sm mt-2 text-secondary-foreground border border-secondary">
-                      <span className="font-medium text-xs uppercase tracking-wide opacity-70 mr-2">
-                        Goal:
-                      </span>
-                      {rehearsal.goal}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
+            <RehearsalCard
+              key={rehearsal.id}
+              rehearsal={rehearsal}
+              farewellId={farewellId}
+              isAdmin={isAdmin}
+              onDelete={handleDelete}
+              // onDuplicate not implemented in page yet, can leave undefined
+            />
           ))}
         </div>
       )}

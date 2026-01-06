@@ -42,6 +42,7 @@ import { useFarewell } from "@/components/providers/farewell-provider";
 import { checkIsAdmin } from "@/lib/auth/roles";
 import { PerformanceCard } from "@/components/performances/performance-card";
 import { Performance } from "@/types/performance";
+import { createClient } from "@/utils/supabase/client";
 
 export default function PerformancesPage() {
   const params = useParams();
@@ -61,8 +62,33 @@ export default function PerformancesPage() {
   const [duration, setDuration] = useState("300"); // 5 mins in seconds
   const [performerNames, setPerformerNames] = useState("");
 
+  // Edit State
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   useEffect(() => {
     fetchPerformances();
+
+    // Realtime Subscription
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`performances-${farewellId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "performances",
+          filter: `farewell_id=eq.${farewellId}`,
+        },
+        () => {
+          fetchPerformances();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [farewellId]);
 
   async function fetchPerformances() {
@@ -73,7 +99,17 @@ export default function PerformancesPage() {
     setLoading(false);
   }
 
-  async function handleCreate() {
+  function handleEdit(performance: Performance) {
+    setTitle(performance.title);
+    setType(performance.type);
+    setRisk(performance.risk_level || "low");
+    setDuration(performance.duration_seconds?.toString() || "300");
+    //   setPerformerNames(performance.performers?.join(', ') || '');
+    setEditingId(performance.id);
+    setIsDialogOpen(true);
+  }
+
+  async function handleSave() {
     if (!title || !type) {
       toast.error("Error", { description: "Title and Type are required" });
       return;
@@ -84,18 +120,37 @@ export default function PerformancesPage() {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const result = await createPerformanceAction(farewellId, {
-      title,
-      type,
-      performers: performersList,
-      risk_level: risk,
-      duration_seconds: parseInt(duration) || 300,
-    });
+    let result;
+    if (editingId) {
+      // Update
+      result = await import("@/app/actions/event-actions").then((m) =>
+        m.updatePerformanceAction(editingId, farewellId, {
+          title,
+          type,
+          risk_level: risk,
+          duration_seconds: parseInt(duration) || 300,
+          performers: performersList,
+        })
+      );
+    } else {
+      // Create
+      result = await createPerformanceAction(farewellId, {
+        title,
+        type,
+        performers: performersList,
+        risk_level: risk,
+        duration_seconds: parseInt(duration) || 300,
+      });
+    }
 
     if (result.error) {
       toast.error("Error", { description: result.error });
     } else {
-      toast.success("Success", { description: "Performance Draft Created" });
+      toast.success("Success", {
+        description: editingId
+          ? "Performance Updated"
+          : "Performance Draft Created",
+      });
       setIsDialogOpen(false);
       resetForm();
       fetchPerformances();
@@ -107,6 +162,7 @@ export default function PerformancesPage() {
     setType("");
     setRisk("low");
     setDuration("300");
+    setEditingId(null);
   }
 
   async function handleDelete(id: string) {
@@ -168,7 +224,13 @@ export default function PerformancesPage() {
       title="Performance Registry"
       description="The official source of truth for all farewell acts."
       action={
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="shadow-lg shadow-primary/20">
               <Plus className="mr-2 h-4 w-4" />
@@ -177,9 +239,13 @@ export default function PerformancesPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Register New Act</DialogTitle>
+              <DialogTitle>
+                {editingId ? "Edit Performance" : "Register New Act"}
+              </DialogTitle>
               <DialogDescription>
-                Initialize a structured performance object.
+                {editingId
+                  ? "Update performance details."
+                  : "Initialize a structured performance object."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -235,8 +301,8 @@ export default function PerformancesPage() {
                 />
               </div>
 
-              <Button onClick={handleCreate} className="w-full">
-                Initialize Act
+              <Button onClick={handleSave} className="w-full">
+                {editingId ? "Save Changes" : "Initialize Act"}
               </Button>
             </div>
           </DialogContent>
@@ -335,7 +401,7 @@ export default function PerformancesPage() {
               key={performance.id}
               performance={performance}
               isAdmin={isAdmin}
-              onEdit={() => {}} // TODO: Open Edit Dialog
+              onEdit={() => handleEdit(performance)}
               onDelete={handleDelete}
               onToggleLock={handleToggleLock}
               onApprove={handleApprove}

@@ -8,22 +8,31 @@ import { logAudit } from "@/lib/audit-logger";
 import { isFarewellAdmin } from "@/lib/auth/roles-server";
 import { createSystemNotification } from "./notifications";
 
+// --- Types ---
+
 export interface Duty {
   id: string;
   farewell_id: string;
   title: string;
   description: string | null;
-  expense_limit: number;
+  status:
+    | "pending"
+    | "pending_receipt"
+    | "voting"
+    | "admin_review"
+    | "approved"
+    | "rejected"
+    | "in_progress"
+    | "completed";
+  expense_type: "none" | "reimbursable" | "advance";
+  expected_amount: number;
+  final_amount: number;
   deadline: string | null;
-  status: "pending" | "in_progress" | "completed";
-  created_by: string;
+  // Legacy / UI Helpers
+  priority?: "low" | "medium" | "high";
+  category?: string;
   created_at: string;
   updated_at: string;
-  priority?: "low" | "medium" | "high";
-  expense_limit_hard?: boolean;
-  category?: string;
-  location?: string;
-  estimated_hours?: number;
   assignments?: DutyAssignment[];
   receipts?: DutyReceipt[];
 }
@@ -44,68 +53,141 @@ export interface DutyReceipt {
   id: string;
   duty_id: string;
   uploader_id: string;
-  amount: number;
-  image_url: string | null;
-  notes: string | null;
-  status: "pending" | "approved" | "rejected";
-  admin_notes: string | null;
+  amount_paid: number;
+  image_url: string;
+  payment_mode: "upi" | "cash" | "online" | "card";
+  status: "pending_vote" | "approved" | "rejected";
   created_at: string;
   uploader?: {
     full_name: string;
     avatar_url: string;
   };
+  votes?: ReceiptVote[];
 }
+
+export interface ReceiptVote {
+  id: string;
+  receipt_id: string;
+  voter_id: string;
+  vote: "valid" | "invalid";
+  comment: string | null;
+  created_at: string;
+  voter?: {
+    full_name: string;
+    avatar_url: string;
+  };
+}
+
+// --- Fetch Actions ---
 
 export async function getDutiesAction(farewellId: string): Promise<Duty[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  // 1. Fetch Duties + Assignments
+  const { data: dutiesData, error: dutiesError } = await supabase
     .from("duties")
     .select(
       `
       *,
       assignments:duty_assignments(
         *,
-        user:users!user_id(full_name, avatar_url, email)
-      ),
-      receipts:duty_receipts(
-        *,
-        uploader:users!uploader_id(full_name, avatar_url)
+        user:users!duty_assignments_user_id_fkey(full_name, avatar_url, email)
       )
     `
     )
     .eq("farewell_id", farewellId)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching duties:", error);
+  if (dutiesError) {
+    console.error("Error fetching duties:", dutiesError);
     return [];
   }
 
-  return data as unknown as Duty[];
+  // 2. Fetch Receipts & Votes (Admin client to ensure visibility)
+  // We fetch receipts for these duties.
+  const dutyIds = dutiesData.map((d) => d.id);
+  let receiptsMap: Record<string, DutyReceipt[]> = {};
+
+  if (dutyIds.length > 0) {
+    console.log("Fetching receipts for duty IDs:", dutyIds);
+    // 2a. Fetch Receipts (No Votes Join)
+    const { data: receiptsData, error: receiptError } = await supabase
+      .from("duty_receipts")
+      .select(
+        `
+        *,
+        uploader:users(full_name, avatar_url)
+      `
+      )
+      .in("duty_id", dutyIds);
+
+    if (receiptError) console.error("Receipt Fetch Error:", receiptError);
+
+    if (receiptsData && receiptsData.length > 0) {
+      // 2b. Fetch Votes Manually (Avoid Relationship Error)
+      const receiptIds = receiptsData.map((r) => r.id);
+      let votesMap: Record<string, ReceiptVote[]> = {};
+
+      const { data: votesData, error: votesError } = await supabase
+        .from("receipt_votes")
+        .select(
+          `
+          *,
+          voter:users(full_name, avatar_url)
+        `
+        )
+        .in("receipt_id", receiptIds);
+
+      if (votesError) console.error("Votes Fetch Error:", votesError);
+
+      if (votesData) {
+        votesData.forEach((v) => {
+          if (!votesMap[v.receipt_id]) votesMap[v.receipt_id] = [];
+          votesMap[v.receipt_id].push(v as any);
+        });
+      }
+
+      // 2c. Merge Votes into Receipts
+      console.log("Fetched receipts count:", receiptsData.length);
+      receiptsData.forEach((r) => {
+        const receiptWithVotes = { ...r, votes: votesMap[r.id] || [] };
+        if (!receiptsMap[r.duty_id]) receiptsMap[r.duty_id] = [];
+        receiptsMap[r.duty_id].push(receiptWithVotes as any);
+      });
+    }
+  }
+
+  // 3. Merge
+  return (dutiesData as any[]).map((d) => ({
+    ...d,
+    receipts: receiptsMap[d.id] || [],
+  }));
 }
+
+// --- Write Actions ---
 
 export async function createDutyAction(
   farewellId: string,
   data: {
     title: string;
     description: string;
-    expense_limit: number;
+    expense_type: "none" | "reimbursable" | "advance";
+    expected_amount: number;
     deadline?: string;
-    priority?: "low" | "medium" | "high";
-    expense_limit_hard?: boolean;
     category?: string;
-    location?: string;
-    estimated_hours?: number | null;
+    priority?: "low" | "medium" | "high";
   }
 ): Promise<ActionState<Duty>> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  if (!claimsData?.claims) return { error: "Not authenticated" };
   const userId = claimsData.claims.sub;
 
+  // Check Admin Permission
   const isAdmin = await isFarewellAdmin(farewellId, userId);
-  if (!isAdmin) return { error: "Unauthorized" };
+  if (!isAdmin) {
+    return { error: "Only admins can create duties." };
+  }
 
   const { data: duty, error } = await supabase
     .from("duties")
@@ -113,14 +195,12 @@ export async function createDutyAction(
       farewell_id: farewellId,
       title: data.title,
       description: data.description,
-      expense_limit: data.expense_limit,
-      deadline: data.deadline,
-      created_by: userId,
-      priority: data.priority || "medium",
-      expense_limit_hard: data.expense_limit_hard || false,
+      expense_type: data.expense_type,
+      expected_amount: data.expected_amount,
+      deadline: data.deadline || null,
       category: data.category,
-      location: data.location,
-      estimated_hours: data.estimated_hours,
+      priority: data.priority || "medium",
+      status: "pending",
     })
     .select()
     .single();
@@ -139,202 +219,28 @@ export async function createDutyAction(
   return { success: true, data: duty as unknown as Duty };
 }
 
-export async function assignDutiesAction(
-  farewellId: string,
-  dutyId: string,
-  userIds: string[]
-): Promise<ActionState> {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
-  const userId = claimsData.claims.sub;
-
-  const isAdmin = await isFarewellAdmin(farewellId, userId);
-  if (!isAdmin) return { error: "Unauthorized" };
-
-  const assignments = userIds.map((uid) => ({
-    duty_id: dutyId,
-    user_id: uid,
-    status: "accepted", // Auto-accept to skip acceptance step
-  }));
-
-  const { error } = await supabase.from("duty_assignments").insert(assignments);
-
-  if (error) {
-    if (error.code === "23505") return { error: "Some users already assigned" };
-    return { error: error.message };
-  }
-
-  // Auto-transition duty to in_progress since assignments are auto-accepted
-  await supabase
-    .from("duties")
-    .update({ status: "in_progress" })
-    .eq("id", dutyId)
-    .eq("status", "pending");
-
-  await logAudit({
-    farewellId,
-    action: "assign_duty",
-    targetId: dutyId,
-    targetType: "duty",
-    metadata: { assigned_user_ids: userIds },
-  });
-
-  // Notify assigned users
-  // Get Duty Title for notification
-  const { data: duty } = await supabase
-    .from("duties")
-    .select("title, farewell_id")
-    .eq("id", dutyId)
-    .single();
-  if (duty) {
-    for (const uid of userIds) {
-      await createSystemNotification(
-        uid,
-        farewellId,
-        "New Duty Assigned",
-        `You have been assigned to: ${duty.title}. You can start submitting expenses now.`,
-        "duty",
-        `/dashboard/${farewellId}/duties/${dutyId}`
-      );
-    }
-  }
-
-  revalidatePath(`/dashboard/${farewellId}/duties`);
-  return { success: true };
-}
-
-// Accept or Reject Duty Assignment
-export async function respondToAssignmentAction(
-  dutyId: string,
-  accept: boolean
-): Promise<ActionState> {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
-  const userId = claimsData.claims.sub;
-
-  // Get the assignment
-  const { data: assignment, error: fetchError } = await supabase
-    .from("duty_assignments")
-    .select("*, duties(farewell_id, title)")
-    .eq("duty_id", dutyId)
-    .eq("user_id", userId)
-    .single();
-
-  if (fetchError || !assignment) {
-    return { error: "Assignment not found" };
-  }
-
-  const newStatus = accept ? "accepted" : "rejected";
-
-  // Update assignment status
-  const { error: updateError } = await supabase
-    .from("duty_assignments")
-    .update({ status: newStatus })
-    .eq("duty_id", dutyId)
-    .eq("user_id", userId);
-
-  if (updateError) return { error: updateError.message };
-
-  // If accepted, update duty status to in_progress if it was pending
-  if (accept) {
-    const { error: dutyUpdateError } = await supabase
-      .from("duties")
-      .update({ status: "in_progress" })
-      .eq("id", dutyId)
-      .eq("status", "pending");
-
-    if (dutyUpdateError) {
-      console.error("Failed to update duty status:", dutyUpdateError);
-    }
-  }
-
-  // Log audit
-  await logAudit({
-    farewellId: (assignment.duties as any).farewell_id,
-    action: accept ? "accept_duty" : "reject_duty",
-    targetId: dutyId,
-    targetType: "duty",
-    metadata: { assignment_id: assignment.id },
-  });
-
-  // Send notification to admins
-  const farewellId = (assignment.duties as any).farewell_id;
-  const dutyTitle = (assignment.duties as any).title;
-
-  await createSystemNotification(
-    userId,
-    farewellId,
-    accept ? "Duty Accepted" : "Duty Declined",
-    accept ? `You accepted: ${dutyTitle}` : `You declined: ${dutyTitle}`,
-    "duty",
-    `/dashboard/${farewellId}/duties/${dutyId}`
-  );
-
-  revalidatePath(`/dashboard/${farewellId}/duties`);
-  return { success: true };
-}
-
-export async function updateDutyStatusAction(
-  farewellId: string,
-  dutyId: string,
-  status: "pending" | "in_progress" | "completed"
-): Promise<ActionState> {
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("duties")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", dutyId);
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    farewellId,
-    action: "update_duty_status",
-    targetId: dutyId,
-    targetType: "duty",
-    metadata: { status },
-  });
-
-  revalidatePath(`/dashboard/${farewellId}/duties`);
-  return { success: true };
-}
-
 export async function uploadDutyReceiptAction(
   farewellId: string,
   formData: FormData
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  if (!claimsData?.claims) return { error: "Not authenticated" };
   const userId = claimsData.claims.sub;
 
   const dutyId = formData.get("dutyId") as string;
   const amount = Number(formData.get("amount"));
-  const notes = formData.get("notes") as string;
+  const paymentMode = formData.get("paymentMode") as string;
   const file = formData.get("file") as File;
 
   if (!file || !dutyId || !amount) return { error: "Missing required fields" };
 
+  // Upload Image
   const fileExt = file.name.split(".").pop();
   const fileName = `${dutyId}/${Date.now()}.${fileExt}`;
   const { error: uploadError } = await supabase.storage
     .from("receipts")
     .upload(fileName, file);
-
-  // Validate Assignment
-  const { data: assignment, error: assignmentError } = await supabase
-    .from("duty_assignments")
-    .select("id")
-    .eq("duty_id", dutyId)
-    .eq("user_id", userId)
-    .single();
-
-  if (assignmentError || !assignment) {
-    return { error: "You are not assigned to this duty." };
-  }
 
   if (uploadError) return { error: "Failed to upload receipt image" };
 
@@ -342,19 +248,28 @@ export async function uploadDutyReceiptAction(
     data: { publicUrl },
   } = supabase.storage.from("receipts").getPublicUrl(fileName);
 
+  // Create Receipt
   const { data: receipt, error } = await supabase
     .from("duty_receipts")
     .insert({
       duty_id: dutyId,
       uploader_id: userId,
-      amount,
-      notes,
+      amount_paid: amount,
+      payment_mode: paymentMode,
       image_url: publicUrl,
+      status: "pending_vote",
     })
     .select()
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("Upload Receipt Error:", error);
+    return { error: error.message };
+  }
+  console.log("Upload Receipt Success:", receipt);
+
+  // Update Duty Status -> Voting
+  await supabase.from("duties").update({ status: "voting" }).eq("id", dutyId);
 
   await logAudit({
     farewellId,
@@ -368,35 +283,103 @@ export async function uploadDutyReceiptAction(
   return { success: true };
 }
 
-export async function approveDutyReceiptAction(
+export async function castReceiptVoteAction(
   farewellId: string,
   receiptId: string,
-  adminNotes?: string
+  vote: "valid" | "invalid",
+  comment?: string
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  if (!claimsData?.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
+
+  const { error } = await supabase.from("receipt_votes").insert({
+    receipt_id: receiptId,
+    voter_id: userId,
+    vote,
+    comment,
+  });
+
+  if (error) {
+    if (error.code === "23505") return { error: "You have already voted." };
+    return { error: error.message };
+  }
+
+  // Check if we have enough votes to move to Admin Review?
+  // Logic: If > 3 'valid' votes, auto-move to admin_review.
+  // Using Admin client to count votes securely
+  const { count } = await supabaseAdmin
+    .from("receipt_votes")
+    .select("*", { count: "exact", head: true })
+    .eq("receipt_id", receiptId)
+    .eq("vote", "valid");
+
+  if ((count || 0) >= 2) {
+    // Find duty_id from receipt
+    const { data: receipt } = await supabaseAdmin
+      .from("duty_receipts")
+      .select("duty_id")
+      .eq("id", receiptId)
+      .single();
+    if (receipt) {
+      await supabaseAdmin
+        .from("duties")
+        .update({ status: "admin_review" })
+        .eq("id", receipt.duty_id);
+    }
+  }
+
+  revalidatePath(`/dashboard/${farewellId}/duties`);
+  return { success: true };
+}
+
+export async function approveDutyReceiptAction(
+  farewellId: string,
+  receiptId: string
+): Promise<ActionState> {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) return { error: "Not authenticated" };
   const userId = claimsData.claims.sub;
 
   const isAdmin = await isFarewellAdmin(farewellId, userId);
   if (!isAdmin) return { error: "Unauthorized" };
 
-  /* 
-     CALLING RPC for Transactional Approval 
-     Reference: 20251213010000_duty_ledger_system.sql
-  */
-  const { data: rpcData, error } = await supabase.rpc("approve_duty_receipt", {
-    p_receipt_id: receiptId,
-    p_admin_notes: adminNotes || null,
-  });
+  // 1. Mark Receipt Approved
+  const { error: rError } = await supabase
+    .from("duty_receipts")
+    .update({ status: "approved" })
+    .eq("id", receiptId);
 
-  if (error) return { error: error.message };
+  if (rError) return { error: rError.message };
 
-  // RPC returns { success: boolean, error?: string }
-  // We need to cast or check it. Supabase RPC returns `any` often, or typed if we had types.
-  const result = rpcData as any;
-  if (!result.success) {
-    return { error: result.error || "Approval failed" };
+  // 2. Lock Duty (Approved, Final Amount)
+  // Fetch receipt amount first
+  const { data: receipt } = await supabase
+    .from("duty_receipts")
+    .select("*")
+    .eq("id", receiptId)
+    .single();
+
+  if (receipt) {
+    await supabase
+      .from("duties")
+      .update({
+        status: "approved",
+        final_amount: receipt.amount_paid,
+      })
+      .eq("id", receipt.duty_id);
+
+    // Notify user
+    await createSystemNotification(
+      receipt.uploader_id,
+      farewellId,
+      "Expense Approved",
+      "Your expense has been approved by admin.",
+      "finance",
+      `/dashboard/${farewellId}/duties`
+    );
   }
 
   await logAudit({
@@ -406,30 +389,6 @@ export async function approveDutyReceiptAction(
     targetType: "receipt",
   });
 
-  // Notify Uploader
-  // Need to fetch receipt details first or depend on what we know?
-  // We only have receiptId.
-  const { data: receipt } = await supabase
-    .from("duty_receipts")
-    .select("uploader_id, sections:duties(title)")
-    .eq("id", receiptId)
-    .single();
-  // Note: sections:duties(...) join might fail if not set up, using query
-  // But we know dutyId... wait, we don't have dutyId in args here easily, passed via client?
-  // We can fetch it.
-  if (receipt && receipt.uploader_id) {
-    // @ts-ignore
-    const dutyTitle = receipt.sections?.title || "Duty";
-    await createSystemNotification(
-      receipt.uploader_id,
-      farewellId,
-      "Expense Approved",
-      `Your expense for ${dutyTitle} has been approved.`,
-      "finance",
-      `/dashboard/${farewellId}/duties`
-    );
-  }
-
   revalidatePath(`/dashboard/${farewellId}/duties`);
   return { success: true };
 }
@@ -437,11 +396,11 @@ export async function approveDutyReceiptAction(
 export async function rejectDutyReceiptAction(
   farewellId: string,
   receiptId: string,
-  adminNotes?: string
+  reason: string
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  if (!claimsData?.claims) return { error: "Not authenticated" };
   const userId = claimsData.claims.sub;
 
   const isAdmin = await isFarewellAdmin(farewellId, userId);
@@ -449,40 +408,29 @@ export async function rejectDutyReceiptAction(
 
   const { error } = await supabase
     .from("duty_receipts")
-    .update({
-      status: "rejected",
-      reviewed_by: userId,
-      reviewed_at: new Date().toISOString(),
-      admin_notes: adminNotes,
-    })
+    .update({ status: "rejected" })
     .eq("id", receiptId);
 
   if (error) return { error: error.message };
 
-  await logAudit({
-    farewellId,
-    action: "reject_receipt",
-    targetId: receiptId,
-    targetType: "receipt",
-    metadata: { adminNotes },
-  });
-
-  // Notify Uploader
-  const { data: receiptRec } = await supabase
+  // Set duty back to 'pending_receipt' (or keep as is? usually re-upload needed)
+  // We assume workflow -> back to pending_receipt
+  const { data: receipt } = await supabase
     .from("duty_receipts")
-    .select("uploader_id, duties(title)")
+    .select("duty_id, uploader_id")
     .eq("id", receiptId)
     .single();
-  if (receiptRec && receiptRec.uploader_id) {
-    // @ts-ignore
-    const dutyTitle = receiptRec.duties?.title || "Duty";
+  if (receipt) {
+    await supabase
+      .from("duties")
+      .update({ status: "pending_receipt" })
+      .eq("id", receipt.duty_id);
+
     await createSystemNotification(
-      receiptRec.uploader_id,
+      receipt.uploader_id,
       farewellId,
       "Expense Rejected",
-      `Your expense for ${dutyTitle} was rejected.${
-        adminNotes ? ` Reason: ${adminNotes}` : ""
-      }`,
+      `Your expense was rejected: ${reason}`,
       "finance",
       `/dashboard/${farewellId}/duties`
     );
@@ -492,30 +440,61 @@ export async function rejectDutyReceiptAction(
   return { success: true };
 }
 
-export async function getLedgerAction(farewellId: string) {
+// --- Legacy / Helper Wrappers ---
+
+export async function assignDutiesAction(
+  farewellId: string,
+  dutyId: string,
+  userIds: string[]
+): Promise<ActionState> {
   const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
 
-  // Note: RLS allows all farewell members to view
-  const { data, error } = await supabaseAdmin
-    .from("ledger")
-    .select(
-      `
-      *,
-      created_by_user:users!created_by(full_name, avatar_url)
-    `
-    )
-    .eq("farewell_id", farewellId)
-    .order("created_at", { ascending: false });
+  const isAdmin = await isFarewellAdmin(farewellId, userId);
+  if (!isAdmin) return { error: "Unauthorized" };
 
-  if (error) {
-    console.error("Error fetching ledger:", error);
-    return [];
+  const assignments = userIds.map((uid) => ({
+    duty_id: dutyId,
+    user_id: uid,
+  }));
+
+  const { error } = await supabase.from("duty_assignments").insert(assignments);
+  if (error) return { error: error.message };
+
+  await supabase
+    .from("duties")
+    .update({ status: "in_progress" }) // Move to In Progress
+    .eq("id", dutyId);
+
+  // Notify Assignees
+  // Fetch duty title for message
+  const { data: duty } = await supabase
+    .from("duties")
+    .select("title")
+    .eq("id", dutyId)
+    .single();
+
+  if (duty) {
+    await Promise.all(
+      userIds.map((uid) =>
+        createSystemNotification(
+          uid,
+          farewellId,
+          "New Duty Assigned",
+          `You have been assigned to: ${duty.title}`,
+          "duty",
+          `/dashboard/${farewellId}/duties`
+        )
+      )
+    );
   }
 
-  return data;
+  revalidatePath(`/dashboard/${farewellId}/duties`);
+  return { success: true };
 }
 
-// Unassign a user from a duty
 export async function unassignDutyAction(
   farewellId: string,
   dutyId: string,
@@ -523,82 +502,73 @@ export async function unassignDutyAction(
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  if (!claimsData?.claims) return { error: "Not authenticated" };
   const userId = claimsData.claims.sub;
 
   const isAdmin = await isFarewellAdmin(farewellId, userId);
   if (!isAdmin) return { error: "Unauthorized" };
 
-  const { error } = await supabase
+  await supabase
     .from("duty_assignments")
     .delete()
     .eq("duty_id", dutyId)
     .eq("user_id", userIdToRemove);
 
-  if (error) return { error: error.message };
-
-  await logAudit({
-    farewellId,
-    action: "unassign_duty",
-    targetId: dutyId,
-    targetType: "duty",
-    metadata: { removed_user_id: userIdToRemove },
-  });
-
   revalidatePath(`/dashboard/${farewellId}/duties`);
   return { success: true };
 }
 
-// Added to fix build error and usage in duty-claim-actions.ts
-export async function logDutyActivity(
-  dutyId: string,
-  action: string,
-  message: string, // 'details' maps to 'message' in common semantic, but logAudit uses strict action names
-  metadata: any = {}
-) {
-  const supabase = await createClient();
-  // We need farewellId. Fetch it.
-  const { data: duty } = await supabase
-    .from("duties")
-    .select("farewell_id")
-    .eq("id", dutyId)
-    .single();
-
-  if (duty) {
-    await logAudit({
-      farewellId: duty.farewell_id,
-      action: "duty_activity_log", // Generic action
-      targetId: dutyId,
-      targetType: "duty",
-      metadata: { message, ...metadata },
-    });
-  }
-}
-
-// Delete a duty
 export async function deleteDutyAction(
   farewellId: string,
   dutyId: string
 ): Promise<ActionState> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData || !claimsData.claims) return { error: "Not authenticated" };
+  if (!claimsData?.claims) return { error: "Not authenticated" };
   const userId = claimsData.claims.sub;
 
   const isAdmin = await isFarewellAdmin(farewellId, userId);
   if (!isAdmin) return { error: "Unauthorized" };
 
-  const { error } = await supabase.from("duties").delete().eq("id", dutyId);
-
-  if (error) return { error: error.message };
-
-  await logAudit({
-    farewellId,
-    action: "delete_duty",
-    targetId: dutyId,
-    targetType: "duty",
-  });
+  await supabase.from("duties").delete().eq("id", dutyId);
 
   revalidatePath(`/dashboard/${farewellId}/duties`);
   return { success: true };
+}
+
+export async function updateDutyAction(
+  dutyId: string,
+  farewellId: string,
+  updates: any
+): Promise<ActionState> {
+  const supabase = await createClient();
+  // Simple wrapper for edits
+  const { error } = await supabase
+    .from("duties")
+    .update(updates)
+    .eq("id", dutyId);
+  if (error) return { error: error.message };
+  revalidatePath(`/dashboard/${farewellId}/duties`);
+  return { success: true };
+}
+
+export async function getFarewellMembersAction(farewellId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("farewell_members")
+    .select(
+      `
+      user_id,
+      role,
+      user:users(id, full_name, avatar_url, email)
+    `
+    )
+    .eq("farewell_id", farewellId);
+
+  if (error) {
+    console.error("Error fetching farewell members:", error);
+    return [];
+  }
+
+  return data;
 }

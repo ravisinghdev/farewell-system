@@ -26,6 +26,7 @@ interface RehearsalDetailClientProps {
   initialRehearsal: any; // Ideally typed
   currentUserRole: string | null;
   isAdmin: boolean;
+  farewellMembers: any[];
 }
 
 export function RehearsalDetailClient({
@@ -34,6 +35,7 @@ export function RehearsalDetailClient({
   initialRehearsal,
   currentUserRole,
   isAdmin,
+  farewellMembers,
 }: RehearsalDetailClientProps) {
   const [rehearsal, setRehearsal] = useState<any>(initialRehearsal);
 
@@ -55,7 +57,7 @@ export function RehearsalDetailClient({
         {
           event: "UPDATE",
           schema: "public",
-          table: "rehearsal_sessions",
+          table: "rehearsals",
           filter: `id=eq.${rehearsalId}`,
         },
         (payload) => {
@@ -127,7 +129,7 @@ export function RehearsalDetailClient({
         </div>
       </div>
 
-      <main className="flex-1 p-4 sm:p-6 w-full max-w-[1600px] mx-auto space-y-8 relative z-10">
+      <main className="flex-1 p-2 sm:p-4 w-full max-w-[1600px] mx-auto space-y-4 relative z-10 pb-32">
         {/* 1. Hero Content (Simplified RehearsalHeader) */}
         <RehearsalHeader
           rehearsal={rehearsal}
@@ -136,35 +138,50 @@ export function RehearsalDetailClient({
         />
 
         {/* 2. Main Content Tabs */}
-        <Tabs defaultValue="run-of-show" className="space-y-8">
-          <div className="sticky top-[73px] z-10 p-1 w-fit mx-auto sm:mx-0">
-            <TabsList className="bg-transparent h-9 p-0 gap-1">
-              <TabsTrigger
-                value="run-of-show"
-                className="cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
-              >
-                Run of Show
-              </TabsTrigger>
-              <TabsTrigger
-                value="cast-attendance"
-                className="cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
-              >
-                Cast & Attendance
-              </TabsTrigger>
-              <TabsTrigger
-                value="studio"
-                className="cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
-              >
-                Studio
-              </TabsTrigger>
-              <TabsTrigger
-                value="overview"
-                className="rounded-full px-4 py-1.5 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
-              >
-                Overview
-              </TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="overview" className="space-y-4 bg-transparent">
+          <div className="sticky top-[60px] z-10 py-1 bg-transparent backdrop-blur w-full border-b mb-4">
+            <div className="overflow-x-auto pb-1 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              <TabsList className="bg-transparent h-9 p-0 gap-2 w-max mx-auto sm:mx-0">
+                <TabsTrigger
+                  value="overview"
+                  className="cursor-pointer rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all border border-transparent data-[state=active]:border-border"
+                >
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger
+                  value="run-of-show"
+                  className="cursor-pointer rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all border border-transparent data-[state=active]:border-border"
+                >
+                  Run of Show
+                </TabsTrigger>
+                <TabsTrigger
+                  value="cast-attendance"
+                  className="cursor-pointer rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all border border-transparent data-[state=active]:border-border"
+                >
+                  Cast & Crew
+                </TabsTrigger>
+                <TabsTrigger
+                  value="studio"
+                  className="cursor-pointer rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all border border-transparent data-[state=active]:border-border"
+                >
+                  Studio
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </div>
+
+          {/* TAB: Overview */}
+          <TabsContent
+            value="overview"
+            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+          >
+            <RehearsalOverviewTab
+              rehearsal={rehearsal}
+              farewellId={farewellId}
+              isAdmin={isAdmin}
+              participantsCount={participants.length}
+            />
+          </TabsContent>
 
           {/* TAB: Run of Show */}
           <TabsContent
@@ -190,12 +207,15 @@ export function RehearsalDetailClient({
               <div className="md:col-span-2 space-y-6">
                 <Card className="p-4 sm:p-6 border bg-transparent shadow-none">
                   <RehearsalCastManager
+                    rehearsal={rehearsal}
                     rehearsalId={rehearsalId}
                     farewellId={farewellId}
                     participants={participants}
                     metadata={metadata}
                     isAdmin={isAdmin}
                     currentUserRole={currentUserRole || "Unknown"}
+                    rehearsalType={rehearsal.rehearsal_type}
+                    availableUsers={farewellMembers}
                   />
                 </Card>
               </div>
@@ -222,19 +242,6 @@ export function RehearsalDetailClient({
               assets={assets}
               metadata={metadata}
               isAdmin={isAdmin}
-            />
-          </TabsContent>
-
-          {/* TAB: Overview (Simple Read-only) */}
-          <TabsContent
-            value="overview"
-            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
-          >
-            <RehearsalOverviewTab
-              rehearsal={rehearsal}
-              farewellId={farewellId}
-              isAdmin={isAdmin}
-              participantsCount={participants.length}
             />
           </TabsContent>
         </Tabs>

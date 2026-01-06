@@ -25,13 +25,11 @@ export async function getLeaderboardAction(
     .select(
       `
       user_id,
-      status,
       user:users!user_id(full_name, avatar_url),
       duty:duties!inner(id, status, farewell_id)
     `
     )
-    .eq("duty.farewell_id", farewellId)
-    .eq("duty.status", "completed");
+    .eq("duty.farewell_id", farewellId);
 
   if (error) {
     console.error("Leaderboard fetch error:", error);
@@ -42,6 +40,9 @@ export async function getLeaderboardAction(
   const stats = new Map<string, LeaderboardEntry>();
 
   data.forEach((item: any) => {
+    // Filter for completed duties in memory to avoid 22P02 Enum Error
+    if (item.duty?.status !== "completed") return;
+
     const userId = item.user_id;
     if (!stats.has(userId)) {
       stats.set(userId, {

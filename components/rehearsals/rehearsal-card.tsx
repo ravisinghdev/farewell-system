@@ -66,12 +66,14 @@ export function RehearsalCard({
               >
                 {rehearsal.status}
               </Badge>
-              <Badge
-                variant="outline"
-                className="capitalize text-xs font-normal"
-              >
-                {rehearsal.rehearsal_type}
-              </Badge>
+              {rehearsal.rehearsal_type && (
+                <Badge
+                  variant="outline"
+                  className="capitalize text-xs font-normal"
+                >
+                  {rehearsal.rehearsal_type}
+                </Badge>
+              )}
             </div>
             <CardTitle className="text-lg pt-1 line-clamp-1">
               {rehearsal.title}
@@ -177,6 +179,15 @@ export function RehearsalCard({
           <p className="text-muted-foreground text-xs line-clamp-2 mt-2 pt-2 border-t">
             {rehearsal.description}
           </p>
+        )}
+
+        {rehearsal.goal && (
+          <div className="bg-secondary/50 p-2 rounded text-xs mt-2 text-secondary-foreground border border-secondary">
+            <span className="font-medium uppercase tracking-wide opacity-70 mr-1">
+              Goal:
+            </span>
+            {rehearsal.goal}
+          </div>
         )}
       </CardContent>
 

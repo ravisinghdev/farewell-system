@@ -143,7 +143,7 @@ export function ModernDashboard({
       {/* ---------------- Header ---------------- */}
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <div>
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-white via-white/80 to-white/50 pb-2">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground/80 to-foreground/50 pb-2">
             Ready to make memories, <br className="hidden md:block" />
             <span className="text-primary">{user?.name?.split(" ")[0]}?</span>
           </h1>

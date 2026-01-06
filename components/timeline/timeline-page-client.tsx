@@ -61,7 +61,7 @@ export default function TimelinePageClient({
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 pb-24">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Timeline</h1>
@@ -70,7 +70,7 @@ export default function TimelinePageClient({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {/* Settings Dialog */}
           <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
             <DialogTrigger asChild>

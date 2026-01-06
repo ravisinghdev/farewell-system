@@ -85,7 +85,10 @@ export function FreshTimelineView({
     return {
       ...block,
       // reactions is an array from the join, but we want a number
-      reaction_count: (block as any).reactions?.[0]?.count || 0,
+      reaction_count:
+        (block as any).reaction_count !== undefined
+          ? (block as any).reaction_count
+          : (block as any).reactions?.[0]?.count || 0,
       startTime: start,
       endTime: currentTime,
       status:
@@ -186,7 +189,7 @@ function TimelineNode({
   onEdit: (block: any) => void;
   onDelete: (id: string) => void;
 }) {
-  const [hyped, setHyped] = useState(false);
+  const [hyped, setHyped] = useState(!!item.has_liked);
   const [hypeCount, setHypeCount] = useState(item.reaction_count || 0);
 
   const isLive = item.status === "live";

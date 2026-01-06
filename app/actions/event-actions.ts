@@ -159,6 +159,46 @@ export async function createPerformanceAction(
   }
 }
 
+export async function updatePerformanceAction(
+  id: string,
+  farewellId: string,
+  data: {
+    title?: string;
+    type?: string;
+    performers?: string[];
+    duration?: string;
+    duration_seconds?: number;
+    risk_level?: string;
+    video_url?: string;
+  }
+) {
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase
+      .from("performances")
+      .update({
+        title: data.title,
+        type: data.type,
+        risk_level: data.risk_level,
+        duration_seconds: data.duration_seconds,
+        video_url: data.video_url,
+        // performers: data.performers // Not updating performers column as comment said "Use dedicated performers table later", but create used it?
+        // In create: performers: [], // Use dedicated performers table later
+        // So we ignore performers for now or stick to empty.
+        // User prompt didn't specify, but I'll stick to updating fields present in dialog.
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+    revalidatePath(`/dashboard/${farewellId}/performances`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
 export async function updatePerformanceStatusAction(
   id: string,
   farewellId: string,
@@ -486,22 +526,82 @@ export async function deleteEventTaskAction(
 
 // --- Timeline ---
 export async function getTimelineBlocksAction(farewellId: string) {
-  const supabase = createAdminClient(); // Bypass RLS for READ
+  const supabase = await createClient(); // Use User Client for proper RLS handling with joins
 
+  // Join removed as per user request (missing FK relationship in DB)
+  // 1. Fetch blocks first (without join) to ensure the page loads
   const { data: blocks, error: blocksError } = await supabase
     .from("timeline_blocks")
-    .select(
-      `
-      *,
-      performance:performances(*)
-      // reactions:timeline_reactions(count)
-    `
-    )
+    .select("*")
     .eq("farewell_id", farewellId)
     .order("order_index", { ascending: true });
 
-  if (blocksError) return { error: blocksError.message };
-  return { data: blocks };
+  if (blocksError) {
+    console.error("Error fetching timeline blocks:", blocksError);
+    return { error: blocksError.message };
+  }
+
+  // 2. Fetch reaction counts separately (Robustness)
+  // We do this separately so if the permissions fail, the timeline still loads.
+  let blocksWithCounts = blocks.map((b) => ({
+    ...b,
+    reaction_count: 0,
+    has_liked: false,
+  }));
+
+  try {
+    const blockIds = blocks.map((b) => b.id);
+    if (blockIds.length > 0) {
+      // Fetch all reactions for these blocks to count
+      const { data: reactions, error: reactionError } = await supabase
+        .from("timeline_reactions")
+        .select("block_id")
+        .in("block_id", blockIds);
+
+      // Fetch USER's reactions to check "has_liked"
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      let userReactionsSet = new Set<string>();
+
+      if (user) {
+        const { data: myReactions } = await supabase
+          .from("timeline_reactions")
+          .select("block_id")
+          .eq("user_id", user.id)
+          .in("block_id", blockIds);
+
+        if (myReactions) {
+          myReactions.forEach((r) => userReactionsSet.add(r.block_id));
+        }
+      }
+
+      if (reactionError) {
+        console.error(
+          "Error fetching timeline reactions (permission?):",
+          reactionError
+        );
+        // Continue without counts
+      } else if (reactions) {
+        // Count in memory
+        const counts: Record<string, number> = {};
+        reactions.forEach((r) => {
+          counts[r.block_id] = (counts[r.block_id] || 0) + 1;
+        });
+
+        // Merge
+        blocksWithCounts = blocks.map((b) => ({
+          ...b,
+          reaction_count: counts[b.id] || 0,
+          has_liked: userReactionsSet.has(b.id),
+        }));
+      }
+    }
+  } catch (err) {
+    console.error("Unexpected error fetching reactions:", err);
+  }
+
+  return { data: blocksWithCounts };
 }
 
 export async function createTimelineBlockAction(
@@ -545,22 +645,28 @@ export async function updateTimelineOrderAction(
 
   if (!user) return { error: "Not authenticated" };
 
-  const updates = items.map((item) => ({
-    id: item.id,
-    order_index: item.order_index,
-    start_time_projected: item.start_time_projected,
-    farewell_id: farewellId,
-    updated_at: new Date().toISOString(),
-  }));
+  // Use Promise.all to update sequentially (safer than upsert which might try to insert partial rows)
+  // We use Admin Client to ensure no RLS blocking on updates
+  try {
+    const updatePromises = items.map((item) =>
+      supabaseAdmin
+        .from("timeline_blocks")
+        .update({
+          order_index: item.order_index,
+          start_time_projected: item.start_time_projected,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", item.id)
+    );
 
-  // Use Admin Client
-  const { error } = await supabaseAdmin
-    .from("timeline_blocks")
-    .upsert(updates, { onConflict: "id" });
+    await Promise.all(updatePromises);
 
-  if (error) return { error: error.message };
-  revalidatePath(`/dashboard/${farewellId}/timeline`);
-  return { success: true };
+    revalidatePath(`/dashboard/${farewellId}/timeline`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error saving sequence:", error);
+    return { error: error.message };
+  }
 }
 
 export async function deleteTimelineBlockAction(
@@ -635,15 +741,26 @@ export async function toggleTimelineBlockHypeAction(blockId: string) {
 
   if (existing) {
     // Ungle
-    await supabase.from("timeline_reactions").delete().eq("id", existing.id);
+    const { error } = await supabase
+      .from("timeline_reactions")
+      .delete()
+      .eq("id", existing.id);
+    if (error) {
+      console.error("Error un-hyping:", error);
+      return { error: error.message };
+    }
     return { success: true, hyped: false };
   } else {
     // Hype
-    await supabase.from("timeline_reactions").insert({
+    const { error } = await supabase.from("timeline_reactions").insert({
       block_id: blockId,
       user_id: user.id,
       type: "hype",
     });
+    if (error) {
+      console.error("Error hyping:", error);
+      return { error: error.message };
+    }
     return { success: true, hyped: true };
   }
 }

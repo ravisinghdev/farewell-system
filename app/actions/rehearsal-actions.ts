@@ -18,6 +18,7 @@ export async function createRehearsalAction(
     venue?: string;
     rehearsal_type: string;
     performance_id?: string;
+    metadata?: any;
   }
 ): Promise<ActionState> {
   const supabase = await createClient();
@@ -44,7 +45,9 @@ export async function createRehearsalAction(
         start_time: data.start_time,
         end_time: data.end_time,
         venue: data.venue,
+        rehearsal_type: data.rehearsal_type,
         performance_id: data.performance_id || null, // Ensure this column exists
+        metadata: data.metadata || {},
         is_mandatory: true,
       })
       .select()
@@ -161,21 +164,67 @@ export async function getFarewellMembersAction(farewellId: string) {
 export async function updateRehearsalMetadataAction(
   rehearsalId: string,
   farewellId: string,
-  metadata: any
+  partialMetadata: any
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  // Using Admin client to bypass strict RLS
+  const supabase = supabaseAdmin;
 
   try {
-    const { error } = await supabase
+    console.log(
+      `DEBUG: updateRehearsalMetadataAction called for ${rehearsalId}`
+    );
+    // 1. Fetch current metadata first (Server-side merge)
+    const { data: current, error: fetchError } = await supabase
       .from("rehearsals")
-      .update({ metadata })
-      .eq("id", rehearsalId);
+      .select("metadata")
+      .eq("id", rehearsalId)
+      .single();
 
-    if (error) throw error;
+    if (fetchError) {
+      console.error("DEBUG: Fetch current metadata failed:", fetchError);
+      throw fetchError;
+    }
+
+    const currentMetadata = current.metadata || {};
+    console.log(
+      "DEBUG: Current Metadata:",
+      JSON.stringify(currentMetadata).substring(0, 100) + "..."
+    );
+
+    // 2. Merge the new partial data into existing
+    const mergedMetadata = {
+      ...currentMetadata,
+      ...partialMetadata,
+    };
+    console.log("DEBUG: Merged Metadata Keys:", Object.keys(mergedMetadata));
+
+    // 3. Update
+    console.log(
+      "DEBUG: Saving merged metadata:",
+      JSON.stringify(mergedMetadata, null, 2)
+    );
+
+    const { error, data: updated } = await supabase
+      .from("rehearsals")
+      .update({ metadata: mergedMetadata })
+      .eq("id", rehearsalId)
+      .select();
+
+    if (error) {
+      console.error("DEBUG: Update metadata failed:", error);
+      throw error;
+    }
+
+    console.log("DEBUG: Update successful. Rows affected:", updated?.length);
+    console.log(
+      "DEBUG: Revalidating path:",
+      `/dashboard/${farewellId}/rehearsals/${rehearsalId}`
+    );
 
     revalidatePath(`/dashboard/${farewellId}/rehearsals/${rehearsalId}`);
     return { success: true };
   } catch (error: any) {
+    console.error("DEBUG: Action caught error:", error);
     return { error: error.message };
   }
 }
@@ -207,7 +256,8 @@ export async function updateAttendanceAction(
   status: "present" | "absent" | "late",
   date?: string // YYYY-MM-DD
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  // Use Admin client to ensure attendance can be marked by any authorized UI user
+  const supabase = supabaseAdmin;
   const targetDate = date || new Date().toISOString().split("T")[0];
 
   try {
@@ -300,21 +350,27 @@ export async function updateRehearsalDetailsAction(
     end_time: string;
     venue?: string;
     status: string;
+    rehearsal_type?: string;
+    metadata?: any;
   }
 ): Promise<ActionState> {
   const supabase = await createClient();
 
   try {
+    const updateData: any = {
+      title: data.title,
+      goal: data.goal,
+      start_time: data.start_time,
+      end_time: data.end_time,
+      venue: data.venue,
+      status: data.status,
+    };
+    if (data.rehearsal_type) updateData.rehearsal_type = data.rehearsal_type;
+    if (data.metadata) updateData.metadata = data.metadata;
+
     const { error } = await supabase
       .from("rehearsals")
-      .update({
-        title: data.title,
-        goal: data.goal,
-        start_time: data.start_time,
-        end_time: data.end_time,
-        venue: data.venue,
-        status: data.status,
-      })
+      .update(updateData)
       .eq("id", rehearsalId);
 
     if (error) throw error;

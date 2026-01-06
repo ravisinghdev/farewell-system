@@ -20,9 +20,9 @@ export function GlassCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-white/20 transition-all duration-300",
+        "relative overflow-hidden rounded-3xl border border-border dark:border-white/20 transition-all duration-300",
         hoverEffect &&
-          "hover:border-white/30 hover:shadow-sm hover:-translate-y-1",
+          "hover:border-border/80 dark:hover:border-white/30 hover:shadow-sm hover:-translate-y-1",
         className
       )}
     >
@@ -108,8 +108,8 @@ export function QuickAction({
     <Link href={href} className="block group h-full">
       <div
         className={cn(
-          "relative h-full p-4 rounded-2xl border border-white/20 transition-all duration-300 overflow-hidden",
-          "hover:border-white/30 hover:shadow-sm group-hover:-translate-y-0.5"
+          "relative h-full p-4 rounded-2xl border border-border dark:border-white/20 transition-all duration-300 overflow-hidden",
+          "hover:border-border/80 dark:hover:border-white/30 hover:shadow-sm group-hover:-translate-y-0.5"
         )}
       >
         <div
@@ -152,7 +152,7 @@ export function LiveTickerItem({
   time: string;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 text-xs font-medium text-muted-foreground whitespace-nowrap mx-2">
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border dark:border-white/20 text-xs font-medium text-muted-foreground whitespace-nowrap mx-2">
       <Icon className="h-3 w-3 text-primary animate-pulse" />
       <span suppressHydrationWarning>{text}</span>
       <span suppressHydrationWarning className="opacity-50">

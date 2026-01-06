@@ -51,7 +51,7 @@ export default function DownloadSection() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative rounded-[2.5rem] bg-card/50 border border-white/10 overflow-hidden backdrop-blur-3xl shadow-2xl p-8 lg:p-16">
+        <div className="relative rounded-[2.5rem] bg-card/50 border border-border dark:border-white/10 overflow-hidden backdrop-blur-3xl shadow-2xl p-8 lg:p-16">
           {/* Inner Grid */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] opacity-20" />
 

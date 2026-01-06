@@ -36,7 +36,7 @@ export default function FeatureSearch({
             placeholder="Search features..."
             value={query}
             onChange={(e) => setQuery(e.target.value ?? "")}
-            className="pl-12 py-6 bg-white/5 border-white/10 text-slate-200 text-base"
+            className="pl-12 py-6 bg-muted/50 border-border text-foreground text-base"
           />
         </div>
       </div>
@@ -49,8 +49,8 @@ export default function FeatureSearch({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
           >
-            <Card className="bg-white/5 border border-white/10 hover:bg-white/10 cursor-pointer transition-all backdrop-blur-lg">
-              <CardContent className="p-6 text-base text-slate-200 font-medium">
+            <Card className="bg-muted/50 border border-border hover:bg-accent cursor-pointer transition-all backdrop-blur-lg">
+              <CardContent className="p-6 text-base text-foreground font-medium">
                 <Sparkles className="h-5 w-5 text-blue-400 inline-block mr-2" />{" "}
                 {f}
               </CardContent>

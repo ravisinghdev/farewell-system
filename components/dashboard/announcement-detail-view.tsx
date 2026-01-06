@@ -13,7 +13,6 @@ import {
   Share2,
   Printer,
   Star,
-  Reply,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -216,14 +215,6 @@ export function AnnouncementDetailView({
               </Button>
             </div>
           )}
-
-        {/* Footer Actions (Reply/Forward style) */}
-        <div className="pt-8 flex gap-4">
-          <Button variant="outline" className="gap-2">
-            <Reply className="h-4 w-4" /> Reply
-          </Button>
-          {/* Just visual for now */}
-        </div>
       </div>
 
       {/* Dialogs */}

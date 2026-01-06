@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { getCroppedImg } from "@/utils/canvas-utils";
+import { getCroppedImg } from "@/lib/utils";
 import { Loader2, ZoomIn, ZoomOut } from "lucide-react";
 
 interface AvatarEditorDialogProps {

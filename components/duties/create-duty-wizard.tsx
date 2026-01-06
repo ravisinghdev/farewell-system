@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createDutyAction } from "@/app/actions/duty-actions";
-import { getFarewellMembers } from "@/actions/people";
+import { getFarewellMembersAction } from "@/app/actions/duty-actions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -110,7 +110,7 @@ export function CreateDutyWizard({
     if (members.length > 0) return;
     setLoadingMembers(true);
     try {
-      const data = await getFarewellMembers(farewellId);
+      const data = await getFarewellMembersAction(farewellId);
       setMembers(data || []);
     } catch (error) {
       toast.error("Failed to load members");
@@ -157,7 +157,7 @@ export function CreateDutyWizard({
       toast.error("Please fill in required fields");
       return;
     }
-    if (step === 3) loadMembers();
+    if (step === 2) loadMembers();
     setStep(step + 1);
   };
 
@@ -427,6 +427,10 @@ export function CreateDutyWizard({
                   <div className="text-center text-muted-foreground py-8">
                     Loading members...
                   </div>
+                ) : members.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    No members found.
+                  </div>
                 ) : (
                   <div className="space-y-1">
                     {members.map((member) => (
@@ -446,14 +450,12 @@ export function CreateDutyWizard({
                           onCheckedChange={() => {}}
                         />
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={member.users?.avatar_url} />
+                          <AvatarImage src={member.user?.avatar_url} />
                           <AvatarFallback>
-                            {member.users?.full_name?.charAt(0).toUpperCase()}
+                            {member.user?.full_name?.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="flex-1">
-                          {member.users?.full_name}
-                        </span>
+                        <span className="flex-1">{member.user?.full_name}</span>
                       </div>
                     ))}
                   </div>

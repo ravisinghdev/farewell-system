@@ -89,11 +89,6 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: ClipboardList,
       },
       {
-        href: "/dashboard/tasks",
-        label: "Event Task Board",
-        icon: ListChecks,
-      },
-      {
         href: "/dashboard/decor",
         label: "Decoration & Setup",
         icon: Palette,

@@ -51,7 +51,7 @@ export function PremiumSidebar({
           isCollapsed ? "px-1" : "px-3"
         )}
       >
-        <div className="flex h-full flex-col rounded-3xl bg-black/40 backdrop-blur-3xl border border-white/10 shadow-2xl overflow-hidden transition-all duration-300">
+        <div className="flex h-full flex-col rounded-3xl bg-sidebar/95 backdrop-blur-3xl border border-sidebar-border shadow-2xl overflow-hidden transition-all duration-300">
           {/* Header Area */}
           <SidebarHeader
             className={cn(
@@ -75,7 +75,7 @@ export function PremiumSidebar({
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                   <Sparkles
                     className={cn(
-                      "text-white relative z-10 transition-all duration-300",
+                      "text-primary-foreground relative z-10 transition-all duration-300",
                       isCollapsed ? "h-4 w-4" : "h-5 w-5"
                     )}
                   />
@@ -113,7 +113,7 @@ export function PremiumSidebar({
               return (
                 <SidebarGroup key={group.title} className="p-0 space-y-2">
                   {!isCollapsed && (
-                    <div className="px-3 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                    <div className="px-3 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/50">
                       {group.title}
                     </div>
                   )}
@@ -206,7 +206,7 @@ export function PremiumSidebar({
           {/* Footer / Pro Tip */}
           <SidebarFooter className="p-4 relative">
             {!isCollapsed && (
-              <div className="rounded-2xl bg-white/5 border border-white/10 p-4 relative overflow-hidden group hover:border-white/20 transition-colors">
+              <div className="rounded-2xl bg-sidebar-accent/50 border border-sidebar-border p-4 relative overflow-hidden group hover:border-sidebar-border/80 transition-colors">
                 <div className="absolute top-0 right-0 p-2 opacity-30 group-hover:opacity-100 transition-opacity">
                   <Command className="h-3 w-3 text-muted-foreground" />
                 </div>

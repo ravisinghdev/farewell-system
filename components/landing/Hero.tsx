@@ -113,7 +113,7 @@ export default function Hero() {
         <div className="relative mx-auto w-full max-w-6xl perspective-[2000px] group animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-500">
           {/* Main Container with 3D Rotate */}
           <div
-            className="relative rounded-xl border border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-md shadow-2xl transition-transform duration-700 ease-out transform group-hover:rotate-x-2"
+            className="relative rounded-xl border border-border dark:border-white/10 bg-black/5 dark:bg-white/5 backdrop-blur-md shadow-2xl transition-transform duration-700 ease-out transform group-hover:rotate-x-2"
             style={{
               transformStyle: "preserve-3d",
               transform: "rotateX(5deg)",
@@ -126,32 +126,34 @@ export default function Hero() {
             </div>
 
             {/* Floating Glass Cards - Now even glassier */}
-            <div className="absolute -right-8 top-12 p-4 rounded-2xl bg-white/10 dark:bg-black/40 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] animate-float hidden lg:block hover:scale-110 transition-transform cursor-default z-20">
+            <div className="absolute -right-8 top-12 p-4 rounded-2xl bg-card dark:bg-black/40 backdrop-blur-xl border border-border dark:border-white/20 shadow-2xl animate-float hidden lg:block hover:scale-110 transition-transform cursor-default z-20">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center ring-2 ring-green-500/30">
                   <span className="text-green-500 font-bold text-xl">₹</span>
                 </div>
                 <div>
-                  <p className="text-xs text-white/60 font-medium uppercase tracking-wider">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                     Just In
                   </p>
-                  <p className="text-lg font-bold text-white/90">
+                  <p className="text-lg font-bold text-foreground">
                     ₹5,000 received
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="absolute -left-8 bottom-24 p-4 rounded-2xl bg-white/10 dark:bg-black/40 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] animate-float [animation-delay:2000ms] hidden lg:block hover:scale-110 transition-transform cursor-default z-20">
+            <div className="absolute -left-8 bottom-24 p-4 rounded-2xl bg-card dark:bg-black/40 backdrop-blur-xl border border-border dark:border-white/20 shadow-2xl animate-float [animation-delay:2000ms] hidden lg:block hover:scale-110 transition-transform cursor-default z-20">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center ring-2 ring-blue-500/30">
                   <Users className="w-6 h-6 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-xs text-white/60 font-medium uppercase tracking-wider">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                     Community
                   </p>
-                  <p className="text-lg font-bold text-white/90">+12 Joined</p>
+                  <p className="text-lg font-bold text-foreground">
+                    +12 Joined
+                  </p>
                 </div>
               </div>
             </div>

@@ -5,7 +5,8 @@ import {
   DndContext,
   closestCenter,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -192,7 +193,17 @@ export function TimelineManager({
 
   // Drag Sensors
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -261,7 +272,7 @@ export function TimelineManager({
   let currentTime = new Date(baseTime);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-24">
       <TimelineBlockDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -270,7 +281,7 @@ export function TimelineManager({
         currentOrderIndex={items.length}
       />
 
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold">Stage Sequence</h3>
           {hasChanges && (
@@ -279,7 +290,7 @@ export function TimelineManager({
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2 w-full sm:w-auto">
           <Button size="sm" variant="outline" onClick={handleAddNew}>
             <Plus className="w-4 h-4 mr-2" /> Add Event
           </Button>

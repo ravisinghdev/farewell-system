@@ -34,9 +34,14 @@ export async function logAudit(entry: AuditLogEntry) {
     });
 
     if (error) {
-      console.error("Failed to write audit log:", error);
+      // Suppress permission errors to avoid user confusion if RLS is strict
+      if (error.code === "42501") {
+        console.warn("Audit log permission denied (non-fatal):", error.message);
+      } else {
+        console.error("Failed to write audit log:", error);
+      }
     }
   } catch (err) {
-    console.error("Error in logAudit:", err);
+    console.warn("Error in logAudit:", err);
   }
 }

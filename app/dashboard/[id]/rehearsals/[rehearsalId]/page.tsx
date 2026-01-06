@@ -1,5 +1,8 @@
 import { RehearsalDetailClient } from "@/components/rehearsals/rehearsal-detail-client";
-import { getRehearsalByIdAction } from "@/app/actions/rehearsal-actions";
+import {
+  getRehearsalByIdAction,
+  getFarewellMembersAction,
+} from "@/app/actions/rehearsal-actions";
 import {
   getFarewellRoleFromDB,
   isFarewellAdmin,
@@ -33,22 +36,16 @@ export default async function RehearsalDetailPage({
   }
 
   // 2. Fetch Data in Parallel (Waterfall Optimization)
-  const [rehearsalResult, role, isAdmin] = await Promise.all([
+  const [rehearsalResult, role, isAdmin, members] = await Promise.all([
     getRehearsalByIdAction(rehearsalId),
     getFarewellRoleFromDB(farewellId, user.id),
     isFarewellAdmin(farewellId, user.id),
+    getFarewellMembersAction(farewellId),
   ]);
 
   if (!rehearsalResult || !rehearsalResult.rehearsal) {
     return <div className="p-10 text-center">Rehearsal not found</div>;
   }
-
-  // console.log("--- DEBUG REHEARSAL PAGE ---");
-  // console.log("User ID:", user.id);
-  // console.log("Farewell ID:", farewellId);
-  // console.log("Fetched Role:", role);
-  // console.log("Is Admin:", isAdmin);
-  // console.log("----------------------------");
 
   return (
     <RehearsalDetailClient
@@ -57,6 +54,7 @@ export default async function RehearsalDetailPage({
       initialRehearsal={rehearsalResult.rehearsal}
       currentUserRole={role}
       isAdmin={isAdmin}
+      farewellMembers={members}
     />
   );
 }

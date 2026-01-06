@@ -64,17 +64,17 @@ export function RehearsalHeader({
       )}
 
       {/* Hero Title Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b pb-8">
-        <div className="space-y-2 min-w-0 max-w-full">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-foreground truncate max-w-[90vw] md:max-w-2xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b pb-4">
+        <div className="space-y-1 min-w-0 w-full">
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground break-words leading-tight">
             {rehearsal.title}
           </h1>
           {rehearsal.performance && (
-            <div className="flex items-center gap-2 text-lg text-muted-foreground font-medium">
+            <div className="flex flex-wrap items-center gap-2 text-lg text-muted-foreground font-medium">
               <span>Performance:</span>
               <Badge
                 variant="outline"
-                className="text-base px-3 py-1 truncate max-w-[200px] md:max-w-sm block"
+                className="text-base px-3 py-1 break-words whitespace-normal text-left h-auto block"
               >
                 {rehearsal.performance.title}
               </Badge>
@@ -103,7 +103,7 @@ export function RehearsalHeader({
 
         {/* Dynamic Widget (Countdown or Duration) */}
         {!isLive && !isCompleted && !isPast(startTime) && (
-          <div className="bg-card border shadow-sm rounded-xl p-4 min-w-[200px] text-center">
+          <div className="bg-transparent border shadow-sm rounded-xl p-4 min-w-[200px] text-center">
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               Starts In
             </div>
