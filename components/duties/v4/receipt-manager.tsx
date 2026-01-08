@@ -153,7 +153,7 @@ export function ReceiptManager({
       />
 
       <div className="flex items-center justify-between">
-        <h4 className="text-xs uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-2">
+        <h4 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-2">
           <DollarSign className="w-3 h-3" /> Expenses & Receipts
         </h4>
         {isAssignee && (
@@ -167,7 +167,7 @@ export function ReceiptManager({
                 <UploadCloud className="w-3 h-3 mr-1.5" /> Upload Receipt
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-zinc-950 border-white/10 text-white sm:max-w-md">
+            <DialogContent className="bg-background border-border text-foreground sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Upload Expense Receipt</DialogTitle>
               </DialogHeader>
@@ -176,11 +176,11 @@ export function ReceiptManager({
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Amount Paid</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                      <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                       <Input
                         type="number"
                         placeholder="0.00"
-                        className="pl-9 bg-white/5 border-white/10"
+                        className="pl-9 bg-muted/30 border-input text-foreground"
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                       />
@@ -189,10 +189,10 @@ export function ReceiptManager({
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Payment Mode</label>
                     <Select value={paymentMode} onValueChange={setPaymentMode}>
-                      <SelectTrigger className="bg-white/5 border-white/10">
+                      <SelectTrigger className="bg-muted/30 border-input text-foreground">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-white/10">
+                      <SelectContent className="bg-popover border-border">
                         <SelectItem value="upi">UPI</SelectItem>
                         <SelectItem value="cash">Cash</SelectItem>
                         <SelectItem value="card">Card</SelectItem>
@@ -205,18 +205,20 @@ export function ReceiptManager({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Receipt Image</label>
                   <div
-                    className="border-2 border-dashed border-white/10 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors"
+                    className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     {selectedFile ? (
                       <div className="text-center">
-                        <p className="text-sm font-medium text-emerald-400">
+                        <p className="text-sm font-medium text-emerald-500">
                           {selectedFile.name}
                         </p>
-                        <p className="text-xs text-zinc-500">Click to change</p>
+                        <p className="text-xs text-muted-foreground">
+                          Click to change
+                        </p>
                       </div>
                     ) : (
-                      <div className="text-center text-zinc-500">
+                      <div className="text-center text-muted-foreground">
                         <UploadCloud className="w-8 h-8 mx-auto mb-2 opacity-50" />
                         <p className="text-xs">Click to select image</p>
                       </div>
@@ -251,8 +253,10 @@ export function ReceiptManager({
 
       <div className="space-y-3">
         {(!duty.receipts || duty.receipts.length === 0) && (
-          <div className="text-center py-6 border border-dashed border-white/5 rounded-xl bg-white/[0.02]">
-            <p className="text-xs text-zinc-500">No receipts uploaded yet.</p>
+          <div className="text-center py-6 border border-dashed border-border rounded-xl bg-muted/20">
+            <p className="text-xs text-muted-foreground">
+              No receipts uploaded yet.
+            </p>
           </div>
         )}
 
@@ -268,7 +272,7 @@ export function ReceiptManager({
           return (
             <div
               key={receipt.id}
-              className="bg-white/5 border border-white/5 rounded-xl p-3 space-y-3"
+              className="bg-card border border-border rounded-xl p-3 space-y-3 shadow-sm"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
@@ -279,10 +283,10 @@ export function ReceiptManager({
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-xs font-medium text-white">
+                    <p className="text-xs font-medium text-foreground">
                       {receipt.uploader?.full_name}
                     </p>
-                    <p className="text-[10px] text-zinc-500">
+                    <p className="text-[10px] text-muted-foreground">
                       {format(new Date(receipt.created_at), "MMM d, h:mm a")}{" "}
                       via{" "}
                       <span className="uppercase">{receipt.payment_mode}</span>
@@ -290,7 +294,7 @@ export function ReceiptManager({
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-white">
+                  <p className="text-sm font-bold text-foreground">
                     {formatCurrency(receipt.amount_paid)}
                   </p>
                   <div className="flex justify-end mt-1">
@@ -313,7 +317,7 @@ export function ReceiptManager({
               </div>
 
               {receipt.image_url && (
-                <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-black/50 border border-white/5 group">
+                <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-black/50 border border-border group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={receipt.image_url}
@@ -333,7 +337,7 @@ export function ReceiptManager({
               )}
 
               {/* Voting / Actions Section */}
-              <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+              <div className="pt-2 border-t border-border flex items-center justify-between">
                 {/* Votes Count */}
                 <div className="flex items-center gap-2">
                   {validVotes > 0 && (
@@ -376,7 +380,7 @@ export function ReceiptManager({
                     )}
 
                   {receipt.status === "pending_vote" && hasVoted && (
-                    <span className="text-[10px] text-zinc-500 italic">
+                    <span className="text-[10px] text-muted-foreground italic">
                       You voted
                     </span>
                   )}
@@ -385,7 +389,7 @@ export function ReceiptManager({
                     receipt.status !== "approved" &&
                     receipt.status !== "rejected" && (
                       <>
-                        <div className="w-px h-3 bg-white/10 mx-1" />
+                        <div className="w-px h-3 bg-border mx-1" />
                         <Button
                           size="sm"
                           variant="ghost"

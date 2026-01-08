@@ -92,6 +92,11 @@ export async function getDutiesAction(farewellId: string): Promise<Duty[]> {
       assignments:duty_assignments(
         *,
         user:users!duty_assignments_user_id_fkey(full_name, avatar_url, email)
+      ),
+      receipts:duty_receipts(
+        *,
+        uploader:users!duty_receipts_uploader_id_fkey(full_name, avatar_url),
+        votes:receipt_votes(*)
       )
     `
     )
@@ -133,7 +138,7 @@ export async function getDutiesAction(farewellId: string): Promise<Duty[]> {
         .select(
           `
           *,
-          voter:users(full_name, avatar_url)
+          voter:users!receipt_votes_voter_id_fkey(full_name, avatar_url)
         `
         )
         .in("receipt_id", receiptIds);
@@ -297,6 +302,7 @@ export async function castReceiptVoteAction(
   const { error } = await supabase.from("receipt_votes").insert({
     receipt_id: receiptId,
     voter_id: userId,
+    user_id: userId, // Legacy or Required field
     vote,
     comment,
   });
@@ -542,7 +548,31 @@ export async function updateDutyAction(
   updates: any
 ): Promise<ActionState> {
   const supabase = await createClient();
-  // Simple wrapper for edits
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) return { error: "Not authenticated" };
+  const userId = claimsData.claims.sub;
+
+  const isAdmin = await isFarewellAdmin(farewellId, userId);
+
+  // Check if assignee
+  let isAssignee = false;
+  if (!isAdmin) {
+    const { data: assignment } = await supabase
+      .from("duty_assignments")
+      .select("id")
+      .eq("duty_id", dutyId)
+      .eq("user_id", userId)
+      .single();
+    isAssignee = !!assignment;
+  }
+
+  if (!isAdmin && !isAssignee) {
+    return {
+      error:
+        "Unauthorized: You must be an admin or assignee to edit this duty.",
+    };
+  }
+
   const { error } = await supabase
     .from("duties")
     .update(updates)

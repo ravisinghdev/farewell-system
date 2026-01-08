@@ -91,20 +91,20 @@ export function AssigneeManager({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs border-purple-500/30 text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 hover:text-purple-200 transition-all rounded-full px-3 shadow-[0_0_10px_-3px_rgba(168,85,247,0.4)] hover:shadow-[0_0_15px_-3px_rgba(168,85,247,0.6)]"
+                className="h-7 text-xs border-primary/30 text-primary bg-primary/10 hover:bg-primary/20 hover:text-primary transition-all rounded-full px-3"
               >
                 <Plus className="w-3 h-3 mr-1.5" /> Add Member
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="p-0 w-[240px] bg-zinc-950/95 backdrop-blur-xl border-white/10 shadow-2xl"
+              className="p-0 w-[240px] bg-popover text-popover-foreground backdrop-blur-xl border-border shadow-2xl"
               side="left"
               align="start"
             >
-              <Command className="bg-transparent text-white">
+              <Command className="bg-transparent">
                 <CommandInput
                   placeholder="Search member..."
-                  className="h-9 text-xs border-b border-white/10"
+                  className="h-9 text-xs border-b border-border"
                 />
                 <CommandList className="p-1">
                   <CommandEmpty className="py-4 text-xs text-center text-muted-foreground">
@@ -124,11 +124,11 @@ export function AssigneeManager({
                           key={member.id}
                           value={member.full_name}
                           onSelect={() => handleAssign(member.id)}
-                          className="text-xs flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-sm aria-selected:bg-white/10"
+                          className="text-xs flex items-center gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm aria-selected:bg-accent aria-selected:text-accent-foreground"
                         >
-                          <Avatar className="w-6 h-6 border border-white/10">
+                          <Avatar className="w-6 h-6 border border-border">
                             <AvatarImage src={member.avatar_url} />
-                            <AvatarFallback className="text-[9px] bg-zinc-800 text-zinc-400">
+                            <AvatarFallback className="text-[9px] bg-muted text-muted-foreground">
                               {member.full_name[0]}
                             </AvatarFallback>
                           </Avatar>
@@ -145,11 +145,13 @@ export function AssigneeManager({
 
       <div className="space-y-2">
         {(!duty.assignments || duty.assignments.length === 0) && (
-          <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-white/5 rounded-xl bg-white/[0.02]">
-            <UserPlus className="w-6 h-6 text-zinc-700 mb-2" />
-            <p className="text-xs text-zinc-500 font-medium">No assignee yet</p>
+          <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl bg-muted/20">
+            <UserPlus className="w-6 h-6 text-muted-foreground/70 mb-2" />
+            <p className="text-xs text-muted-foreground font-medium">
+              No assignee yet
+            </p>
             {isAdmin && (
-              <p className="text-[10px] text-zinc-600">
+              <p className="text-[10px] text-muted-foreground/60">
                 Click "Add Member" to assign
               </p>
             )}
@@ -159,20 +161,20 @@ export function AssigneeManager({
         {duty.assignments?.map((assignment) => (
           <div
             key={assignment.id}
-            className="flex items-center justify-between p-2 pl-3 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all group animate-in fade-in slide-in-from-bottom-1 duration-300"
+            className="flex items-center justify-between p-2 pl-3 rounded-lg bg-card border border-border hover:bg-muted/50 transition-all group animate-in fade-in slide-in-from-bottom-1 duration-300"
           >
             <div className="flex items-center gap-3">
-              <Avatar className="w-8 h-8 ring-2 ring-white/5">
+              <Avatar className="w-8 h-8 ring-2 ring-border">
                 <AvatarImage src={assignment.user?.avatar_url} />
                 <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white text-xs">
                   {assignment.user?.full_name?.[0]}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-white/90">
+                <span className="text-sm font-medium text-foreground">
                   {assignment.user?.full_name}
                 </span>
-                <span className="text-[10px] text-white/50">
+                <span className="text-[10px] text-muted-foreground">
                   {assignment.user?.email}
                 </span>
               </div>

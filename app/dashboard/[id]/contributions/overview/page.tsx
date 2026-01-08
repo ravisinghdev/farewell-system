@@ -13,6 +13,7 @@ import { redirect } from "next/navigation";
 import { BudgetManager } from "@/components/admin/budget-manager";
 import { checkIsAdmin } from "@/lib/auth/roles";
 import { ContributionHeader } from "@/components/contributions/contribution-header";
+import { RequestPaymentForm } from "@/components/contributions/request-payment-form";
 
 export default async function ContributionOverviewPage({
   params,
@@ -80,6 +81,16 @@ export default async function ContributionOverviewPage({
         assignedAmount={assignedAmount}
         budgetGoal={budgetGoal}
       />
+
+      {!isAdmin && (
+        <div className="max-w-md mx-auto">
+          <RequestPaymentForm
+            farewellId={id}
+            userId={user.id}
+            assignedAmount={assignedAmount}
+          />
+        </div>
+      )}
 
       {isAdmin && (
         <div className="pb-12">

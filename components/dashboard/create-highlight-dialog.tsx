@@ -26,7 +26,7 @@ interface CreateHighlightDialogProps {
 }
 
 import Cropper from "react-easy-crop";
-import getCroppedImg from "@/utils/cropImage";
+import { getCroppedImg } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
 
 import { useFarewell } from "@/components/providers/farewell-provider";

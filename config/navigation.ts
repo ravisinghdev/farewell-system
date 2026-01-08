@@ -168,13 +168,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Duties & Assignments",
         icon: ClipboardList,
       },
-      {
-        href: "/dashboard/committees",
-        label: "Organizing Committees",
-        icon: ClipboardCheck,
-        disabled: true,
-        disabledTooltip: "Coming Soon",
-      },
+
       {
         href: "/dashboard/settings",
         label: "Settings",
@@ -185,16 +179,12 @@ export const NAV_GROUPS: NavGroup[] = [
         label: "Access & Roles",
         icon: Shield,
         adminOnly: true,
-        disabled: true,
-        disabledTooltip: "Coming Soon",
       },
       {
         href: "/dashboard/activity",
         label: "System Activity",
         icon: Activity,
         adminOnly: true,
-        disabled: true,
-        disabledTooltip: "Coming Soon",
       },
     ],
   },

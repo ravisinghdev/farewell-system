@@ -32,6 +32,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 import { AssigneeManager } from "./assignee-manager";
 import { ReceiptManager } from "./receipt-manager";
 
@@ -57,6 +66,7 @@ export function DutyDetailSheet({
   onOpenChange: setControlledOpen,
 }: DutyDetailSheetProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const router = useRouter();
 
   // Use controlled state if provided, else use internal
   const isOpen =
@@ -67,8 +77,10 @@ export function DutyDetailSheet({
   const [editForm, setEditForm] = useState({
     title: duty.title,
     description: duty.description || "",
-    expected_amount: duty.expected_amount,
+    expected_amount: duty.expected_amount?.toString() || "",
     deadline: duty.deadline,
+    category: duty.category,
+    status: duty.status,
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -81,12 +93,15 @@ export function DutyDetailSheet({
         description: editForm.description,
         expected_amount: Number(editForm.expected_amount),
         deadline: editForm.deadline || undefined,
+        category: editForm.category,
+        status: editForm.status,
       });
 
       if (result.error) {
         toast.error(result.error);
       } else {
         toast.success("Duty updated successfully");
+        router.refresh();
         setIsEditing(false);
       }
     } catch (error) {
@@ -113,6 +128,7 @@ export function DutyDetailSheet({
       } else {
         toast.success("Duty deleted");
         setIsOpen(false);
+        router.refresh();
       }
     } catch (e) {
       toast.error("Failed to delete duty");
@@ -120,6 +136,47 @@ export function DutyDetailSheet({
       setIsSaving(false);
     }
   };
+
+  const THEMES = {
+    violet: {
+      label: "Violet",
+      from: "from-violet-500/10",
+      border: "border-violet-500/20",
+      text: "text-violet-500 dark:text-violet-400",
+      bg: "bg-violet-500/10",
+    },
+    blue: {
+      label: "Blue",
+      from: "from-blue-500/10",
+      border: "border-blue-500/20",
+      text: "text-blue-500 dark:text-blue-400",
+      bg: "bg-blue-500/10",
+    },
+    emerald: {
+      label: "Emerald",
+      from: "from-emerald-500/10",
+      border: "border-emerald-500/20",
+      text: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-500/10",
+    },
+    rose: {
+      label: "Rose",
+      from: "from-rose-500/10",
+      border: "border-rose-500/20",
+      text: "text-rose-500 dark:text-rose-400",
+      bg: "bg-rose-500/10",
+    },
+    amber: {
+      label: "Amber",
+      from: "from-amber-500/10",
+      border: "border-amber-500/20",
+      text: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-500/10",
+    },
+  };
+
+  const currentTheme =
+    THEMES[(duty.category as keyof typeof THEMES) || "violet"] || THEMES.violet;
 
   const priorityColor =
     {
@@ -180,17 +237,19 @@ export function DutyDetailSheet({
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full pt-4 sm:max-w-md md:max-w-lg bg-zinc-950/95 backdrop-blur-xl border-l border-white/10 text-white p-0 shadow-2xl shadow-black/50"
+        className="w-full pt-4 sm:max-w-md md:max-w-lg bg-background/95 backdrop-blur-xl border-l border-border text-foreground p-0 shadow-2xl"
       >
         <ScrollArea className="h-full">
           {/* Hero Header with Gradient */}
           <div className="relative p-6 pb-8 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none" />
+            <div
+              className={`absolute inset-0 bg-gradient-to-b ${currentTheme.from} to-transparent pointer-events-none`}
+            />
             <div className="relative space-y-4">
               <div className="flex items-start justify-between gap-4 pr-12">
                 <Badge
                   variant="outline"
-                  className={`capitalize ${priorityColor} border-current bg-white/5 backdrop-blur-md px-3 py-1 text-xs tracking-wider font-medium`}
+                  className={`capitalize ${priorityColor} border-current bg-background/50 backdrop-blur-md px-3 py-1 text-xs tracking-wider font-medium`}
                 >
                   {(duty.priority || "Medium") + " Priority"}
                 </Badge>
@@ -201,7 +260,7 @@ export function DutyDetailSheet({
                       variant="ghost"
                       size="sm"
                       onClick={() => setIsEditing(true)}
-                      className="h-6 text-xs hover:bg-white/10"
+                      className="h-6 text-xs text-foreground hover:bg-accent hover:text-accent-foreground"
                     >
                       Edit
                     </Button>
@@ -230,22 +289,78 @@ export function DutyDetailSheet({
                         title: e.target.value,
                       }))
                     }
-                    className="bg-white/5 border-white/10 text-xl font-bold h-12"
+                    className="bg-muted/50 border-input text-xl font-bold h-12 text-foreground"
                     placeholder="Duty Title"
                   />
+                  <div className="flex gap-4 items-center">
+                    <div className="flex gap-2 items-center">
+                      <Label className="text-xs text-muted-foreground mr-2">
+                        Theme:
+                      </Label>
+                      <Select
+                        value={editForm.category || "violet"}
+                        onValueChange={(val) =>
+                          setEditForm((prev) => ({ ...prev, category: val }))
+                        }
+                      >
+                        <SelectTrigger className="h-7 text-xs w-[100px] bg-muted/50 border-input">
+                          <SelectValue placeholder="Theme" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(THEMES).map(([key, theme]) => (
+                            <SelectItem key={key} value={key}>
+                              {theme.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {isAdmin && (
+                      <div className="flex gap-2 items-center">
+                        <Label className="text-xs text-muted-foreground mr-2">
+                          Status:
+                        </Label>
+                        <Select
+                          value={editForm.status}
+                          onValueChange={(val: any) =>
+                            setEditForm((prev) => ({ ...prev, status: val }))
+                          }
+                        >
+                          <SelectTrigger className="h-7 text-xs w-[120px] bg-muted/50 border-input">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="pending_receipt">
+                              Bill Uploaded
+                            </SelectItem>
+                            <SelectItem value="voting">Voting</SelectItem>
+                            <SelectItem value="admin_review">Review</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="in_progress">
+                              In Progress
+                            </SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <SheetTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-white/50 tracking-tight">
+                <SheetTitle className="text-3xl font-bold text-foreground tracking-tight">
                   {duty.title}
                 </SheetTitle>
               )}
 
-              <div className="flex items-center gap-3 text-zinc-400 text-xs">
+              <div className="flex items-center gap-3 text-muted-foreground text-xs">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3" />{" "}
                   {format(new Date(duty.created_at), "PPP")}
                 </span>
-                <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
                 <span className="flex items-center gap-1">
                   Created by {duty.assignments?.length ? "Admin" : "System"}
                 </span>
@@ -253,13 +368,13 @@ export function DutyDetailSheet({
             </div>
           </div>
 
-          <Separator className="bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
 
           {/* Main Content */}
           <div className="p-6 space-y-8">
             {/* Description Card */}
             <div className="group space-y-3">
-              <h4 className="text-xs uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-2">
+              <h4 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-2">
                 <FileText className="w-3 h-3" /> Overview
               </h4>
               {isEditing ? (
@@ -271,13 +386,13 @@ export function DutyDetailSheet({
                       description: e.target.value,
                     }))
                   }
-                  className="bg-white/5 border-white/10 min-h-[120px]"
+                  className="bg-muted/30 border-input min-h-[120px]"
                   placeholder="Description"
                 />
               ) : (
-                <div className="p-5 rounded-xl bg-white/[0.03] border border-white/[0.05] text-sm text-zinc-300 leading-relaxed group-hover:bg-white/[0.05] group-hover:border-white/10 transition-all duration-300">
+                <div className="p-5 rounded-xl bg-muted/30 border border-border text-sm text-foreground leading-relaxed transition-all duration-300">
                   {duty.description || (
-                    <span className="text-zinc-500 italic">
+                    <span className="text-muted-foreground italic">
                       No description provided for this duty.
                     </span>
                   )}
@@ -288,11 +403,11 @@ export function DutyDetailSheet({
             {/* Assignment Section */}
             {!isEditing && (
               <div className="space-y-3">
-                <h4 className="text-xs uppercase tracking-widest text-zinc-500 font-semibold flex items-center gap-2">
+                <h4 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-2">
                   <CheckCircle2 className="w-3 h-3" /> Team
                 </h4>
-                <div className="p-1 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 backdrop-blur-sm shadow-inner">
-                  <div className="bg-zinc-950/50 rounded-xl p-4">
+                <div className="p-1 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/10 border border-border backdrop-blur-sm shadow-inner">
+                  <div className="bg-background/50 rounded-xl p-4">
                     <AssigneeManager
                       duty={duty}
                       farewellId={farewellId}
@@ -307,7 +422,7 @@ export function DutyDetailSheet({
             {/* Stats / Edit Fields Grid */}
             <div className="grid grid-cols-2 gap-4">
               <Card className="p-4 bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20 space-y-2 hover:border-blue-500/40 transition-colors">
-                <div className="text-xs text-blue-300/70 uppercase tracking-wider flex items-center gap-2">
+                <div className="text-xs text-blue-500 dark:text-blue-300/70 uppercase tracking-wider flex items-center gap-2">
                   <Calendar className="w-3 h-3" /> Deadline
                 </div>
                 {isEditing ? (
@@ -328,10 +443,10 @@ export function DutyDetailSheet({
                           : null,
                       }))
                     }
-                    className="bg-transparent border-white/10 text-blue-100 h-8 p-0"
+                    className="bg-transparent border-border text-blue-600 dark:text-blue-100 h-8 p-0 placeholder:text-blue-600/50 dark:placeholder:text-blue-100/50"
                   />
                 ) : (
-                  <div className="text-lg font-semibold text-blue-100">
+                  <div className="text-lg font-semibold text-blue-600 dark:text-blue-100">
                     {duty.deadline
                       ? format(new Date(duty.deadline), "MMM d, yyyy")
                       : "None"}
@@ -340,7 +455,7 @@ export function DutyDetailSheet({
               </Card>
 
               <Card className="p-4 bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20 space-y-2 hover:border-emerald-500/40 transition-colors">
-                <div className="text-xs text-emerald-300/70 uppercase tracking-wider flex items-center gap-2">
+                <div className="text-xs text-emerald-600 dark:text-emerald-300/70 uppercase tracking-wider flex items-center gap-2">
                   <DollarSign className="w-3 h-3" /> Budget / Cost
                 </div>
                 {isEditing ? (
@@ -350,13 +465,13 @@ export function DutyDetailSheet({
                     onChange={(e) =>
                       setEditForm((prev) => ({
                         ...prev,
-                        expected_amount: Number(e.target.value),
+                        expected_amount: e.target.value,
                       }))
                     }
-                    className="bg-transparent border-white/10 text-emerald-100 h-8 p-0"
+                    className="bg-transparent border-border text-emerald-600 dark:text-emerald-100 h-8 p-0 placeholder:text-emerald-600/50 dark:placeholder:text-emerald-100/50"
                   />
                 ) : (
-                  <div className="text-lg font-semibold text-emerald-100">
+                  <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-100">
                     {formatCurrency(duty.expected_amount)}
                   </div>
                 )}
@@ -368,7 +483,7 @@ export function DutyDetailSheet({
                 <Button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="flex-1 bg-white text-black hover:bg-white/90"
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
@@ -376,7 +491,7 @@ export function DutyDetailSheet({
                   variant="outline"
                   onClick={() => setIsEditing(false)}
                   disabled={isSaving}
-                  className="flex-1 border-white/10 bg-transparent text-white hover:bg-white/5"
+                  className="flex-1 border-input bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   Cancel
                 </Button>

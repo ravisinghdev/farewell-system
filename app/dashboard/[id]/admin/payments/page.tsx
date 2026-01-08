@@ -1,6 +1,9 @@
-import { Suspense } from "react";
-import { getPaymentLinksAction } from "@/app/actions/payment-link-actions";
-import { CreateLinkDialog } from "@/components/admin/gateway/create-link-dialog";
+import {
+  getFarewellMembersAction,
+  getPendingContributionsAction,
+} from "@/app/actions/payout-actions";
+import { AllocationManager } from "@/components/admin/payment/allocation-manager";
+import { VerificationTable } from "@/components/admin/payment/verification-table";
 import {
   Card,
   CardContent,
@@ -10,38 +13,65 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Copy } from "lucide-react";
+import {
+  ExternalLink,
+  Copy,
+  CreditCard,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RevenueChart } from "@/components/admin/gateway/revenue-chart";
+import { getPaymentLinksAction } from "@/app/actions/payment-link-actions";
+import { CreateLinkDialog } from "@/components/admin/gateway/create-link-dialog";
 
-// Stats/Analytics can be added here
-import { CreditCard, TrendingUp, Users } from "lucide-react";
-
-interface PageProps {
-  params: {
-    id: string; // farewellId
-  };
-}
+// ... existing imports
 
 export default async function PaymentGatewayPage({ params }: any) {
   const { id } = await params;
-  const { links, error } = await getPaymentLinksAction(id);
+
+  // Fetch data in parallel
+  const [linksResult, members, pendingRequests] = await Promise.all([
+    getPaymentLinksAction(id),
+    getFarewellMembersAction(id),
+    getPendingContributionsAction(id),
+  ]);
+
+  const { links, error } = linksResult;
 
   if (error) {
     return <div>Error loading payment gateway</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Payment Gateway</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Financial Management
+          </h1>
           <p className="text-muted-foreground">
-            Manage payment links and view transactions.
+            Manage budget allocations, verify payments, and payment links.
           </p>
         </div>
         <CreateLinkDialog farewellId={id} />
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-2">
+        <AllocationManager farewellId={id} users={members} />
+
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>Pending Verifications</CardTitle>
+            <CardDescription>
+              Verify payment requests from users.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <VerificationTable requests={pendingRequests} farewellId={id} />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Analytics Cards (Placeholder data for now) */}

@@ -16,7 +16,7 @@ import {
   getPayoutMethodsAction,
   addPayoutMethodAction,
   deletePayoutMethodAction,
-} from "@/actions/payouts";
+} from "@/app/actions/payout-actions";
 import { toast } from "sonner";
 import {
   Loader2,

@@ -26,11 +26,11 @@ export function FinancialOverview({
     let totalSpend = 0;
 
     duties.forEach((d) => {
-      totalBudget += d.expense_limit || 0;
+      totalBudget += d.expected_amount || 0;
       // Calculate spend from Approved receipts
       const dutySpend = (d.receipts || [])
         .filter((r) => r.status === "approved")
-        .reduce((acc, r) => acc + (r.amount || 0), 0);
+        .reduce((acc, r) => acc + (r.amount_paid || 0), 0);
       totalSpend += dutySpend;
     });
 
@@ -42,15 +42,15 @@ export function FinancialOverview({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Total Budget {isAdmin && "(Editable)"}
+            Total Budget
           </CardTitle>
-          <Wallet className="w-4 h-4 text-blue-400" />
+          <Wallet className="w-4 h-4 text-blue-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-foreground">
             {formatMoney(stats.totalBudget)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
@@ -59,15 +59,15 @@ export function FinancialOverview({
         </CardContent>
       </Card>
 
-      <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Actual Spend
           </CardTitle>
-          <DollarSign className="w-4 h-4 text-yellow-400" />
+          <DollarSign className="w-4 h-4 text-amber-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-white">
+          <div className="text-2xl font-bold text-foreground">
             {formatMoney(stats.totalSpend)}
           </div>
           <Progress value={stats.percentage} className="mt-2 h-1" />
@@ -77,40 +77,40 @@ export function FinancialOverview({
         </CardContent>
       </Card>
 
-      <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+      <Card className="bg-card border-border shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Remaining
           </CardTitle>
-          <ArrowDown className="w-4 h-4 text-green-400" />
+          <ArrowDown className="w-4 h-4 text-emerald-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-400">
+          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
             {formatMoney(stats.remaining)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">Available Funds</p>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-indigo-600 to-purple-600 border-none text-white">
+      <Card className="bg-primary/5 border-primary/20 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-white/80">
+          <CardTitle className="text-sm font-medium text-primary">
             Pending Claims
           </CardTitle>
-          <ArrowUp className="w-4 h-4 text-white" />
+          <ArrowUp className="w-4 h-4 text-primary" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold text-primary">
             {duties.reduce(
               (acc, d) =>
                 acc +
-                ((d.receipts || []).filter((r) => r.status === "pending")
+                ((d.receipts || []).filter((r) => r.status === "pending_vote")
                   .length || 0),
               0
             )}
           </div>
-          <p className="text-xs text-white/60 mt-1">
-            Receipts needing approval
+          <p className="text-xs text-primary/70 mt-1">
+            Receipts needing vote/approval
           </p>
         </CardContent>
       </Card>

@@ -146,10 +146,21 @@ export function UnifiedBottomNav() {
       <TooltipProvider delayDuration={0}>
         <nav className="pointer-events-auto flex items-center gap-1 p-2 bg-white/80 dark:bg-black/40 w-fit max-w-full overflow-x-auto rounded-2xl border border-zinc-200 dark:border-white/10 backdrop-blur-xl shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 ring-1 ring-black/5 dark:ring-white/5 no-scrollbar">
           {navItems.map((link) => {
-            const dynamicHref =
-              link.href === "/dashboard"
-                ? `/dashboard/${farewellId}`
-                : link.href.replace("/dashboard", `/dashboard/${farewellId}`);
+            // Fix: settingsLinks already contain farewellId, so don't double replace
+            // For NAV_GROUPS (which might use generic placeholders), we might need replacement.
+            // But NAV_GROUPS items usually define generic paths or specific ones?
+            // Let's check if the href ALREADY contains the farewellId.
+            let dynamicHref = link.href;
+
+            if (link.href === "/dashboard") {
+              dynamicHref = `/dashboard/${farewellId}`;
+            } else if (!link.href.includes(farewellId)) {
+              // Only replace if ID is missing (generic /dashboard path)
+              dynamicHref = link.href.replace(
+                "/dashboard",
+                `/dashboard/${farewellId}`
+              );
+            }
 
             // Active logic: Exact match for home, startsWith for others
             const isActive =

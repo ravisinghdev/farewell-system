@@ -73,12 +73,12 @@ export function GlassDutyCard({ duty, isOverlay }: GlassDutyCardProps) {
           </div>
           <div className="flex items-center space-x-1">
             <DollarSign className="w-3 h-3" />
-            <span>{duty.expense_limit}</span>
+            <span>{duty.expected_amount || 0}</span>
           </div>
         </div>
         {/* Progress Bar placeholder for Subtasks */}
         {(duty as any).completion_percentage !== undefined && (
-          <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="mt-3 h-1 w-full bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-primary/70 rounded-full"
               style={{ width: `${(duty as any).completion_percentage}%` }}

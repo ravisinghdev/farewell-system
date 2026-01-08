@@ -39,8 +39,8 @@ export default async function DutiesPage({
       */}
 
       <div className="flex flex-col h-full space-y-6">
-        {/* Top Section: Metrics (Optional, keeps context) */}
-        <div className="hidden md:grid grid-cols-1 lg:grid-cols-4 gap-6 shrink-0">
+        {/* Top Section: Metrics */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 shrink-0">
           <div className="lg:col-span-3">
             <FinancialOverview duties={duties} isAdmin={isAdmin} />
           </div>

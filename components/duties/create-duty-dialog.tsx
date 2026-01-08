@@ -16,8 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   createDutyAction,
   assignDutiesAction,
+  getFarewellMembersAction,
 } from "@/app/actions/duty-actions";
-import { getFarewellMembers } from "@/actions/people";
 import { toast } from "sonner";
 import { Loader2, Plus, CalendarIcon } from "lucide-react";
 import {
@@ -82,7 +82,7 @@ export function CreateDutyDialog({
       // Previous file imported from "@/actions/people" but typical pattern is app/actions/something.
       // I corrected to "@/app/actions/people-actions" assuming standard structure,
       // but if it fails I'll check.
-      const data = await getFarewellMembers(farewellId);
+      const data = await getFarewellMembersAction(farewellId);
       setMembers(data || []);
     } catch (error) {
       console.error("Failed to fetch members", error);
@@ -101,10 +101,10 @@ export function CreateDutyDialog({
       const dutyResult = await createDutyAction(farewellId, {
         title,
         description,
-        expense_limit: expenseLimit ? parseFloat(expenseLimit) : 0,
+        expected_amount: expenseLimit ? parseFloat(expenseLimit) : 0,
+        expense_type: "reimbursable",
         deadline: deadline?.toISOString(),
         priority,
-        expense_limit_hard: expenseLimitHard,
       });
 
       if (dutyResult.error || !dutyResult.data) {

@@ -37,8 +37,14 @@ export async function updateSettingsAction(
   try {
     await updateFarewellSettings(farewellId, settings);
 
-    // Revalidate the cache
+    // Revalidate the dashboard layout to update nav/context
     revalidatePath(`/dashboard/${farewellId}`, "layout");
+
+    // Also explicitly revalidate the settings path to ensure page data is fresh
+    revalidatePath(`/dashboard/${farewellId}/settings`, "layout");
+    if (path) {
+      revalidatePath(path);
+    }
 
     // Return success
     return { success: true };

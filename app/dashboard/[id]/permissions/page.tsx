@@ -1,12 +1,36 @@
-"use client";
+import { getSettingsAction } from "@/app/actions/settings/actions";
+import { RolesSettingsForm } from "@/components/settings/forms/RolesSettingsForm";
+import { Shield } from "lucide-react";
 
-import { ConstructionPlaceholder } from "@/components/ui/construction-placeholder";
+export const dynamic = "force-dynamic";
 
-export default function PermissionsPage() {
+export default async function PermissionsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const settings = await getSettingsAction(id);
+
   return (
-    <ConstructionPlaceholder
-      title="Permissions & Roles"
-      description="Advanced role management and permission settings are currently under development."
-    />
+    <div className="flex flex-col h-full space-y-6 p-6 pt-16">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Access & Roles</h2>
+          <p className="text-muted-foreground">
+            Manage granular permissions for different user roles.
+          </p>
+        </div>
+        <Shield className="w-8 h-8 text-muted-foreground/20" />
+      </div>
+
+      <div className="max-w-4xl">
+        {/* We reuse the existing Roles Form component */}
+        <RolesSettingsForm
+          farewellId={id}
+          initialRoles={settings.roles || {}}
+        />
+      </div>
+    </div>
   );
 }

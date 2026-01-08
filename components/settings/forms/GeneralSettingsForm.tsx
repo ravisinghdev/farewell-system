@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ export function GeneralSettingsForm({
   initialSettings,
 }: GeneralSettingsFormProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm({
@@ -56,9 +57,13 @@ export function GeneralSettingsForm({
   function onSubmit(data: GeneralSettings) {
     startTransition(() => {
       // Transition callback must be void, so we wrap the async call
-      updateSettingsAction(farewellId, {
-        general: data,
-      } as Partial<FarewellSettings>)
+      updateSettingsAction(
+        farewellId,
+        {
+          general: data,
+        } as Partial<FarewellSettings>,
+        pathname
+      )
         .then((result) => {
           if (result.success) {
             toast.success("Settings updated successfully");
