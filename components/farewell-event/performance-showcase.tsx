@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Badge } from "../ui/badge";
 
 interface PerformanceShowcaseProps {
   performances: Performance[];
@@ -116,6 +117,25 @@ export function PerformanceShowcase({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredPerformances.map((perf) => (
           <div key={perf.id} className="group relative">
+            <div className="flex gap-1">
+              {perf.status === "ready" && (
+                <Badge
+                  variant="secondary"
+                  className="bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                >
+                  Ready
+                </Badge>
+              )}
+              {perf.risk_level === "high" && (
+                <Badge
+                  variant="outline"
+                  className="border-red-500/50 text-red-500"
+                >
+                  High Risk
+                </Badge>
+              )}
+            </div>
+
             <PerformanceCard
               performance={perf}
               isAdmin={isAdmin}
