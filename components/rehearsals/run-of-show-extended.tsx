@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PromoteToDutyMenuItem } from "./promote-to-duty-menu-item";
 
 interface Segment {
   id: string;
@@ -270,6 +271,10 @@ export function RunOfShowExtended({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <PromoteToDutyMenuItem
+                          segmentTitle={segment.title}
+                          segmentNotes={segment.notes}
+                        />
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDelete(segment.id)}

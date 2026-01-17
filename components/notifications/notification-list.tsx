@@ -19,6 +19,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -126,16 +127,22 @@ export function NotificationList({
     };
   }, []);
 
-  if (loading && notifications.length === 0) {
+  if (loading) {
     return (
-      <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        Loading...
+      <div className="flex flex-col gap-4 p-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex gap-4">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-4 w-[200px]" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
-  if (notifications.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[300px] text-center p-6 space-y-3">
         <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">

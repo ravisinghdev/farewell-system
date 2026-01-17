@@ -390,6 +390,36 @@ export async function getDecorItemsAction(farewellId: string) {
   }));
 }
 
+export async function getDecorItemByIdAction(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("decor_items")
+    .select(
+      `
+      *,
+      assignee:users(
+        id,
+        full_name,
+        avatar_url
+      )
+    `
+    )
+    .eq("id", id)
+    .single();
+
+  if (error) return null;
+  return {
+    ...data,
+    assignee: data.assignee
+      ? {
+          id: data.assignee.id,
+          full_name: data.assignee.full_name,
+          avatar_url: data.assignee.avatar_url,
+        }
+      : null,
+  };
+}
+
 export async function createDecorItemAction(
   farewellId: string,
   data: {

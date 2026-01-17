@@ -7,76 +7,16 @@ import { ActionState } from "@/types/custom";
 import { logAudit } from "@/lib/audit-logger";
 import { isFarewellAdmin } from "@/lib/auth/roles-server";
 import { createSystemNotification } from "./notifications";
+import {
+  Duty,
+  DutyAssignment,
+  DutyReceipt,
+  ReceiptVote,
+  DutyStatus,
+} from "@/types/duties";
 
-// --- Types ---
-
-export interface Duty {
-  id: string;
-  farewell_id: string;
-  title: string;
-  description: string | null;
-  status:
-    | "pending"
-    | "pending_receipt"
-    | "voting"
-    | "admin_review"
-    | "approved"
-    | "rejected"
-    | "in_progress"
-    | "completed";
-  expense_type: "none" | "reimbursable" | "advance";
-  expected_amount: number;
-  final_amount: number;
-  deadline: string | null;
-  // Legacy / UI Helpers
-  priority?: "low" | "medium" | "high";
-  category?: string;
-  created_at: string;
-  updated_at: string;
-  assignments?: DutyAssignment[];
-  receipts?: DutyReceipt[];
-}
-
-export interface DutyAssignment {
-  id: string;
-  duty_id: string;
-  user_id: string;
-  assigned_at: string;
-  user?: {
-    full_name: string;
-    avatar_url: string;
-    email: string;
-  };
-}
-
-export interface DutyReceipt {
-  id: string;
-  duty_id: string;
-  uploader_id: string;
-  amount_paid: number;
-  image_url: string;
-  payment_mode: "upi" | "cash" | "online" | "card";
-  status: "pending_vote" | "approved" | "rejected";
-  created_at: string;
-  uploader?: {
-    full_name: string;
-    avatar_url: string;
-  };
-  votes?: ReceiptVote[];
-}
-
-export interface ReceiptVote {
-  id: string;
-  receipt_id: string;
-  voter_id: string;
-  vote: "valid" | "invalid";
-  comment: string | null;
-  created_at: string;
-  voter?: {
-    full_name: string;
-    avatar_url: string;
-  };
-}
+// Types are imported for internal use but not re-exported to avoid build issues
+// import { Duty, DutyAssignment, DutyReceipt, ReceiptVote, DutyStatus } from "@/types/duties";
 
 // --- Fetch Actions ---
 
@@ -86,20 +26,7 @@ export async function getDutiesAction(farewellId: string): Promise<Duty[]> {
   // 1. Fetch Duties + Assignments
   const { data: dutiesData, error: dutiesError } = await supabase
     .from("duties")
-    .select(
-      `
-      *,
-      assignments:duty_assignments(
-        *,
-        user:users!duty_assignments_user_id_fkey(full_name, avatar_url, email)
-      ),
-      receipts:duty_receipts(
-        *,
-        uploader:users!duty_receipts_uploader_id_fkey(full_name, avatar_url),
-        votes:receipt_votes(*)
-      )
-    `
-    )
+    .select("*")
     .eq("farewell_id", farewellId)
     .order("created_at", { ascending: false });
 
@@ -108,32 +35,47 @@ export async function getDutiesAction(farewellId: string): Promise<Duty[]> {
     return [];
   }
 
-  // 2. Fetch Receipts & Votes (Admin client to ensure visibility)
-  // We fetch receipts for these duties.
+  // 2. Fetch Nested Data Manually (Robustness)
   const dutyIds = dutiesData.map((d) => d.id);
   let receiptsMap: Record<string, DutyReceipt[]> = {};
+  let assignmentsMap: Record<string, DutyAssignment[]> = {};
 
   if (dutyIds.length > 0) {
-    console.log("Fetching receipts for duty IDs:", dutyIds);
-    // 2a. Fetch Receipts (No Votes Join)
-    const { data: receiptsData, error: receiptError } = await supabase
+    // 2a. Fetch Receipts
+    const { data: receiptsData } = await supabase
       .from("duty_receipts")
       .select(
         `
         *,
-        uploader:users(full_name, avatar_url)
+        uploader:users!duty_receipts_uploader_id_fkey(full_name, avatar_url)
       `
       )
       .in("duty_id", dutyIds);
 
-    if (receiptError) console.error("Receipt Fetch Error:", receiptError);
+    // 2b. Fetch Assignments
+    const { data: assignmentsData } = await supabase
+      .from("duty_assignments")
+      .select(
+        `
+        *,
+        user:users!duty_assignments_user_id_fkey(full_name, avatar_url, email)
+      `
+      )
+      .in("duty_id", dutyIds);
+
+    if (assignmentsData) {
+      assignmentsData.forEach((a) => {
+        if (!assignmentsMap[a.duty_id]) assignmentsMap[a.duty_id] = [];
+        assignmentsMap[a.duty_id].push(a as any);
+      });
+    }
 
     if (receiptsData && receiptsData.length > 0) {
-      // 2b. Fetch Votes Manually (Avoid Relationship Error)
+      // 2c. Fetch Votes
       const receiptIds = receiptsData.map((r) => r.id);
       let votesMap: Record<string, ReceiptVote[]> = {};
 
-      const { data: votesData, error: votesError } = await supabase
+      const { data: votesData } = await supabase
         .from("receipt_votes")
         .select(
           `
@@ -143,8 +85,6 @@ export async function getDutiesAction(farewellId: string): Promise<Duty[]> {
         )
         .in("receipt_id", receiptIds);
 
-      if (votesError) console.error("Votes Fetch Error:", votesError);
-
       if (votesData) {
         votesData.forEach((v) => {
           if (!votesMap[v.receipt_id]) votesMap[v.receipt_id] = [];
@@ -152,8 +92,6 @@ export async function getDutiesAction(farewellId: string): Promise<Duty[]> {
         });
       }
 
-      // 2c. Merge Votes into Receipts
-      console.log("Fetched receipts count:", receiptsData.length);
       receiptsData.forEach((r) => {
         const receiptWithVotes = { ...r, votes: votesMap[r.id] || [] };
         if (!receiptsMap[r.duty_id]) receiptsMap[r.duty_id] = [];
@@ -162,11 +100,27 @@ export async function getDutiesAction(farewellId: string): Promise<Duty[]> {
     }
   }
 
-  // 3. Merge
+  // 3. Merge and Map to UI Type
   return (dutiesData as any[]).map((d) => ({
-    ...d,
+    id: d.id,
+    farewell_id: d.farewell_id,
+    title: d.title,
+    description: d.description,
+    category: d.category || "General",
+    min_assignees: 1,
+    max_assignees: 1,
+    status: d.status as DutyStatus,
+    created_at: d.created_at,
+    updated_at: d.updated_at,
     receipts: receiptsMap[d.id] || [],
-  }));
+    assignments: assignmentsMap[d.id] || [],
+    // Legacy mapping if needed
+    expense_type: d.expense_type,
+    expected_amount: d.expected_amount,
+    final_amount: d.final_amount,
+    deadline: d.deadline,
+    priority: d.priority,
+  })) as Duty[];
 }
 
 // --- Write Actions ---

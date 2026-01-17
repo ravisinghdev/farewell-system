@@ -13,8 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getFarewellMembers } from "@/actions/people";
-import { assignDutiesAction } from "@/app/actions/duty-actions";
+import {
+  assignDutiesAction,
+  getFarewellMembersAction,
+} from "@/app/actions/duty-actions";
 import { toast } from "sonner";
 import { Loader2, Search } from "lucide-react";
 
@@ -51,7 +53,7 @@ export function AssignmentDialog({
   const fetchMembers = async () => {
     setLoading(true);
     try {
-      const data = await getFarewellMembers(farewellId, "student"); // Or fetch all roles?
+      const data = await getFarewellMembersAction(farewellId);
       setMembers(data || []);
     } catch (error) {
       toast.error("Failed to load members");

@@ -26,8 +26,10 @@ import {
   updateDutyAction,
   deleteDutyAction,
 } from "@/app/actions/duty-management-actions";
-import { assignDutiesAction } from "@/app/actions/duty-actions";
-import { getFarewellMembers } from "@/actions/people";
+import {
+  assignDutiesAction,
+  getFarewellMembersAction,
+} from "@/app/actions/duty-actions";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -36,6 +38,7 @@ import {
   Save,
   UserPlus,
   X,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -91,7 +94,7 @@ export function DutyManagementPanel({
     if (members.length > 0) return;
     setLoadingMembers(true);
     try {
-      const data = await getFarewellMembers(farewellId);
+      const data = await getFarewellMembersAction(farewellId);
       setMembers(data || []);
     } catch (error) {
       toast.error("Failed to load members");
@@ -390,8 +393,8 @@ export function DutyManagementPanel({
 
             <ScrollArea className="h-64 border rounded-lg p-2 mb-4">
               {loadingMembers ? (
-                <div className="text-center text-muted-foreground py-8">
-                  Loading...
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
               ) : (
                 <div className="space-y-1">

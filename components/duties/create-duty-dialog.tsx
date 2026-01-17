@@ -43,12 +43,16 @@ interface CreateDutyDialogProps {
   farewellId?: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  initialTitle?: string;
+  initialDescription?: string;
 }
 
 export function CreateDutyDialog({
   onSuccess,
   open: controlledOpen,
   onOpenChange,
+  initialTitle = "",
+  initialDescription = "",
 }: CreateDutyDialogProps) {
   const { farewell } = useFarewell();
   const farewellId = farewell.id;
@@ -59,8 +63,8 @@ export function CreateDutyDialog({
   const setOpen = isControlled ? onOpenChange! : setInternalOpen;
 
   // Form State
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState(initialTitle);
+  const [description, setDescription] = useState(initialDescription);
   const [expenseLimit, setExpenseLimit] = useState("");
   const [deadline, setDeadline] = useState<Date | undefined>(undefined);
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
@@ -137,8 +141,8 @@ export function CreateDutyDialog({
   };
 
   const resetForm = () => {
-    setTitle("");
-    setDescription("");
+    setTitle(initialTitle);
+    setDescription(initialDescription);
     setExpenseLimit("");
     setDeadline(undefined);
     setPrimaryAssignee("");
@@ -277,8 +281,8 @@ export function CreateDutyDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {loadingMembers ? (
-                    <div className="p-2 text-center text-sm text-muted-foreground">
-                      Loading...
+                    <div className="flex items-center justify-center p-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
                   ) : (
                     members.map((m) => (

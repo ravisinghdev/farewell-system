@@ -3,6 +3,7 @@ import {
   getRehearsalByIdAction,
   getFarewellMembersAction,
 } from "@/app/actions/rehearsal-actions";
+import { getDutiesAction } from "@/app/actions/duty-actions";
 import {
   getFarewellRoleFromDB,
   isFarewellAdmin,
@@ -36,11 +37,12 @@ export default async function RehearsalDetailPage({
   }
 
   // 2. Fetch Data in Parallel (Waterfall Optimization)
-  const [rehearsalResult, role, isAdmin, members] = await Promise.all([
+  const [rehearsalResult, role, isAdmin, members, duties] = await Promise.all([
     getRehearsalByIdAction(rehearsalId),
     getFarewellRoleFromDB(farewellId, user.id),
     isFarewellAdmin(farewellId, user.id),
     getFarewellMembersAction(farewellId),
+    getDutiesAction(farewellId),
   ]);
 
   if (!rehearsalResult || !rehearsalResult.rehearsal) {
@@ -52,8 +54,13 @@ export default async function RehearsalDetailPage({
       farewellId={farewellId}
       rehearsalId={rehearsalId}
       initialRehearsal={rehearsalResult.rehearsal}
-      currentUserRole={role}
-      isAdmin={isAdmin}
+      currentUserRole={role!}
+      currentUserId={user.id}
+      // isAdmin prop is actually not on the interface anymore, removed it in previous step?
+      // Wait, let me check the interface again.
+      // The interface in previous step was updated to remove isAdmin and add currentUserId.
+      // So I must match that.
+      duties={duties as any}
       farewellMembers={members}
     />
   );

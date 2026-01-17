@@ -84,6 +84,16 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Events & Planning",
     items: [
       {
+        href: "/dashboard/farewell-event",
+        label: "Main Farewell Event",
+        icon: PartyPopper,
+      },
+      {
+        href: "/dashboard/performances",
+        label: "Performances & Acts",
+        icon: Music,
+      },
+      {
         href: "/dashboard/rehearsals",
         label: "Rehearsals & Planning",
         icon: ClipboardList,
@@ -92,16 +102,6 @@ export const NAV_GROUPS: NavGroup[] = [
         href: "/dashboard/decor",
         label: "Decoration & Setup",
         icon: Palette,
-      },
-      {
-        href: "/dashboard/performances",
-        label: "Performances & Acts",
-        icon: Music,
-      },
-      {
-        href: "/dashboard/farewell-event",
-        label: "Main Farewell Event",
-        icon: PartyPopper,
       },
     ],
   },

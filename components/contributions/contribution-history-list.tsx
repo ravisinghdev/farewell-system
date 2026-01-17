@@ -289,7 +289,7 @@ export function ContributionHistoryList({
           >
             {isLoadingMore ? (
               <>
-                <Loader2 className="w-3 h-3 mr-2 animate-spin" /> Loading...
+                <Loader2 className="w-3 h-3 mr-2 animate-spin" />
               </>
             ) : (
               "Load Older Records"

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Duty, updateDutyStatusAction } from "@/app/actions/duty-actions";
+import { updateDutyStatusAction } from "@/app/actions/duty-actions";
+import { Duty } from "@/types/duties";
 import {
   DndContext,
   DragOverlay,

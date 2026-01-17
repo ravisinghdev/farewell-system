@@ -2,13 +2,12 @@
 
 import { useState, useRef } from "react";
 import {
-  Duty,
-  DutyReceipt,
   uploadDutyReceiptAction,
   approveDutyReceiptAction,
   rejectDutyReceiptAction,
   castReceiptVoteAction,
 } from "@/app/actions/duty-actions";
+import { Duty, DutyReceipt } from "@/types/duties";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -304,8 +303,8 @@ export function ReceiptManager({
                         receipt.status === "approved"
                           ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/10"
                           : receipt.status === "rejected"
-                          ? "text-red-400 border-red-500/30 bg-red-500/10"
-                          : "text-amber-400 border-amber-500/30 bg-amber-500/10"
+                            ? "text-red-400 border-red-500/30 bg-red-500/10"
+                            : "text-amber-400 border-amber-500/30 bg-amber-500/10"
                       }`}
                     >
                       {receipt.status === "pending_vote"

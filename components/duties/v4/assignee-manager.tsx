@@ -3,10 +3,10 @@
 
 import { useState } from "react";
 import {
-  Duty,
   assignDutiesAction,
   unassignDutyAction,
 } from "@/app/actions/duty-actions";
+import { Duty } from "@/types/duties";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {

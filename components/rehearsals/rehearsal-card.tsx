@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, Users, MoreHorizontal } from "lucide-react";
+import { Calendar, Clock, MapPin, MoreHorizontal } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import {
@@ -20,11 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface RehearsalCardProps {
-  rehearsal: any; // Type should be imported from types/custom or supabase generated types
+  rehearsal: any;
   farewellId: string;
   isAdmin: boolean;
   onDelete?: (id: string) => void;
-  onDuplicate?: (id: string) => void;
 }
 
 export function RehearsalCard({
@@ -32,9 +31,15 @@ export function RehearsalCard({
   farewellId,
   isAdmin,
   onDelete,
-  onDuplicate,
 }: RehearsalCardProps) {
-  const statusColors: Record<
+  const statusStyles: Record<string, string> = {
+    scheduled: "from-indigo-500 to-blue-500",
+    ongoing: "from-emerald-500 to-green-500",
+    completed: "from-slate-400 to-slate-500",
+    cancelled: "from-rose-500 to-red-500",
+  };
+
+  const statusBadge: Record<
     string,
     "default" | "secondary" | "destructive" | "outline"
   > = {
@@ -45,37 +50,36 @@ export function RehearsalCard({
   };
 
   return (
-    <Card className="relative overflow-hidden hover:shadow-md transition-shadow">
+    <Card className="relative overflow-hidden rounded-xl border shadow-sm transition-all hover:shadow-lg hover:-translate-y-0.5">
+      {/* Gradient status strip */}
       <div
-        className={`absolute top-0 left-0 w-1 h-full ${
-          rehearsal.status === "ongoing"
-            ? "bg-green-500"
-            : rehearsal.status === "cancelled"
-            ? "bg-red-500"
-            : "bg-primary"
+        className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${
+          statusStyles[rehearsal.status] ?? "from-primary to-primary"
         }`}
       />
 
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge
-                variant={statusColors[rehearsal.status] || "outline"}
-                className="capitalize"
+                variant={statusBadge[rehearsal.status] ?? "outline"}
+                className="capitalize px-2 py-0.5 text-xs"
               >
                 {rehearsal.status}
               </Badge>
+
               {rehearsal.rehearsal_type && (
                 <Badge
                   variant="outline"
-                  className="capitalize text-xs font-normal"
+                  className="capitalize text-[11px] font-normal text-muted-foreground"
                 >
                   {rehearsal.rehearsal_type}
                 </Badge>
               )}
             </div>
-            <CardTitle className="text-lg pt-1 line-clamp-1">
+
+            <CardTitle className="text-lg font-semibold leading-snug line-clamp-1">
               {rehearsal.title}
             </CardTitle>
           </div>
@@ -83,49 +87,29 @@ export function RehearsalCard({
           {isAdmin && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="w-4 h-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-full hover:bg-muted"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
+
+              <DropdownMenuContent
+                align="end"
+                className="rounded-lg border shadow-md"
+              >
+                <DropdownMenuItem asChild className="cursor-pointer">
                   <Link
                     href={`/dashboard/${farewellId}/rehearsals/${rehearsal.id}`}
                   >
                     Manage Details
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    // Creating a pseudo-form or handling via a small dialog would be better
-                    // But for speed, let's just prompt or use a default 'tomorrow'
-                    // Actually, I'll emit an event or rely on a parent handler if passed,
-                    // but to be self-contained, I'll use a simple window.prompt for date for now
-                    // or better yet, just render a Dialog in this component (might be heavy).
-                    // Let's defer to a parent or use a simple confirm for "Duplicate for Tomorrow"?
 
-                    // Simplest MVF (Minimum Viable Feature): Duplicate for Tomorrow
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    const dateStr = tomorrow.toISOString().split("T")[0];
-                    if (
-                      confirm(
-                        `Duplicate "${rehearsal.title}" for tomorrow (${dateStr})?`
-                      )
-                    ) {
-                      // We need to import the action. But we are client side.
-                      // We should pass a handler, but to move fast I'll import.
-                      // import { duplicateRehearsalAction } ...
-                      // Actually, I'll pass a prop or just Assume the loop above.
-                      // To avoid prop drilling hell, let's assume onDuplicate prop.
-                      onDuplicate?.(rehearsal.id);
-                    }
-                  }}
-                >
-                  Duplicate (Tomorrow)
-                </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
+                  className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700"
                   onClick={() => onDelete?.(rehearsal.id)}
                 >
                   Delete Rehearsal
@@ -136,15 +120,15 @@ export function RehearsalCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-2.5 text-sm">
+      <CardContent className="space-y-3 text-sm">
+        {/* Date */}
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Calendar className="w-4 h-4 shrink-0" />
+          <Calendar className="h-4 w-4" />
           <span>
             {(() => {
               try {
                 const d = new Date(rehearsal.start_time);
-                if (isNaN(d.getTime())) return "";
-                return format(d, "EEE, MMM d, yyyy");
+                return isNaN(d.getTime()) ? "" : format(d, "EEE, MMM d, yyyy");
               } catch {
                 return "";
               }
@@ -152,15 +136,17 @@ export function RehearsalCard({
           </span>
         </div>
 
+        {/* Time */}
         <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="w-4 h-4 shrink-0" />
+          <Clock className="h-4 w-4" />
           <span>
             {(() => {
               try {
                 const start = new Date(rehearsal.start_time);
                 const end = new Date(rehearsal.end_time);
-                if (isNaN(start.getTime()) || isNaN(end.getTime())) return "";
-                return `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`;
+                return isNaN(start.getTime()) || isNaN(end.getTime())
+                  ? ""
+                  : `${format(start, "h:mm a")} – ${format(end, "h:mm a")}`;
               } catch {
                 return "";
               }
@@ -168,22 +154,25 @@ export function RehearsalCard({
           </span>
         </div>
 
+        {/* Venue */}
         {rehearsal.venue && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="w-4 h-4 shrink-0" />
+            <MapPin className="h-4 w-4" />
             <span className="line-clamp-1">{rehearsal.venue}</span>
           </div>
         )}
 
+        {/* Description */}
         {rehearsal.description && (
-          <p className="text-muted-foreground text-xs line-clamp-2 mt-2 pt-2 border-t">
+          <p className="pt-2 mt-2 text-xs text-muted-foreground border-t line-clamp-2">
             {rehearsal.description}
           </p>
         )}
 
+        {/* Goal */}
         {rehearsal.goal && (
-          <div className="bg-secondary/50 p-2 rounded text-xs mt-2 text-secondary-foreground border border-secondary">
-            <span className="font-medium uppercase tracking-wide opacity-70 mr-1">
+          <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs">
+            <span className="mr-1 font-semibold uppercase tracking-wide text-muted-foreground">
               Goal:
             </span>
             {rehearsal.goal}
@@ -191,10 +180,10 @@ export function RehearsalCard({
         )}
       </CardContent>
 
-      <CardFooter className="pt-0">
-        <Button asChild variant="secondary" className="w-full">
+      <CardFooter>
+        <Button asChild className="w-full rounded-lg font-medium shadow-sm">
           <Link href={`/dashboard/${farewellId}/rehearsals/${rehearsal.id}`}>
-            View Dashboard
+            Open Rehearsal Dashboard →
           </Link>
         </Button>
       </CardFooter>

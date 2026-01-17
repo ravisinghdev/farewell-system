@@ -217,176 +217,176 @@ function RehearsalsContent() {
     <PageScaffold
       title="Rehearsals & Planning"
       description="Military-grade scheduling for all practices."
-      action={
-        isAdmin && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => resetForm()}>
-                <Plus className="w-4 h-4 mr-2" /> Schedule Session
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Schedule Rehearsal</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label>Title</Label>
-                  <Input
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Opening Number Practice"
-                  />
-                </div>
+      // action={
+      //   isAdmin && (
+      //     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      //       <DialogTrigger asChild>
+      //         <Button onClick={() => resetForm()}>
+      //           <Plus className="w-4 h-4 mr-2" /> Schedule Session
+      //         </Button>
+      //       </DialogTrigger>
+      //       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      //         <DialogHeader>
+      //           <DialogTitle>Schedule Rehearsal</DialogTitle>
+      //         </DialogHeader>
+      //         <div className="grid gap-4 py-4">
+      //           <div className="grid gap-2">
+      //             <Label>Title</Label>
+      //             <Input
+      //               value={title}
+      //               onChange={(e) => setTitle(e.target.value)}
+      //               placeholder="e.g. Opening Number Practice"
+      //             />
+      //           </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Date</Label>
-                    <Input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Venue</Label>
-                    <Input
-                      value={venue}
-                      onChange={(e) => setVenue(e.target.value)}
-                      placeholder="e.g. Auditorium"
-                    />
-                  </div>
-                </div>
+      //           <div className="grid grid-cols-2 gap-4">
+      //             <div className="grid gap-2">
+      //               <Label>Date</Label>
+      //               <Input
+      //                 type="date"
+      //                 value={date}
+      //                 onChange={(e) => setDate(e.target.value)}
+      //               />
+      //             </div>
+      //             <div className="grid gap-2">
+      //               <Label>Venue</Label>
+      //               <Input
+      //                 value={venue}
+      //                 onChange={(e) => setVenue(e.target.value)}
+      //                 placeholder="e.g. Auditorium"
+      //               />
+      //             </div>
+      //           </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Start Time</Label>
-                    <Input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>End Time</Label>
-                    <Input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                    />
-                  </div>
-                </div>
+      //           <div className="grid grid-cols-2 gap-4">
+      //             <div className="grid gap-2">
+      //               <Label>Start Time</Label>
+      //               <Input
+      //                 type="time"
+      //                 value={startTime}
+      //                 onChange={(e) => setStartTime(e.target.value)}
+      //               />
+      //             </div>
+      //             <div className="grid gap-2">
+      //               <Label>End Time</Label>
+      //               <Input
+      //                 type="time"
+      //                 value={endTime}
+      //                 onChange={(e) => setEndTime(e.target.value)}
+      //               />
+      //             </div>
+      //           </div>
 
-                <div className="grid gap-2">
-                  <Label>Rehearsal Type</Label>
-                  <Select
-                    value={rehearsalType}
-                    onValueChange={(val) => {
-                      setRehearsalType(val);
-                      // Reset pair if switching away
-                      if (val !== "pair") {
-                        setPair1("");
-                        setPair2("");
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">
-                        General (Open to All)
-                      </SelectItem>
-                      <SelectItem value="pair">Pair / Duet</SelectItem>
-                      <SelectItem value="sectional">
-                        Sectional / Group
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+      //           <div className="grid gap-2">
+      //             <Label>Rehearsal Type</Label>
+      //             <Select
+      //               value={rehearsalType}
+      //               onValueChange={(val) => {
+      //                 setRehearsalType(val);
+      //                 // Reset pair if switching away
+      //                 if (val !== "pair") {
+      //                   setPair1("");
+      //                   setPair2("");
+      //                 }
+      //               }}
+      //             >
+      //               <SelectTrigger>
+      //                 <SelectValue placeholder="Select type" />
+      //               </SelectTrigger>
+      //               <SelectContent>
+      //                 <SelectItem value="general">
+      //                   General (Open to All)
+      //                 </SelectItem>
+      //                 <SelectItem value="pair">Pair / Duet</SelectItem>
+      //                 <SelectItem value="sectional">
+      //                   Sectional / Group
+      //                 </SelectItem>
+      //               </SelectContent>
+      //             </Select>
+      //           </div>
 
-                {rehearsalType === "pair" && (
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border border-dashed">
-                    <div className="grid gap-2">
-                      <Label className="text-xs">Partner 1</Label>
-                      <Select value={pair1} onValueChange={setPair1}>
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="Select Partner" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {members.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.full_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label className="text-xs">Partner 2</Label>
-                      <Select value={pair2} onValueChange={setPair2}>
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="Select Partner" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {members.map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.full_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                )}
+      //           {rehearsalType === "pair" && (
+      //             <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border border-dashed">
+      //               <div className="grid gap-2">
+      //                 <Label className="text-xs">Partner 1</Label>
+      //                 <Select value={pair1} onValueChange={setPair1}>
+      //                   <SelectTrigger className="h-8 text-xs">
+      //                     <SelectValue placeholder="Select Partner" />
+      //                   </SelectTrigger>
+      //                   <SelectContent>
+      //                     {members.map((m) => (
+      //                       <SelectItem key={m.id} value={m.id}>
+      //                         {m.full_name}
+      //                       </SelectItem>
+      //                     ))}
+      //                   </SelectContent>
+      //                 </Select>
+      //               </div>
+      //               <div className="grid gap-2">
+      //                 <Label className="text-xs">Partner 2</Label>
+      //                 <Select value={pair2} onValueChange={setPair2}>
+      //                   <SelectTrigger className="h-8 text-xs">
+      //                     <SelectValue placeholder="Select Partner" />
+      //                   </SelectTrigger>
+      //                   <SelectContent>
+      //                     {members.map((m) => (
+      //                       <SelectItem key={m.id} value={m.id}>
+      //                         {m.full_name}
+      //                       </SelectItem>
+      //                     ))}
+      //                   </SelectContent>
+      //                 </Select>
+      //               </div>
+      //             </div>
+      //           )}
 
-                <div className="grid gap-2">
-                  <Label>Linked Performance (Optional)</Label>
-                  <Select
-                    value={performanceId}
-                    onValueChange={setPerformanceId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="General Session" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">None (General)</SelectItem>
-                      {performances.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+      //           <div className="grid gap-2">
+      //             <Label>Linked Performance (Optional)</Label>
+      //             <Select
+      //               value={performanceId}
+      //               onValueChange={setPerformanceId}
+      //             >
+      //               <SelectTrigger>
+      //                 <SelectValue placeholder="General Session" />
+      //               </SelectTrigger>
+      //               <SelectContent>
+      //                 <SelectItem value="general">None (General)</SelectItem>
+      //                 {performances.map((p) => (
+      //                   <SelectItem key={p.id} value={p.id}>
+      //                     {p.title}
+      //                   </SelectItem>
+      //                 ))}
+      //               </SelectContent>
+      //             </Select>
+      //           </div>
 
-                <div className="grid gap-2">
-                  <Label>Goal / Description</Label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="What do we need to achieve?"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreate} disabled={isSubmitting}>
-                  {isSubmitting && (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  )}
-                  Schedule
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )
-      }
+      //           <div className="grid gap-2">
+      //             <Label>Goal / Description</Label>
+      //             <Textarea
+      //               value={description}
+      //               onChange={(e) => setDescription(e.target.value)}
+      //               placeholder="What do we need to achieve?"
+      //             />
+      //           </div>
+      //         </div>
+      //         <DialogFooter>
+      //           <Button
+      //             variant="outline"
+      //             onClick={() => setIsDialogOpen(false)}
+      //           >
+      //             Cancel
+      //           </Button>
+      //           <Button onClick={handleCreate} disabled={isSubmitting}>
+      //             {isSubmitting && (
+      //               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      //             )}
+      //             Schedule
+      //           </Button>
+      //         </DialogFooter>
+      //       </DialogContent>
+      //     </Dialog>
+      //   )
+      // }
     >
       {filterPerfId && (
         <div className="mb-6 flex items-center justify-between bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-900/30">

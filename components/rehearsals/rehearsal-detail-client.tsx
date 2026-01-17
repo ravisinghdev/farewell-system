@@ -15,29 +15,36 @@ import { createClient } from "@/utils/supabase/client";
 import { RehearsalHeader } from "@/components/rehearsals/rehearsal-header";
 import { RunOfShowExtended } from "@/components/rehearsals/run-of-show-extended";
 import { RehearsalAssets } from "@/components/rehearsals/rehearsal-assets";
+import { RehearsalDutiesTab } from "@/components/rehearsals/rehearsal-duties-tab";
+import { Duty } from "@/types/duties";
 import { RehearsalCastManager } from "@/components/rehearsals/rehearsal-cast-manager";
 import { AttendanceTracker } from "@/components/rehearsals/attendance-tracker";
 import { getRehearsalByIdAction } from "@/app/actions/rehearsal-actions";
 import { RehearsalOverviewTab } from "@/components/rehearsals/rehearsal-overview-tab";
 
 interface RehearsalDetailClientProps {
-  farewellId: string;
   rehearsalId: string;
-  initialRehearsal: any; // Ideally typed
-  currentUserRole: string | null;
-  isAdmin: boolean;
-  farewellMembers: any[];
+  farewellId: string;
+  initialRehearsal: any;
+  currentUserRole: string;
+  currentUserId: string;
+  duties?: Duty[];
+  farewellMembers?: any[];
 }
 
 export function RehearsalDetailClient({
-  farewellId,
   rehearsalId,
+  farewellId,
   initialRehearsal,
   currentUserRole,
-  isAdmin,
-  farewellMembers,
+  currentUserId,
+  duties = [],
+  farewellMembers = [],
 }: RehearsalDetailClientProps) {
   const [rehearsal, setRehearsal] = useState<any>(initialRehearsal);
+  const isAdmin = ["admin", "main_admin", "parallel_admin"].includes(
+    currentUserRole
+  );
 
   // Supabase Realtime Subscription
   useEffect(() => {
@@ -173,7 +180,7 @@ export function RehearsalDetailClient({
           {/* TAB: Overview */}
           <TabsContent
             value="overview"
-            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
           >
             <RehearsalOverviewTab
               rehearsal={rehearsal}
@@ -186,7 +193,7 @@ export function RehearsalDetailClient({
           {/* TAB: Run of Show */}
           <TabsContent
             value="run-of-show"
-            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
           >
             <RunOfShowExtended
               rehearsalId={rehearsalId}
@@ -201,7 +208,7 @@ export function RehearsalDetailClient({
           {/* TAB: Cast & Attendance */}
           <TabsContent
             value="cast-attendance"
-            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               <div className="md:col-span-2 space-y-6">
@@ -234,14 +241,30 @@ export function RehearsalDetailClient({
           {/* TAB: Studio */}
           <TabsContent
             value="studio"
-            className="cursor-pointer animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
           >
             <RehearsalAssets
               rehearsalId={rehearsalId}
               farewellId={farewellId}
-              assets={assets}
-              metadata={metadata}
-              isAdmin={isAdmin}
+              assets={rehearsal.metadata?.assets || []}
+              metadata={rehearsal.metadata}
+              isAdmin={["admin", "main_admin", "parallel_admin"].includes(
+                currentUserRole
+              )}
+            />
+          </TabsContent>
+
+          {/* TAB: Duties */}
+          <TabsContent
+            value="duties"
+            className="animate-in fade-in-50 slide-in-from-bottom-4 duration-500 mt-0 focus-visible:outline-none"
+          >
+            <RehearsalDutiesTab
+              rehearsalId={rehearsalId}
+              farewellId={farewellId}
+              duties={duties}
+              currentUserRole={currentUserRole}
+              currentUserId={currentUserId}
             />
           </TabsContent>
         </Tabs>

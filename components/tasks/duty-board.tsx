@@ -14,7 +14,8 @@ import {
   closestCorners,
   useDroppable,
 } from "@dnd-kit/core";
-import { updateDutyAction, Duty } from "@/app/actions/duty-actions";
+import { updateDutyAction } from "@/app/actions/duty-actions";
+import { Duty } from "@/types/duties";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -97,8 +98,8 @@ function DutyCard({ duty, onClick }: { duty: Duty; onClick?: () => void }) {
     duty.priority === "high"
       ? "text-orange-500 border-orange-500/50"
       : duty.priority === "medium"
-      ? "text-yellow-500 border-yellow-500/50"
-      : "text-blue-500 border-blue-500/50";
+        ? "text-yellow-500 border-yellow-500/50"
+        : "text-blue-500 border-blue-500/50";
 
   return (
     <motion.div
@@ -159,7 +160,7 @@ function DutyCard({ duty, onClick }: { duty: Duty; onClick?: () => void }) {
               <div className="text-[9px] px-1.5 py-0.5 font-mono text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 rounded-sm flex items-center">
                 <DollarSign className="w-2 h-2 mr-1" />
                 {formatCurrency(
-                  duty.expected_amount || (duty as any).expense_limit
+                  duty.expected_amount || (duty as any).expense_limit || 0
                 )}
               </div>
             )}

@@ -112,7 +112,7 @@ export default function TimelinePageClient({
           <div className="bg-muted p-1 rounded-lg inline-flex self-start md:self-auto">
             <button
               onClick={() => setViewMode("visual")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex items-center cursor-pointer gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 viewMode === "visual"
                   ? "bg-background shadow text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -123,7 +123,7 @@ export default function TimelinePageClient({
             </button>
             <button
               onClick={() => setViewMode("manage")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex cursor-pointer items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 viewMode === "manage"
                   ? "bg-background shadow text-foreground"
                   : "text-muted-foreground hover:text-foreground"

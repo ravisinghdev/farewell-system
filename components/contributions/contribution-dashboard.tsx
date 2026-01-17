@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Activity,
   History,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -571,9 +572,9 @@ export function ContributionDashboard({
               className="py-4 text-center border-t border-zinc-100 dark:border-zinc-800"
             >
               {isLoadingMore && (
-                <span className="text-xs text-muted-foreground animate-pulse">
-                  Loading...
-                </span>
+                <div className="flex justify-center">
+                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                </div>
               )}
               {!hasMore && contributions.length > 0 && (
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest">

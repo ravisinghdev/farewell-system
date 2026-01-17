@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Duty } from "@/app/actions/duty-actions";
+import { Duty } from "@/types/duties";
 import {
   Sheet,
   SheetContent,
@@ -472,7 +472,7 @@ export function DutyDetailSheet({
                   />
                 ) : (
                   <div className="text-lg font-semibold text-emerald-600 dark:text-emerald-100">
-                    {formatCurrency(duty.expected_amount)}
+                    {formatCurrency(duty.expected_amount || 0)}
                   </div>
                 )}
               </Card>

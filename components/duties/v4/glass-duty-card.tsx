@@ -1,6 +1,6 @@
 "use client";
 
-import { Duty } from "@/app/actions/duty-actions";
+import { Duty } from "@/types/duties";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Duty } from "@/app/actions/duty-actions";
+import { Duty } from "@/types/duties";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowDown, ArrowUp, DollarSign, Wallet } from "lucide-react";

@@ -3,7 +3,6 @@
 import { useFarewell } from "@/components/providers/farewell-provider";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { Loader2 } from "lucide-react";
 
 interface PageScaffoldProps {
   title: string;
@@ -20,26 +19,17 @@ export function PageScaffold({
   requireAdmin = false,
   action,
 }: PageScaffoldProps) {
-  const { user, farewell } = useFarewell();
-  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
+  const { farewell } = useFarewell();
+  const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
     if (!farewell.id) return;
 
     const supabase = createClient();
     const channel = supabase
-      .channel(
-        `page-${title.toLowerCase().replace(/\s+/g, "-")}:${farewell.id}`
-      )
-      .on("broadcast", { event: "ping" }, () => {
-        // Keep alive
-      })
+      .channel(`page:${farewell.id}:${title}`)
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          setIsRealtimeConnected(true);
-        } else {
-          setIsRealtimeConnected(false);
-        }
+        setIsLive(status === "SUBSCRIBED");
       });
 
     return () => {
@@ -53,40 +43,55 @@ export function PageScaffold({
 
   if (requireAdmin && !isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center h-[50vh] text-center p-1">
-        <h2 className="text-2xl font-bold text-destructive">Access Denied</h2>
-        <p className="text-muted-foreground mt-2">
-          You do not have permission to view this page.
+      <div className="px-4 py-20 text-center">
+        <h2 className="text-xl font-semibold text-destructive">
+          Access denied
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          You don’t have permission to view this page.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-1 space-y-1 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="mx-auto w-full max-w-7xl px-3 sm:px-6 animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            {title}
-            <div
-              className={`h-2 w-2 rounded-full ${
-                isRealtimeConnected ? "bg-green-500" : "bg-yellow-500"
-              } shadow-[0_0_8px_rgba(0,0,0,0.2)]`}
-              title={isRealtimeConnected ? "Realtime Active" : "Connecting..."}
-            />
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+              {title}
+            </h1>
+
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isLive ? "bg-emerald-500" : "bg-yellow-400"
+                }`}
+              />
+              {isLive ? "Live" : "Connecting"}
+            </span>
+          </div>
+
           {description && (
-            <p className="text-muted-foreground">{description}</p>
+            <p className="text-sm text-muted-foreground max-w-xl">
+              {description}
+            </p>
           )}
         </div>
-        {action && <div>{action}</div>}
+
+        {action && <div className="pt-2 sm:pt-0">{action}</div>}
       </div>
 
-      <div className="min-h-[400px] border rounded-xl bg-transparent p-6 relative overflow-hidden">
-        {children || (
-          <div className="flex flex-col items-center justify-center h-64 text-center text-muted-foreground">
-            <p>Content for {title} is coming soon.</p>
-            <p className="text-xs mt-2 opacity-50">Role: {farewell.role}</p>
+      {/* Spacer instead of box */}
+      <div className="h-6 sm:h-8" />
+
+      {/* Content flows naturally */}
+      <div className="space-y-4">
+        {children ?? (
+          <div className="py-20 text-center text-sm text-muted-foreground">
+            Content coming soon.
           </div>
         )}
       </div>

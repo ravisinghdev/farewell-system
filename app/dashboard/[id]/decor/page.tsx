@@ -8,7 +8,7 @@ export default function DecorPage() {
   const farewellId = params.id as string;
 
   return (
-    <div className="h-full w-full p-4 md:p-6 overflow-hidden">
+    <div className="py-6">
       <FreshDecorBoard farewellId={farewellId} />
     </div>
   );

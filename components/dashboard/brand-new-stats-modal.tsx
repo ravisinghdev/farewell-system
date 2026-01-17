@@ -112,7 +112,7 @@ export function BrandNewStatsModal({
                 key={t}
                 onClick={() => setAccent(t)}
                 className={cn(
-                  "w-2.5 h-2.5 rounded-full transition-all duration-300",
+                  "w-2.5 h-2.5 cursor-pointer rounded-full transition-all duration-300",
                   themes[t].bg,
                   accent === t
                     ? "ring-2 ring-foreground/20 scale-110"

@@ -18,6 +18,24 @@ export async function createNotificationAction(
   if (error) console.error("Error sending notification:", error);
 }
 
+export async function createBulkNotificationAction(
+  userIds: string[],
+  title: string,
+  message: string,
+  link?: string
+) {
+  const supabase = await createClient();
+  const notifications = userIds.map((userId) => ({
+    user_id: userId,
+    title,
+    message,
+    link,
+  }));
+
+  const { error } = await supabase.from("notifications").insert(notifications);
+  if (error) console.error("Error sending bulk notifications:", error);
+}
+
 export async function getNotificationsAction() {
   const supabase = await createClient();
   const {
