@@ -123,6 +123,18 @@ CREATE TABLE channels (
     deleted_by UUID
 );
 
+CREATE TABLE channel_members (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL DEFAULT 'member',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ,
+    deleted_by UUID
+);
+
 CREATE TABLE messages (
     id UUID NOT NULL DEFAULT uuid_generate_v4(),
     organization_id UUID NOT NULL,
