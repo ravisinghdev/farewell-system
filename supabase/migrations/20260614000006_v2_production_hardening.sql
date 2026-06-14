@@ -59,6 +59,19 @@ ALTER TABLE albums ADD COLUMN slug TEXT;
 -- 5. MISSING UNIQUE CONSTRAINTS
 ALTER TABLE billing_plans ADD CONSTRAINT unique_billing_plan_name UNIQUE (name);
 ALTER TABLE rehearsal_sessions ADD CONSTRAINT unique_rehearsal_session_time UNIQUE(rehearsal_id, start_time);
+
+CREATE TABLE IF NOT EXISTS channel_members (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    channel_id UUID NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL DEFAULT 'member',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ,
+    deleted_by UUID
+);
+
 ALTER TABLE channel_members ADD CONSTRAINT unique_channel_member UNIQUE(channel_id, user_id);
 
 -- 6. MISSING FOREIGN KEYS & ON DELETE BEHAVIORS
