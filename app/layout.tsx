@@ -3,9 +3,14 @@ import type { Metadata, Viewport } from "next";
 import Provider from "./Provider";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { GeminiAssistant } from "@/components/ai/GeminiAssistant";
+
 import NextTopLoader from "nextjs-toploader";
 import { Analytics } from "@vercel/analytics/react";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 // Metadata configuration for SEO and social sharing
 export const metadata: Metadata = {
@@ -75,14 +80,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body className="min-h-screen">
         <Provider>
           <NextTopLoader color="#7c3aed" showSpinner={false} />
           {children}
           <Toaster />
           <Analytics />
-          {/* <GeminiAssistant /> */}
+
         </Provider>
       </body>
     </html>

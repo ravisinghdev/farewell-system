@@ -7,9 +7,9 @@ import SearchDropdown from "./SearchDropdown";
 import Image from "next/image";
 import { useSearch } from "./SearchProvider";
 import { Logo } from "@/components/ui/logo";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
-import { ThemeToggle } from "../theme-toggler";
+import { ThemeToggle } from "../common/theme-toggler";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
